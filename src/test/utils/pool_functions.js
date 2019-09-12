@@ -29,7 +29,7 @@ class PoolFunctions {
         }
     }
 
-    _verify_data_placement(data_placement) {
+    verify_data_placement(data_placement) {
         if (data_placement !== 'SPREAD' && data_placement !== 'MIRROR') {
             throw new Error(`data_placement must be SPREAD or MIRROR, got ${data_placement}`);
         }
@@ -37,7 +37,7 @@ class PoolFunctions {
 
     async change_tier(pool_name, bucket, data_placement) {
         if (data_placement !== 'INTERNAL') {
-            this._verify_data_placement(data_placement);
+            this.verify_data_placement(data_placement);
             const read_bucket = await this._client.bucket.read_bucket({ name: bucket });
             console.log(`Setting ${pool_name} as the pool for bucket: ${bucket}`);
             await this._client.tier.update_tier({
