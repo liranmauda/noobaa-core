@@ -16,13 +16,6 @@ const tests = [{
     agent_cpu: '250m',
     agent_mem: '150Mi',
 }, {
-    name: 'quota-test',
-    test: './src/test/pipeline/quota_test.js',
-    server_cpu: '400m',
-    server_mem: '400Mi',
-    agent_cpu: '250m',
-    agent_mem: '150Mi',
-}, {
     name: 'account-test-many-accounts',
     test: './src/test/pipeline/account_test.js',
     server_cpu: '400m',
@@ -34,6 +27,13 @@ const tests = [{
         accounts_number: 200,
         skip_delete: true,
     },
+}, {
+    name: 'quota-test',
+    test: './src/test/pipeline/quota_test.js',
+    server_cpu: '400m',
+    server_mem: '400Mi',
+    agent_cpu: '250m',
+    agent_mem: '150Mi',
 }, {
     name: 'namespace-test',
     test: './src/test/pipeline/namespace_test.js',
@@ -71,6 +71,13 @@ const tests = [{
         dataset_size: (30 * 1024),
         size_units: 'MB',
     },
+}, {
+    name: 'space-leaks-test',
+    test: './src/test/pipeline/space_leaks_test.js',
+    server_cpu: '400m',
+    server_mem: '400Mi',
+    agent_cpu: '250m',
+    agent_mem: '150Mi',
 }, ];
 
 module.exports = tests;
