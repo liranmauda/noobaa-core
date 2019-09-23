@@ -27,7 +27,7 @@ const TEST_CFG_DEFAULTS = {
     bucket: 'first.bucket',
     emailSuffix: '@email.email',
     password: 'Password',
-    s3_access: true, //TODO: this is a bug, we will not ve able to change it (argv changes from false to true only)
+    skip_s3_access: false,
     cycles: 15,
     accounts_number: 2,
     skip_report: false,
@@ -45,10 +45,10 @@ const YELLOW = "\x1b[33;1m";
 const RED = "\x1b[31;1m";
 const NC = "\x1b[0m";
 
-let TEST_CFG = _.defaults(_.pick(argv, _.keys(TEST_CFG_DEFAULTS)), TEST_CFG_DEFAULTS);
+const TEST_CFG = _.defaults(_.pick(argv, _.keys(TEST_CFG_DEFAULTS)), TEST_CFG_DEFAULTS);
 Object.freeze(TEST_CFG);
 
-let report = new Report();
+const report = new Report();
 
 function usage() {
     console.log(`
@@ -60,7 +60,7 @@ function usage() {
     --bucket            -   bucket name (default: ${TEST_CFG_DEFAULTS.bucket})
     --emailSuffix       -   The email suffix (default: ${TEST_CFG_DEFAULTS.emailSuffix})
     --password          -   Account's Password (default: ${TEST_CFG_DEFAULTS.password})
-    --s3_access         -   should we have s3 access (default: ${TEST_CFG_DEFAULTS.s3_access})
+    --skip_s3_access    -   should we have s3 access (default: ${TEST_CFG_DEFAULTS.skip_s3_access})
     --cycles            -   number of cycles (default: ${TEST_CFG_DEFAULTS.cycles})
     --accounts_number   -   number of accounts to create per cycle (default: ${TEST_CFG_DEFAULTS.accounts_number})
     --skip_report       -   will skip sending report to mongo
@@ -156,16 +156,17 @@ function set_account_details(has_login, account_name, email, s3_access) {
         email,
         password: TEST_CFG.password,
         has_login,
-        s3_access: TEST_CFG.s3_access,
+        s3_access,
         allowed_buckets,
     };
 }
 
 async function create_account(has_login, account_name) {
     //building an account parameters object.
-    console.log(`Creating account: ${account_name} with access login: ${has_login} s3 access: ${TEST_CFG.s3_access}`);
+    console.log(`Creating account: ${account_name} ${has_login ? 'with access login' : ''} ${
+        TEST_CFG.skip_s3_access ? '' : ' ,with s3 access'}`);
     let email = account_name + TEST_CFG.emailSuffix;
-    let accountData = set_account_details(has_login, account_name, email, TEST_CFG.s3_access);
+    let accountData = set_account_details(has_login, account_name, email, !TEST_CFG.skip_s3_access);
     try {
         await client.account.create_account(accountData);
         await report.success('create_account');
@@ -402,7 +403,7 @@ async function disable_s3_Access_and_check(email) {
 async function checkAccountFeatures() {
     const fullName = `${TEST_CFG.name}` + (Math.floor(Date.now() / 1000));
     const email = (await create_account(true, fullName)).unwrap();
-    console.log(`Created account is ${email} with access s3 ${TEST_CFG.s3_access}`);
+    console.log(`Created account ${email} ${TEST_CFG.s3_access ? 'with s3 access' : 'without s3 access'}`);
     await verify_account_in_system(email, true);
     if (TEST_CFG.s3_access === true) {
         await verify_s3_access(email, TEST_CFG.bucket);
@@ -442,7 +443,7 @@ async function create_delete_accounts(cycle_num, count) {
         } else {
             email = (await create_account(true, fullName)).unwrap();
         }
-        console.log(`Created account is ${email} with access s3 ${TEST_CFG.s3_access}`);
+        console.log(`Created account ${email} ${TEST_CFG.s3_access ? 'with s3 access' : 'without s3 access'}`);
         await verify_account_in_system(email, true);
         await P.delay(10 * 1000);
         if (TEST_CFG.skip_delete) {
