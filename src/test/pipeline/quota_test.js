@@ -118,14 +118,14 @@ async function _wait_no_available_space(bucket_name) {
     let is_no_available;
     while (Date.now() - base_time < 360 * 1000) {
         try {
-            is_no_available = await bucket_functions.checkAvailableSpace(bucket_name);
+            is_no_available = await bucket_functions.check_bucket_available_for_upload(bucket_name);
             if (is_no_available <= 0) {
                 break;
             } else {
                 await P.delay(15 * 1000);
             }
         } catch (e) {
-            console.error(`Something went wrong with checkAvailableSpace`);
+            console.error(`Something went wrong with check_bucket_available_for_upload`);
             throw e;
         }
     }
@@ -194,7 +194,7 @@ async function _check_file_in_pool(file_name, pool, bucket_name) {
 }
 
 async function _check_quota(bucket_name, pool, multiplier) {
-    await bucket_functions.setQuotaBucket(bucket_name, 1, 'GIGABYTE');
+    await bucket_functions.set_bucket_quota(bucket_name, 1, 'GIGABYTE');
     // Start writing, and see that we are failing when we get into the quota
     const uploaded_files = await _upload_files(bucket_name, 1024, multiplier);
     await _wait_no_available_space(bucket_name);
@@ -205,7 +205,7 @@ async function _check_quota(bucket_name, pool, multiplier) {
 }
 
 async function _disable_quota_and_check(bucket_name, pool, multiplier) {
-    await bucket_functions.disableQuotaBucket(bucket_name);
+    await bucket_functions.disable_bucket_quota(bucket_name);
     await P.delay(10 * 1000); //delaying to get pool cool down
     //Continue to write and see that the writes are passing
     const uploaded_files = await _upload_files(bucket_name, 500, multiplier);

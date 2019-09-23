@@ -63,7 +63,7 @@ class BucketFunctions {
     }
 
 
-    async setQuotaBucket(bucket_name, size, unit) {
+    async set_bucket_quota(bucket_name, size, unit) {
         console.log(`Setting quota ${size} ${unit} for bucket ${bucket_name}`);
         try {
             await this._client.bucket.update_bucket({
@@ -79,7 +79,7 @@ class BucketFunctions {
         }
     }
 
-    async disableQuotaBucket(bucket_name) {
+    async disable_bucket_quota(bucket_name) {
         console.log('Disabling quota bucket');
         try {
             await this._client.bucket.update_bucket({
@@ -104,7 +104,7 @@ class BucketFunctions {
         }
     }
 
-    async checkFreeSpace(bucket_name) {
+    async check_bucket_free_space(bucket_name) {
         console.log(`Checking free space in bucket ${bucket_name}`);
         try {
             const bucket = await this.get_bucket_index(bucket_name);
@@ -117,7 +117,7 @@ class BucketFunctions {
         }
     }
 
-    async checkAvailableSpace(bucket_name) {
+    async check_bucket_available_for_upload(bucket_name) {
         console.log(`Checking available space in bucket ${bucket_name}`);
         try {
             const bucket = await this.get_bucket_index(bucket_name);

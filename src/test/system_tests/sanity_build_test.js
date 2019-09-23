@@ -29,12 +29,12 @@ const TEST_CTX = {
 
 async function main() {
     if (_.isUndefined(argv.mgmt_ip) || _.isUndefined(argv.mgmt_port)) {
-        console.error('Missing mgmt paramters');
+        console.error('Missing mgmt parameters');
         process.exit(5);
     }
 
     if (_.isUndefined(argv.s3_ip) || _.isUndefined(argv.s3_port)) {
-        console.error('Missing s3 endpoint paramters');
+        console.error('Missing s3 endpoint parameters');
         process.exit(5);
     }
 
@@ -163,7 +163,7 @@ async function _create_resources_and_buckets() {
     });
 
     console.info('Setting Bucket Quota and Updating to Replica & Spread');
-    await TEST_CTX.bucketfunc.setQuotaBucket(TEST_CTX.bucket_spread, 2, 'TERABYTE');
+    await TEST_CTX.bucketfunc.set_bucket_quota(TEST_CTX.bucket_spread, 2, 'TERABYTE');
     await TEST_CTX.client.tier.update_tier({
         name: buck2.tiering.tiers[0].tier,
         attached_pools: ['COMP-S3-V2-Resource', 'COMP-S3-V4-Resource'],
