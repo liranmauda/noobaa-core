@@ -1,8 +1,8 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
+const _ = require('lodash');
 const api = require('../../api');
-const P = require('../../util/promise');
 const { S3OPS } = require('../utils/s3ops');
 const Report = require('../framework/report');
 const argv = require('minimist')(process.argv);
@@ -16,18 +16,26 @@ dbg.set_process_name(test_name);
 let current_size = 0;
 const POOL_NAME = "first-pool";
 
-const {
-    mgmt_ip,
-    mgmt_port_https,
-    s3_ip,
-    s3_port,
-    agent_number,
-    dataset_size = 100, //MB
-    max_size = 250, //MB
-    min_size = 50, //MB
-} = argv;
+//define colors
+const YELLOW = "\x1b[33;1m";
+const NC = "\x1b[0m";
 
-const s3ops = new S3OPS({ ip: s3_ip, port: s3_port });
+const TEST_CFG_DEFAULTS = {
+    mgmt_ip: '',
+    mgmt_port_https: '',
+    s3_ip: '',
+    s3_port: '',
+    agent_number: 3,
+    cycles: 300,
+    dataset_size: 100, //MB
+    max_size: 250, //MB
+    min_size: 50, //MB
+};
+
+const TEST_CFG = _.defaults(_.pick(argv, _.keys(TEST_CFG_DEFAULTS)), TEST_CFG_DEFAULTS);
+Object.freeze(TEST_CFG);
+
+const s3ops = new S3OPS({ ip: TEST_CFG.s3_ip, port: TEST_CFG.s3_port });
 
 function usage() {
     console.log(`
@@ -35,7 +43,8 @@ function usage() {
     --mgmt_port_https       -   noobaa server management https port
     --s3_ip                 -   noobaa s3 ip
     --s3_port               -   noobaa s3 port
-    --agent_number          -   number of agents to create (default: ${agent_number})
+    --agent_number          -   number of agents to create (default: ${TEST_CFG_DEFAULTS.agent_number})
+    --cycles                -   number of cycles (default: ${TEST_CFG_DEFAULTS.cycles})
     --dataset_size          -   size uploading data for checking rebuild
     --max_size              -   max size of uploading files
     --min_size              -   min size of uploading files
@@ -48,7 +57,7 @@ if (argv.help) {
     process.exit(1);
 }
 
-const rpc = api.new_rpc_from_base_address(`wss://${mgmt_ip}:${mgmt_port_https}`, 'EXTERNAL');
+const rpc = api.new_rpc_from_base_address(`wss://${TEST_CFG.mgmt_ip}:${TEST_CFG.mgmt_port_https}`, 'EXTERNAL');
 const client = rpc.new_client({});
 
 let report = new Report();
@@ -59,7 +68,7 @@ const cases = [
 report.init_reporter({
     suite: test_name,
     conf: {
-        dataset_size: dataset_size,
+        dataset_size: TEST_CFG.dataset_size,
     },
     mongo_report: true,
     cases: cases
@@ -88,10 +97,10 @@ async function _upload_and_verify_files(bucket, dataset) {
     const files = [];
     current_size = 0;
     let { data_multiplier } = unit_mapping.MB;
-    console.log(`Writing and deleting data till size amount to grow ${dataset} MB`);
+    console.log(`Writing ${dataset} MB `);
     while (current_size < dataset) {
         try {
-            console.log(`Uploading files till data size grow to ${dataset}, current size is ${current_size}`);
+            console.log(`Uploading files: destination size is ${dataset}, current size is ${current_size}`);
             let file_size = set_fileSize();
             let file_name = 'file_part_' + file_size + (Math.floor(Date.now() / 1000));
             files.push(file_name);
@@ -100,7 +109,7 @@ async function _upload_and_verify_files(bucket, dataset) {
             await s3ops.put_file_with_md5(bucket, file_name, file_size, data_multiplier);
             await s3ops.get_file_check_md5(bucket, file_name);
         } catch (e) {
-            console.error(`${mgmt_ip} FAILED verification uploading and reading`, e);
+            console.error(`${TEST_CFG.mgmt_ip} FAILED verification uploading and reading`, e);
             throw e;
         }
     }
@@ -108,13 +117,13 @@ async function _upload_and_verify_files(bucket, dataset) {
 }
 
 function set_fileSize() {
-    let rand_size = Math.floor((Math.random() * (max_size - min_size)) + min_size);
-    if (dataset_size - current_size === 0) {
+    let rand_size = Math.floor((Math.random() * (TEST_CFG.max_size - TEST_CFG.min_size)) + TEST_CFG.min_size);
+    if (TEST_CFG.dataset_size - current_size === 0) {
         rand_size = 1;
         //if we choose file size grater then the remaining space for the dataset,
         //set it to be in the size that complete the dataset size.
-    } else if (rand_size > dataset_size - current_size) {
-        rand_size = dataset_size - current_size;
+    } else if (rand_size > TEST_CFG.dataset_size - current_size) {
+        rand_size = TEST_CFG.dataset_size - current_size;
     }
     return rand_size;
 }
@@ -129,56 +138,36 @@ async function _cleanup_bucket(bucket) {
     }
 }
 
-async function _available_space({ bucket, data_size = '', target = false }) {
-    const base_time = Date.now();
-    if (data_size) {
-        while (Date.now() - base_time < 360 * 1000) {
-            try {
-                const available_space = await bucket_functions.checkAvailableSpace(bucket);
-                if (target && available_space === data_size) {
-                    return available_space;
-                } else if (available_space <= data_size) {
-                    return available_space;
-                } else {
-                    await P.delay(15 * 1000);
-                }
-            } catch (e) {
-                console.error(`Something went wrong with checkAvailableSpace`);
-                throw e;
-            }
-        }
-    } else {
-        const available_space = await bucket_functions.checkAvailableSpace(bucket);
-        return available_space;
-    }
-    throw new Error(`Available space meat it's target by now.`);
+async function _check_host_space_leaks() {
+
 }
 
-async function _check_space_leaks(bucket) {
+
+async function _check_space_calculations_leaks(bucket) {
     try {
-        const initial_available_space = await _available_space({ bucket });
-        await _upload_and_verify_files(bucket, dataset_size);
-        await _available_space({ bucket, data_size: dataset_size });
+        const initial_available_space = await bucket_functions.check_bucket_available_for_upload(bucket);
+        console.log(`Initial available space is ${initial_available_space}`);
+        await _upload_and_verify_files(bucket, TEST_CFG.dataset_size);
         await _cleanup_bucket(bucket);
-        const current_available_space = await _available_space({ bucket, target: true });
+        const current_available_space = await bucket_functions.check_bucket_available_for_upload(bucket);
         if (initial_available_space !== current_available_space) {
+            console.error(`Expected to get ${initial_available_space} free space, got ${current_available_space}`);
             throw new Error(`space should have beed reclaimed by now`);
         }
     } catch (e) {
         report.fail('reclaimed blocks');
-        console.error('_check_space_leaks:: failed', e);
+        console.error('_check_space_leaks:: failed', e.stack);
         throw e;
     }
     report.success('reclaimed blocks');
 }
 
-async function _check_space_leaks_cycle(agents_num) {
-    const bucket = 'reclaim.bucket';
+async function _check_space_leaks_cycle(bucket, agents_num) {
     await pool_functions.create_pool(POOL_NAME, agents_num);
     await bucket_functions.createBucket(bucket);
     // Changing the bucket policy
     await pool_functions.change_tier(POOL_NAME, bucket, 'SPREAD');
-    await _check_space_leaks(bucket);
+
 }
 
 async function main() {
@@ -188,7 +177,15 @@ async function main() {
             password: 'DeMo1',
             system: 'demo'
         });
-        await _check_space_leaks_cycle(agent_number);
+
+        const bucket = 'reclaim.bucket';
+        await _check_space_leaks_cycle(bucket, TEST_CFG.agent_number);
+
+        for (let cycle = 1; cycle <= TEST_CFG.cycles; cycle++) {
+            console.log(`${YELLOW}Starting cycle ${cycle}${NC}`);
+            await _check_space_calculations_leaks(bucket);
+        }
+
         console.log('space leaks test was successful!');
         await report.report();
         process.exit(0);
