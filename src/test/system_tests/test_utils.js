@@ -73,6 +73,31 @@ function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) 
         });
 }
 
+async function verify_all_hosts_are_ready(
+    rpc_client,
+    pool_name,
+    host_count = 3,
+    timeout_ms = 5 * 60 * 1000 // 5min
+) {
+    await promise_utils.timeout(
+        async () => {
+                let all_hosts_ready = false;
+                while (!all_hosts_ready) {
+                    const res = await rpc_client.host.list_hosts({
+                        query: {
+                            pools: [pool_name],
+                            mode: ['OPTIMAL'],
+                        }
+                    });
+
+                    await P.delay(2500);
+                    all_hosts_ready = res.hosts.length === host_count;
+                }
+            },
+            timeout_ms
+    );
+}
+
 async function create_hosts_pool(
     rpc_client,
     pool_name,
@@ -87,23 +112,7 @@ async function create_hosts_pool(
     });
 
     console.log(`test_utils::create_hosts_pool: waiting for ${pool_name} hosts (${host_count}) to be in optimal state`);
-    await promise_utils.timeout(
-        async () => {
-            let all_hosts_ready = false;
-            while (!all_hosts_ready) {
-                const res = await rpc_client.host.list_hosts({
-                    query: {
-                        pools: [pool_name],
-                        mode: ['OPTIMAL'],
-                    }
-                });
-
-                await P.delay(2500);
-                all_hosts_ready = res.hosts.length === host_count;
-            }
-        },
-        timeout_ms
-    );
+    await verify_all_hosts_are_ready(rpc_client, pool_name, host_count, timeout_ms);
     console.log(`test_utils::create_hosts_pool: all ${pool_name} hosts (${host_count}) are in optimal state`);
 }
 
@@ -118,14 +127,14 @@ async function delete_hosts_pool(
     console.log(`test_utils::delete_hosts_pool: Waiting for ${pool_name} to be evacuated and delete`);
     await promise_utils.timeout(
         async () => {
-            let pool_exists = true;
-            while (pool_exists) {
-                await P.delay(30 * 1000); // 30sec
-                const system = await rpc_client.system.read_system({});
-                pool_exists = system.pools.find(pool => pool.name === pool_name);
-            }
-        },
-        timeout_ms
+                let pool_exists = true;
+                while (pool_exists) {
+                    await P.delay(30 * 1000); // 30sec
+                    const system = await rpc_client.system.read_system({});
+                    pool_exists = system.pools.find(pool => pool.name === pool_name);
+                }
+            },
+            timeout_ms
     );
     console.log(`test_utils::delete_hosts_pool: ${pool_name} was evacuated and deleted`);
 }
@@ -163,6 +172,7 @@ async function disable_accounts_s3_access(rpc_client, accounts_emails) {
 }
 
 exports.blocks_exist_on_cloud = blocks_exist_on_cloud;
+exports.verify_all_hosts_are_ready = verify_all_hosts_are_ready;
 exports.create_hosts_pool = create_hosts_pool;
 exports.delete_hosts_pool = delete_hosts_pool;
 exports.empty_and_delete_buckets = empty_and_delete_buckets;

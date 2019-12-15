@@ -12,14 +12,14 @@ const tests = [
     //     agent_cpu: '250m',
     //     agent_mem: '150Mi'
     // },
-    {
-        name: 'test-bucket-access',
-        test: './src/test/system_tests/test_bucket_access',
-        server_cpu: '400m',
-        server_mem: '400Mi',
-        agent_cpu: '250m',
-        agent_mem: '250Mi'
-    },
+    // {
+    //     name: 'test-bucket-access',
+    //     test: './src/test/system_tests/test_bucket_access',
+    //     server_cpu: '400m',
+    //     server_mem: '400Mi',
+    //     agent_cpu: '250m',
+    //     agent_mem: '250Mi'
+    // },
     {
         name: 'test-bucket-placement',
         test: './src/test/system_tests/test_bucket_placement.js',
@@ -41,22 +41,22 @@ const tests = [
     //     agent_cpu: '250m',
     //     agent_mem: '150Mi'
     // },
-    {
-        name: 'test-ceph-s3',
-        test: './src/test/system_tests/test_ceph_s3.js',
-        server_cpu: '400m',
-        server_mem: '400Mi',
-        agent_cpu: '250m',
-        agent_mem: '150Mi'
-    },
-    {
-        name: 'test-bucket-lambda-triggers',
-        test: './src/test/system_tests/test_bucket_lambda_triggers.js',
-        server_cpu: '400m',
-        server_mem: '400Mi',
-        agent_cpu: '250m',
-        agent_mem: '150Mi'
-    }
+    // {
+    //     name: 'test-ceph-s3',
+    //     test: './src/test/system_tests/test_ceph_s3.js',
+    //     server_cpu: '400m',
+    //     server_mem: '400Mi',
+    //     agent_cpu: '250m',
+    //     agent_mem: '150Mi'
+    // },
+    // {
+    //     name: 'test-bucket-lambda-triggers',
+    //     test: './src/test/system_tests/test_bucket_lambda_triggers.js',
+    //     server_cpu: '400m',
+    //     server_mem: '400Mi',
+    //     agent_cpu: '250m',
+    //     agent_mem: '150Mi'
+    // }
 ];
 
 module.exports = tests;

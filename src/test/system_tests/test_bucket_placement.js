@@ -8,13 +8,13 @@ if (argv.log_file) {
 }
 dbg.set_process_name('test_bucket_placement');
 
-var basic_server_ops = require('../utils/basic_server_ops');
-var P = require('../../util/promise');
-var api = require('../../api');
-var _ = require('lodash');
+const basic_server_ops = require('../utils/basic_server_ops');
+const P = require('../../util/promise');
+const api = require('../../api');
+const _ = require('lodash');
 const test_utils = require('./test_utils');
 
-var dotenv = require('../../util/dotenv');
+const dotenv = require('../../util/dotenv');
 dotenv.load();
 
 
@@ -26,8 +26,8 @@ const {
 
 argv.access_key = argv.access_key || '123';
 argv.secret_key = argv.secret_key || 'abc';
-var rpc = api.new_rpc();
-var client = rpc.new_client({
+const rpc = api.new_rpc();
+const client = rpc.new_client({
     address: 'ws://' + mgmt_ip + ':' + mgmt_port
 });
 
@@ -40,7 +40,7 @@ module.exports = {
 
 // Does the Auth and returns the nodes in the system
 async function create_auth() {
-    var auth_params = {
+    const auth_params = {
         email: 'demo@noobaa.com',
         password: 'DeMo1',
         system: 'demo'
@@ -79,9 +79,14 @@ async function perform_placement_tests() {
     console.log('Testing Placement');
 
     await create_auth();
+    // The reason that we are not using Promise all here is that in small kubernetes 
+    // environments we will straggle on creating an will fail on time out 
+    await test_utils.create_hosts_pool(client, 'pool1', 3, 25 * 60 * 1000);
+    await test_utils.create_hosts_pool(client, 'pool2', 3, 25 * 60 * 1000);
+    // Making sure that all hosts are ready (if they goes down and up in the first 3 min we will miss it)
     await Promise.all([
-        test_utils.create_hosts_pool(client, 'pool1', 3),
-        test_utils.create_hosts_pool(client, 'pool2', 3)
+        test_utils.verify_all_hosts_are_ready(client, 'pool1', 3, 3 * 60 * 1000),
+        test_utils.verify_all_hosts_are_ready(client, 'pool2', 3, 3 * 60 * 1000)
     ]);
     await client.tier.create_tier({
         name: 'tier1',
@@ -130,8 +135,8 @@ async function perform_placement_tests() {
             key: fkey,
         });
         _.each(chunks, chunk => {
-            var pool1_count = 0;
-            var pool2_count = 0;
+            let pool1_count = 0;
+            let pool2_count = 0;
             _.each(chunk.frags, frag => {
                 _.each(frag.blocks, block => {
                     if (block.adminfo.pool_name === 'pool1') {
@@ -199,36 +204,33 @@ async function perform_quota_tests() {
     await update_quota_on_bucket();
 }
 
-function update_quota_on_bucket(limit_gb) {
-    return P.resolve()
-        .then(() => {
-            if (limit_gb) {
-                return client.bucket.update_bucket({
-                    name: TEST_QUOTA_BUCKET_NAME,
-                    quota: {
-                        size: limit_gb,
-                        unit: 'GIGABYTE'
-                    }
-                });
-            } else {
-                return client.bucket.update_bucket({
-                    name: TEST_QUOTA_BUCKET_NAME,
-                });
-            }
-        })
-        .catch(err => {
-            throw new Error(`Failed setting quota with ${limit_gb} - ${err}`);
-        });
+async function update_quota_on_bucket(limit_gb) {
+    try {
+        if (limit_gb) {
+            await client.bucket.update_bucket({
+                name: TEST_QUOTA_BUCKET_NAME,
+                quota: {
+                    size: limit_gb,
+                    unit: 'GIGABYTE'
+                }
+            });
+        } else {
+            await client.bucket.update_bucket({
+                name: TEST_QUOTA_BUCKET_NAME,
+            });
+        }
+    } catch (err) {
+        throw new Error(`Failed setting quota with ${limit_gb} - ${err}`);
+    }
 }
 
-function main() {
-    return run_test()
-        .then(function() {
-            process.exit(0);
-        })
-        .catch(function() {
-            process.exit(1);
-        });
+async function main() {
+    try {
+        await run_test();
+        process.exit(0);
+    } catch (err) {
+        process.exit(1);
+    }
 }
 
 if (require.main === module) {
