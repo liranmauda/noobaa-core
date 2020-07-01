@@ -1884,8 +1884,10 @@ class NodesMonitor extends EventEmitter {
             !item.node.deleting &&
             !item.node.deleted);
         if (stat) {
-            dbg.log0_throttled(`${item.node.name} item has issues ${item.online} ${item.trusted} ${item.node_from_store} ${item.node.rpc_address}
-                ${item.io_detention} ${item.node.migrating_to_pool} ${item.node.decommissioning} ${item.node.decommissioned} ${item.node.deleting} ${item.node.deleted}`);
+            dbg.log0_throttled(item.node.name, 'item has issues');
+            dbg.log3('online:', item.online, 'trusted:', item.trusted, item.node_from_store, item.node.rpc_address,
+                item.io_detention, item.node.migrating_to_pool, item.node.decommissioning,
+                item.node.decommissioned, item.node.deleting, item.node.deleted);
         }
         return stat;
     }
@@ -1904,8 +1906,9 @@ class NodesMonitor extends EventEmitter {
             !item.node.deleted
         );
         if (!readable) {
-            dbg.log0_throttled(`${item.node.name} not readable ${item.online} ${item.trusted} ${item.node_from_store} ${item.node.rpc_address} ${!item.storage_not_exist}
-                ${!item.auth_failed} ${!item.io_detention} ${!item.node.decommissioned} ${!item.node.deleting} ${!item.node.deleted}`);
+            dbg.log0_throttled(item.node.name, 'is not readable');
+            dbg.log3('online:', item.online, 'trusted:', item.trusted, item.node_from_store, item.node.rpc_address, !item.storage_not_exist,
+                !item.auth_failed, !item.io_detention, !item.node.decommissioned, !item.node.deleting, !item.node.deleted);
         }
         return readable;
     }
@@ -1928,9 +1931,10 @@ class NodesMonitor extends EventEmitter {
         );
 
         if (!writable) {
-            dbg.log0_throttled(`${item.node.name} not readable ${item.online} ${item.trusted} ${item.node_from_store} ${item.node.rpc_address} ${!item.storage_not_exist}
-                ${!item.auth_failed} ${!item.io_detention} ${!item.storage_full} ${!item.node.migrating_to_pool} ${!item.node.decommissioning} ${!item.node.decommissioned}
-                ${!item.node.deleting} ${!item.node.deleted}`);
+            dbg.log0_throttled(item.node.name, 'is not writable');
+            dbg.log3('online:', item.online, 'trusted:', item.trusted, item.node_from_store, item.node.rpc_address, !item.storage_not_exist,
+                !item.auth_failed, !item.io_detention, !item.storage_full, !item.node.migrating_to_pool, !item.node.decommissioning,
+                !item.node.decommissioned, !item.node.deleting, !item.node.deleted);
         }
         return writable;
     }
