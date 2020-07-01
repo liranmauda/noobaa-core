@@ -145,14 +145,12 @@ function create_test_bucket() {
         }));
 }
 
-function setup() {
-    return create_agents()
-        .then(() => {
-            console.log('created %s agents. waiting for %s seconds to init', TEST_CTX.num_of_agents, TEST_CTX.init_delay);
-        })
-        .delay(TEST_CTX.init_delay * 1000)
-        .then(() => create_test_pool())
-        .then(() => create_test_bucket());
+async function setup() {
+    await create_agents();
+    console.log('created %s agents. waiting for %s seconds to init', TEST_CTX.num_of_agents, TEST_CTX.init_delay);
+    await P.delay(TEST_CTX.init_delay * 1000);
+    await create_test_pool();
+    await create_test_bucket();
 }
 
 function upload_file() {
