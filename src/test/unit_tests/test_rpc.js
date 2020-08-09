@@ -8,7 +8,6 @@ const _ = require('lodash');
 const mocha = require('mocha');
 const assert = require('assert');
 
-const P = require('../../util/promise');
 const ssl_utils = require('../../util/ssl_utils');
 const { RPC, RpcError, RpcSchema, RPC_BUFFERS } = require('../../rpc');
 
@@ -462,7 +461,7 @@ mocha.describe('RPC', function() {
     mocha.it('TLS', function() {
         rpc.register_service(test_api, make_server());
         let tls_server;
-        return P.resolve()
+        return Promise.resolve()
             .then(() => rpc.register_tcp_transport(0, ssl_utils.generate_ssl_certificate()))
             .then(tls_server_arg => {
                 tls_server = tls_server_arg;

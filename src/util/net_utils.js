@@ -26,7 +26,7 @@ function ping(target, options) {
     options = options || DEFAULT_PING_OPTIONS;
     _.defaults(options, DEFAULT_PING_OPTIONS);
     let session = net_ping.createSession(options);
-    return P.resolve()
+    return Promise.resolve()
         .then(() => {
             let candidate_ip = url.parse(target).hostname || target;
             if (net.isIP(candidate_ip)) {

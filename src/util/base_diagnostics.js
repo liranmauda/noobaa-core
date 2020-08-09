@@ -49,7 +49,7 @@ function write_agent_diag_file(data) {
 
 function pack_diagnostics(dst, working_dir) {
     const work_dir = working_dir || TMP_WORK_DIR;
-    return P.resolve()
+    return Promise.resolve()
         .then(() => fs_utils.file_delete(dst))
         .then(() => fs_utils.create_path(path.dirname(dst)))
         .then(() => fs_utils.tar_pack(dst, work_dir))
@@ -60,7 +60,7 @@ function pack_diagnostics(dst, working_dir) {
             //This flag can help, but not all the distributions support it
             //This is not valid for windows where we have our own executable
             console.error("failed to tar, an attempt to ignore file changes", err);
-            return P.resolve()
+            return Promise.resolve()
                 .then(() => fs_utils.tar_pack(dst, work_dir, 'ignore_file_changes'))
                 .catch(err2 => {
                     console.error('failed to tar with ignore file changes');

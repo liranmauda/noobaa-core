@@ -131,7 +131,7 @@ function download_file(ip, path) {
 function verify_upload_download(ip, path) {
     var orig_md5;
     var down_path = path + '_download';
-    return P.resolve(calc_md5(path))
+    return Promise.resolve(calc_md5(path))
         .then(function(md5) {
             orig_md5 = md5;
             return upload_file(ip, path);
@@ -146,15 +146,15 @@ function verify_upload_download(ip, path) {
             console.warn('Failed to download file with err', err, err.stack);
         })
         .then(function() {
-            return P.resolve(calc_md5(down_path));
+            return Promise.resolve(calc_md5(down_path));
         })
         .then(function(md5) {
             if (md5 === orig_md5) {
                 console.log('Original and downloaded file MDs are the same');
-                return P.resolve();
+                return Promise.resolve();
             } else {
                 console.warn('Original and downloaded file MDs are different');
-                return P.reject();
+                return Promise.resolve();
             }
         });
 }
@@ -205,7 +205,7 @@ function wait_on_agents_upgrade(ip) {
             return client.create_auth_token(auth_params);
         })
         .then(function() {
-            return P.resolve(client.system.read_system({}))
+            return Promise.resolve(client.system.read_system({}))
                 .then(function(res) {
                     sys_ver = res.version;
                 });
@@ -225,7 +225,7 @@ function wait_on_agents_upgrade(ip) {
                         return old_agents;
                     },
                     function() {
-                        return P.resolve(client.node.list_nodes({
+                        return Promise.resolve(client.node.list_nodes({
                                 query: {
                                     online: true,
                                 }

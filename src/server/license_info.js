@@ -22,7 +22,7 @@ const serial = new Semaphore(1);
  */
 function serve_http(req, res) {
     console.log('license_info: serve_http');
-    serial.surround(() => P.resolve()
+    serial.surround(() => Promise.resolve()
             .then(() => fs.statAsync(LICENSE_INFO_JSON_PATH))
             .catch(err => {
                 if (err.code === 'ENOENT') {
@@ -98,7 +98,7 @@ function main() {
         // console.log(`path: ${l.path} license: ${l.license} name: ${l.name} version: ${l.version} url: ${l.url}`);
     });
 
-    return P.resolve()
+    return Promise.resolve()
         .then(() => detector.init_templates())
         .then(() => argv.rpms && scanner.scan_rpms())
         .then(() =>

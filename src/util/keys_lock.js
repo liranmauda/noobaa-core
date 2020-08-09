@@ -40,7 +40,7 @@ class KeysLock {
             // This may cause starvation of tasks in the list
             // We prefer to maximizing the utilization of available resources with the risk of some starvation
             this._lock_keys(lock_item);
-            return P.resolve();
+            return Promise.resolve();
         }
 
         const defer = P.defer();

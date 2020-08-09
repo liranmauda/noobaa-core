@@ -53,7 +53,7 @@ async function run_test() {
         await perform_placement_tests();
         await perform_quota_tests();
         rpc.disconnect_all();
-        return P.resolve("Test Passed! Everything Seems To Be Fine...");
+        return Promise.resolve("Test Passed! Everything Seems To Be Fine...");
     } catch (err) {
         console.error('test_bucket_placement FAILED: ', err.stack || err);
         rpc.disconnect_all();
@@ -200,7 +200,7 @@ async function perform_quota_tests() {
 }
 
 function update_quota_on_bucket(limit_gb) {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => {
             if (limit_gb) {
                 return client.bucket.update_bucket({

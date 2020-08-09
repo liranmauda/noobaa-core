@@ -235,7 +235,7 @@ async function read_func_stats(req) {
 }
 
 function list_funcs(req) {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => func_store.instance().list_funcs(req.system._id))
         .then(funcs => ({
             functions: _.map(funcs, _get_func_info)
@@ -243,7 +243,7 @@ function list_funcs(req) {
 }
 
 function list_func_versions(req) {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => func_store.instance().list_func_versions(
             req.system._id,
             req.params.name
@@ -369,7 +369,7 @@ function _load_func(req) {
     const system = req.system._id;
     const name = req.params.name || _.get(req, 'params.config.name');
     const version = req.params.version || _.get(req, 'params.config.version');
-    return P.resolve()
+    return Promise.resolve()
         .then(() => func_store.instance().read_func(system, name, version))
         .then(func => {
             req.func = func;

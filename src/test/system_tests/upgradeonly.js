@@ -2,7 +2,6 @@
 "use strict";
 
 var _ = require('lodash');
-var P = require('../../util/promise');
 var ops = require('../utils/basic_server_ops');
 var argv = require('minimist')(process.argv);
 
@@ -33,7 +32,7 @@ function main() {
     }
 
     console.log('Upgrading MD server at', argv.target_ip);
-    return P.resolve(ops.upload_and_upgrade(argv.target_ip, argv.upgrade_pack))
+    return Promise.resolve(ops.upload_and_upgrade(argv.target_ip, argv.upgrade_pack))
         .catch(function(error) {
             console.warn('Upgrading failed with', error, error.stack);
             stop();

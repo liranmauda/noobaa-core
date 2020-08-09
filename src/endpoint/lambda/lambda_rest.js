@@ -77,7 +77,7 @@ function handle_request(req, res) {
         error_body_sha256_mismatch: LambdaError.XAmzContentSHA256Mismatch,
     };
 
-    return P.resolve()
+    return Promise.resolve()
         .then(() => http_utils.read_and_parse_body(req, options))
         .then(() => op.handler(req, res))
         .then(reply => http_utils.send_reply(req, res, reply, options));

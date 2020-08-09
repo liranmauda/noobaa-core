@@ -47,6 +47,6 @@ function get_instance_md() {
         });
 }
 
-P.resolve()
+Promise.resolve()
     .then(() => get_instance_md())
     .then(() => process.exit(0), () => process.exit(1));

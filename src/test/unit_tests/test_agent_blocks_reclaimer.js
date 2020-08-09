@@ -35,7 +35,7 @@ class ReclaimerMock extends AgentBlocksReclaimer {
         assert(limit === config.AGENT_BLOCKS_RECLAIMER_BATCH_SIZE, 'Wrong reclaimer config limit');
         assert(deleted_only === true, 'Reclaimer should check only deleted and non reclaimed blocks');
         // TODO: Pay attention to marker and limit
-        return P.resolve(this.blocks.filter(block => (deleted_only ? block.deleted : !block.deleted)));
+        return Promise.resolve(this.blocks.filter(block => (deleted_only ? block.deleted : !block.deleted)));
     }
 
     update_blocks_by_ids(block_ids, set_updates, unset_updates) {
@@ -45,7 +45,7 @@ class ReclaimerMock extends AgentBlocksReclaimer {
             'Reclaimer should only send set_updates with reclaimed');
         assert(_.every(block_ids, block_id =>
             this.is_valid_md_id(block_id)), 'Block_ids not valid ObjectId');
-        return P.resolve()
+        return Promise.resolve()
             .then(() => {
                 if (!block_ids || !block_ids.length) return;
                 const update_blocks = this.blocks.filter(block =>
@@ -67,10 +67,10 @@ class ReclaimerMock extends AgentBlocksReclaimer {
         //     'Reclaimer should only send populate to node property of block');
         const docs_list = docs && !_.isArray(docs) ? [docs] : docs;
         const ids = mongo_utils.uniq_ids(docs_list, doc_path);
-        if (!ids.length) return P.resolve(docs);
+        if (!ids.length) return Promise.resolve(docs);
 
 
-        return P.resolve()
+        return Promise.resolve()
             .then(() => this.nodes.filter(node => !node.deleted &&
                 _.includes(ids.map(node_id => String(node_id)), String(node._id))))
             .then(nodes => {
@@ -97,7 +97,7 @@ class ReclaimerMock extends AgentBlocksReclaimer {
     delete_blocks_from_nodes(blocks) {
         this.reclaimed_blocks = _.concat(this.reclaimed_blocks, blocks.map(block => String(block._id)));
         coretest.log('delete_blocks', blocks);
-        return P.resolve()
+        return Promise.resolve()
             .then(() => {
                 blocks.forEach(block_rec => {
                     let block = this.blocks.find(mock_block => String(mock_block._id) === String(block_rec._id));
@@ -132,7 +132,7 @@ mocha.describe('not mocked agent_blocks_reclaimer', function() {
         let blocks_uploaded = [];
         const agent_blocks_reclaimer =
             new AgentBlocksReclaimer(self.test.title);
-        return P.resolve()
+        return Promise.resolve()
             .then(() => rpc_client.node.list_nodes({}))
             .then(res => {
                 nodes_list = res.nodes;

@@ -2,7 +2,6 @@
 'use strict';
 
 // var _ = require('lodash');
-var P = require('../../util/promise');
 var mocha = require('mocha');
 var assert = require('assert');
 var KeysLock = require('../../util/keys_lock');
@@ -19,21 +18,21 @@ mocha.describe('keys_lock', function() {
         var first_woke = false;
 
         function do_wake() {
-            return P.resolve()
+            return Promise.resolve()
                 .then(() => {
                     first_woke = true;
                 });
         }
 
-        return P.resolve()
+        return Promise.resolve()
             .then(function() {
                 kl = new KeysLock();
                 assert.strictEqual(kl.length, 0);
 
-                P.resolve(kl.surround_keys(['key'], do_wake));
+                Promise.resolve(kl.surround_keys(['key'], do_wake));
                 assert.strictEqual(kl.length, 0);
 
-                P.resolve(kl.surround_keys(['key'], function() {
+                Promise.resolve(kl.surround_keys(['key'], function() {
                     assert.strictEqual(first_woke, true);
                     assert.strictEqual(kl.length, 0);
                 }));
@@ -70,24 +69,24 @@ mocha.describe('keys_lock', function() {
         var first_woke = false;
 
         function do_wake_first() {
-            return P.resolve()
+            return Promise.resolve()
                 .then(() => {
                     first_woke = true;
                 });
         }
 
-        return P.resolve()
+        return Promise.resolve()
             .then(function() {
                 kl = new KeysLock();
                 assert.strictEqual(kl.length, 0);
 
-                P.resolve(kl.surround_keys(['key1'], () => { /* Empty Func */ }));
+                Promise.resolve(kl.surround_keys(['key1'], () => { /* Empty Func */ }));
                 assert.strictEqual(kl.length, 0);
 
-                P.resolve(kl.surround_keys(['key2'], do_wake_first));
+                Promise.resolve(kl.surround_keys(['key2'], do_wake_first));
                 assert.strictEqual(kl.length, 0);
 
-                P.resolve(kl.surround_keys(['key2'], function() {
+                Promise.resolve(kl.surround_keys(['key2'], function() {
                     assert.strictEqual(first_woke, true);
                     assert.strictEqual(kl.length, 0);
                 }));

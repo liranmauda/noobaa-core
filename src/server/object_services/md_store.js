@@ -1205,7 +1205,7 @@ class MDStore {
             bulk.find({ _id: update._id })
                 .updateOne(compact_updates(update.set_updates, update.unset_updates));
         }
-        return bulk.length ? bulk.execute() : P.resolve();
+        return bulk.length ? bulk.execute() : Promise.resolve();
     }
 
     delete_parts_of_object(obj) {

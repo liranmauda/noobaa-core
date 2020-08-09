@@ -42,7 +42,7 @@ const VERIFY_RESPONSE = [
 ];
 
 function _init() {
-    return P.resolve(MongoCtrl.init());
+    return Promise.resolve(MongoCtrl.init());
 }
 
 //
@@ -272,7 +272,7 @@ function add_member_to_cluster_invoke(req, my_address) {
 
 function verify_join_conditions(req) {
     dbg.log0('Got verify_join_conditions request');
-    return P.resolve()
+    return Promise.resolve()
         .then(() => os_utils.os_info(true))
         .then(os_info => {
             let hostname = os_info.hostname;
@@ -350,7 +350,7 @@ function verify_candidate_join_conditions(req) {
                             result: 'CONNECTION_TIMEOUT_ORIGIN'
                         };
                     } else {
-                        return P.resolve()
+                        return Promise.resolve()
                             .then(() => server_rpc.client.cluster_internal.verify_join_conditions({
                                 secret: req.rpc_params.secret
                             }, {
@@ -379,7 +379,7 @@ function verify_candidate_join_conditions(req) {
 
 function get_version(req) {
     dbg.log0('get_version sending version', pkg.version);
-    return P.resolve()
+    return Promise.resolve()
         .then(() => ({
             version: pkg.version
         }));
@@ -449,7 +449,7 @@ function join_to_cluster(req) {
                     dbg.log0('setting location tag to ', req.rpc_params.new_hostname);
                     cluster_info.location = req.rpc_params.location;
                 }
-                return P.resolve(_update_cluster_info(cluster_info))
+                return Promise.resolve(_update_cluster_info(cluster_info))
                     .then(() => _add_new_shard_on_server(req.rpc_params.shard, req.rpc_params.ip, {
                         first_shard: false,
                         remote_server: true
@@ -528,7 +528,7 @@ function update_member_of_cluster(req) {
     if (!(is_clusterized && system_store.is_cluster_master)) {
         dbg.log0(`update_member_of_cluster: is_clusterized:${is_clusterized},
             is_master:${system_store.is_cluster_master}`);
-        return P.resolve();
+        return Promise.resolve();
     }
     const info = cutil.get_cluster_info();
 
@@ -623,8 +623,8 @@ function news_config_servers(req) {
     cutil.verify_cluster_id(req.rpc_params.cluster_id);
     //If config servers changed, update
     //Only the first server in the cfg array does so
-    return P.resolve(_update_rs_if_needed(req.rpc_params.IPs, config.MONGO_DEFAULTS.CFG_RSET_NAME, true))
-        .then(() => P.resolve(_update_cluster_info({
+    return Promise.resolve(_update_rs_if_needed(req.rpc_params.IPs, config.MONGO_DEFAULTS.CFG_RSET_NAME, true))
+        .then(() => Promise.resolve(_update_cluster_info({
                 config_servers: req.rpc_params.IPs
             }))
             .then(() => MongoCtrl.add_new_mongos(cutil.extract_servers_ip(
@@ -664,7 +664,7 @@ function news_updated_topology(req) {
 
     dbg.log0('updating topology to the new published topology:', req.rpc_params.new_topology);
     //Update our view of the topology
-    return P.resolve(_update_cluster_info(params));
+    return Promise.resolve(_update_cluster_info(params));
 }
 
 
@@ -923,13 +923,13 @@ function diagnose_system(req) {
 
 function collect_server_diagnostics(req) {
     const INNER_PATH = `${process.cwd()}/build`;
-    return P.resolve()
+    return Promise.resolve()
         .then(() => os_utils.os_info(true))
         .then(os_info => {
             dbg.log0('Recieved diag req');
             var out_path = '/public/' + os_info.hostname + '_srv_diagnostics.tgz';
             var inner_path = process.cwd() + '/build' + out_path;
-            return P.resolve()
+            return Promise.resolve()
                 .then(() => diag.collect_server_diagnostics(req))
                 .then(() => diag.pack_diagnostics(inner_path))
                 .then(res => out_path);
@@ -987,7 +987,7 @@ function read_server_config(req) {
     let using_dhcp = false;
     let srvconf = {};
 
-    return P.resolve()
+    return Promise.resolve()
         .then(() => _attach_server_configuration(srvconf))
         .then(() => {
             const { dns_servers, timezone } = srvconf;
@@ -1092,7 +1092,7 @@ function _validate_member_request(req) {
 }
 
 function get_secret(req) {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => {
             dbg.log0('_get_secret');
             return {
@@ -1105,7 +1105,7 @@ function _verify_join_preconditons(req) {
     const caller_address = req.connection.url.hostname.includes('ffff') ?
         req.connection.url.hostname.replace(/^.*:/, '') :
         req.connection.url.hostname;
-    return P.resolve()
+    return Promise.resolve()
         .then(() => {
             dbg.log0('_verify_join_preconditons');
             //Verify secrets match
@@ -1159,7 +1159,7 @@ function _add_new_shard_on_server(shardname, ip, params) {
     dbg.log0('Adding shard, new topology', cutil.pretty_topology(current_topology));
 
     //Actually add a new mongo shard instance
-    return P.resolve(MongoCtrl.add_new_shard_server(shardname, params.first_shard))
+    return Promise.resolve(MongoCtrl.add_new_shard_server(shardname, params.first_shard))
         .then(function() {
             dbg.log0('Checking current config servers set, currently contains',
                 current_topology.config_servers.length, 'servers');
@@ -1182,7 +1182,7 @@ function _add_new_shard_on_server(shardname, ip, params) {
         .then(function() {
             dbg.log0('Adding shard to mongo shards');
             //add the new shard in the mongo configuration
-            return P.resolve(MongoCtrl.add_member_shard(shardname, ip));
+            return Promise.resolve(MongoCtrl.add_member_shard(shardname, ip));
         })
         .then(function() {
             if (!params.first_shard) {
@@ -1222,7 +1222,7 @@ function _initiate_replica_set(shardname) {
     new_topology.owner_shardname = shardname;
 
     // first update topology to indicate clusterization
-    return P.resolve(() => _update_cluster_info(new_topology))
+    return Promise.resolve(() => _update_cluster_info(new_topology))
         .then(() => MongoCtrl.add_replica_set_member(shardname, /*first_server=*/ true, new_topology.shards[shard_idx].servers))
         .then(() => {
             dbg.log0('Replica set created and initiated');
@@ -1231,7 +1231,7 @@ function _initiate_replica_set(shardname) {
 
 function _update_cluster_info(params) {
     let current_clustering = system_store.get_local_cluster_info();
-    return P.resolve()
+    return Promise.resolve()
         .then(() => {
             if (!current_clustering) {
                 return new_cluster_info();
@@ -1297,7 +1297,7 @@ function _add_new_server_to_replica_set(params) {
         new_topology.location = params.location;
     }
 
-    return P.resolve(MongoCtrl.add_replica_set_member(shardname, /*first_server=*/ false, new_topology.shards[shard_idx].servers))
+    return Promise.resolve(MongoCtrl.add_replica_set_member(shardname, /*first_server=*/ false, new_topology.shards[shard_idx].servers))
         .then(() => system_store.load())
         .then(() => _attach_server_configuration(new_topology))
         .then(() => os_utils.get_dns_config())
@@ -1332,7 +1332,7 @@ function _add_new_server_to_replica_set(params) {
 
 function _add_new_config_on_server(cfg_array, params) {
     dbg.log0('Adding new local config server', cfg_array);
-    return P.resolve(MongoCtrl.add_new_config())
+    return Promise.resolve(MongoCtrl.add_new_config())
         .then(function() {
             dbg.log0('Adding mongos on config array', cfg_array);
             return MongoCtrl.add_new_mongos(cfg_array);
@@ -1388,11 +1388,11 @@ function _update_rs_if_needed(IPs, name, is_config) {
                 }
             });
     }
-    return P.resolve();
+    return Promise.resolve();
 }
 
 function _get_aws_owner() {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => {
             //paid version only - 8q32hahci09vwgsx568lhrzwl
             dbg.log0('aws: process.env.PLATFORM === aws :' + (process.env.PLATFORM === 'aws') + 'Paid? ' + (process.env.AWS_PRODUCT_CODE === '8q32hahci09vwgsx568lhrzwl'));

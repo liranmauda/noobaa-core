@@ -30,7 +30,7 @@ function background_worker() {
 
     let chunk_ids = [];
 
-    return P.resolve()
+    return Promise.resolve()
         .then(() => {
             if (this.last_check && Date.now() - this.last_check < config.DEDUP_INDEXER_CHECK_INDEX_CYCLE) return;
             dbg.log0('DEDUP_INDEXER: checking index size ...');

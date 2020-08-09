@@ -283,7 +283,7 @@ function replace_file(file_path, data) {
     }
     const lock = process_file_locks.get(lock_key);
     return lock.surround(() =>
-            P.resolve()
+            Promise.resolve()
             .then(() => fs.writeFileAsync(tmp_name, data))
             .then(() => fs.renameAsync(tmp_name, file_path))
             .catch(err => fs.unlinkAsync(tmp_name)

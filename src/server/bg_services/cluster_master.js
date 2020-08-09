@@ -3,7 +3,6 @@
 
 // var _ = require('lodash');
 
-const P = require('../../util/promise');
 const dbg = require('../../util/debug_module')(__filename);
 const config = require('../../../config.js');
 const system_store = require('../system_services/system_store').get_instance();
@@ -32,7 +31,7 @@ function background_worker() {
     if (cutil.check_if_clusterized()) {
         // TODO: Currently checks the replica set master since we don't have shards
         // We always need to send so the webserver will be updated if the
-        return P.resolve()
+        return Promise.resolve()
             .then(() => MongoCtrl.is_master())
             .then(is_master => {
                 if (!is_master.ismaster && is_cluster_master) {

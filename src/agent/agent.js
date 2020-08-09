@@ -224,7 +224,7 @@ class Agent {
         this.is_started = true;
         this.rpc.set_disconnected_state(false);
 
-        return P.resolve()
+        return Promise.resolve()
             .then(() => this._init_node())
             .then(() => this._do_heartbeat())
             .catch(err => {
@@ -327,7 +327,7 @@ class Agent {
         }
         let sorted_new = _.sortBy(new_list, srv => srv.address);
         let sorted_old = _.sortBy(this.servers, srv => srv.address);
-        if (_.isEqual(sorted_new, sorted_old)) return P.resolve();
+        if (_.isEqual(sorted_new, sorted_old)) return Promise.resolve();
         this.servers = new_list;
         return this.agent_conf.update({
             servers: this.servers
@@ -344,7 +344,7 @@ class Agent {
         this.connect_attempts = 0;
         if (!this.servers.length) {
             dbg.error('_handle_server_change no server list');
-            return P.resolve();
+            return Promise.resolve();
         }
         const previous_address = this.rpc.router.default;
         dbg.log0('previous_address =', previous_address);
@@ -383,7 +383,7 @@ class Agent {
 
     _init_node() {
         this._refresh_public_ip();
-        return P.resolve()
+        return Promise.resolve()
             .then(() => {
                 if (this.storage_path) {
                     return os_utils.get_mount_of_path(this.storage_path);
@@ -881,7 +881,7 @@ class Agent {
         const dbg = this.dbg;
         const auth_token = req.rpc_params.auth_token;
         dbg.log0('update_auth_token: received new token');
-        return P.resolve()
+        return Promise.resolve()
             .then(() => {
                 if (this.storage_path) {
                     const token_path = path.join(this.storage_path, 'token');
@@ -1009,7 +1009,7 @@ class Agent {
         dbg.log1('Recieved diag req', req);
         const inner_path = '/tmp/agent_diag.tgz';
 
-        return P.resolve()
+        return Promise.resolve()
             .then(() => diag.collect_agent_diagnostics(this.storage_path))
             .then(() => diag.pack_diagnostics(inner_path))
             .catch(err => {
@@ -1046,7 +1046,7 @@ class Agent {
     }
 
     uninstall() {
-        return P.resolve()
+        return Promise.resolve()
             .then(() => {
                 const dbg = this.dbg;
                 dbg.log1('Recieved unintsall req');

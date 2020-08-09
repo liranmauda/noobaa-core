@@ -26,7 +26,7 @@ class ChunkCoder extends stream.Transform {
         this.coder = coder;
         this.cipher_key_b64 = cipher_key_b64;
         this.chunk_coder_config = chunk_coder_config;
-        this.stream_promise = P.resolve();
+        this.stream_promise = Promise.resolve();
         // using both local and global semaphore to avoid one stream overwhelming the global sem
         this.stream_sem = new Semaphore(concurrency);
         ChunkCoder.global_sem = ChunkCoder.global_sem || new Semaphore(concurrency);

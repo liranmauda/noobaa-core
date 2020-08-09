@@ -33,7 +33,7 @@ class NamespaceNetStorage {
     list_object_versions(params, object_sdk) {
         dbg.log0('NamespaceNetStorage.list_object_versions:', this.ns_config.cpCode, inspect(params));
         // TODO list object versions
-        return P.resolve({
+        return Promise.resolve({
             objects: [],
             common_prefixes: [],
             is_truncated: false,
@@ -43,7 +43,7 @@ class NamespaceNetStorage {
     list_uploads(params, object_sdk) {
         dbg.log0('NamespaceNetStorage.list_uploads:', this.ns_config.cpCode, inspect(params));
         // TODO list uploads
-        return P.resolve({
+        return Promise.resolve({
             objects: [],
             common_prefixes: [],
             is_truncated: false,

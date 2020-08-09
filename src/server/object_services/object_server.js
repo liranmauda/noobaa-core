@@ -1310,7 +1310,7 @@ function report_endpoint_problems(req) {
     const server_info = system_store.get_local_cluster_info();
     switch (params.problem) {
         case 'STRESS':
-            return P.resolve()
+            return Promise.resolve()
                 .then(() => {
                     if (params.node_id) {
                         return nodes_client.instance().read_node_by_id(req.system && req.system._id, params.node_id);

@@ -11,7 +11,6 @@ const mocha = require('mocha');
 const assert = require('assert');
 const S3Auth = require('aws-sdk/lib/signers/s3');
 
-const P = require('../../util/promise');
 const zip_utils = require('../../util/zip_utils');
 const promise_utils = require('../../util/promise_utils');
 const config = require('../../../config');
@@ -137,7 +136,7 @@ mocha.describe('system_servers', function() {
 
     mocha.it('auth works', function() {
         this.timeout(90000); // eslint-disable-line no-invalid-this
-        return P.resolve()
+        return Promise.resolve()
             .then(() => rpc_client.auth.read_auth())
             .then(() => rpc_client.auth.create_auth({
                 system: SYSTEM,
@@ -268,7 +267,7 @@ mocha.describe('system_servers', function() {
 
     mocha.it('bucket works', function() {
         this.timeout(90000); // eslint-disable-line no-invalid-this
-        return P.resolve()
+        return Promise.resolve()
             .then(() => rpc_client.bucket.create_bucket({
                 name: BUCKET,
                 tiering: TIERING_POLICY,

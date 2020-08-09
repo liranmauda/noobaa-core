@@ -78,7 +78,7 @@ mocha.describe('s3_list_objects', function() {
             ),
             function(server_upload_response) {
                 // Uploading zero size objects from the key arrays that were provided
-                return P.resolve()
+                return Promise.resolve()
                     .then(function() {
                         return rpc_client.object.list_objects({
                                 bucket: BKT,
@@ -283,7 +283,7 @@ mocha.describe('s3_list_objects', function() {
 
         return run_case(max_keys_objects, function(server_upload_response) {
             // Uploading zero size objects from the key arrays that were provided
-            return P.resolve()
+            return Promise.resolve()
                 .then(function() {
                     return rpc_client.object.list_objects({
                             bucket: BKT,
@@ -348,7 +348,7 @@ mocha.describe('s3_list_objects', function() {
 
         return run_case(files_in_multipart_folders_to_upload, function(server_upload_response) {
             // Uploading zero size objects from the key arrays that were provided
-            return P.resolve()
+            return Promise.resolve()
                 .then(function() {
                     return rpc_client.object.list_uploads({
                             bucket: BKT,
@@ -415,7 +415,7 @@ mocha.describe('s3_list_objects', function() {
                 same_multipart_file2),
             function(server_upload_response) {
                 // Uploading zero size objects from the key arrays that were provided
-                return P.resolve()
+                return Promise.resolve()
                     .then(function() {
                         return rpc_client.object.list_uploads({
                                 bucket: BKT,
@@ -446,7 +446,7 @@ mocha.describe('s3_list_objects', function() {
             prefix_infinite_loop_test,
             function(server_upload_response) {
                 // Uploading zero size objects from the key arrays that were provided
-                return P.resolve()
+                return Promise.resolve()
                     .then(function() {
                         return truncated_listing({
                                 bucket: BKT,
@@ -472,7 +472,7 @@ mocha.describe('s3_list_objects', function() {
 });
 
 function upload_multiple_files(array_of_names) {
-    return P.map(array_of_names, name => P.resolve()
+    return P.map(array_of_names, name => Promise.resolve()
         .then(() => rpc_client.object.create_object_upload({
             bucket: BKT,
             key: name,
@@ -486,7 +486,7 @@ function upload_multiple_files(array_of_names) {
 }
 
 function initiate_upload_multiple_files(array_of_names) {
-    return P.map(array_of_names, name => P.resolve()
+    return P.map(array_of_names, name => Promise.resolve()
         .then(() => rpc_client.object.create_object_upload({
             bucket: BKT,
             key: name,
@@ -516,7 +516,7 @@ function is_sorted_array(arr) {
 
 function clean_up_after_case(array_of_names, abort_upload) {
     return abort_upload ?
-        P.map(array_of_names, obj => P.resolve()
+        P.map(array_of_names, obj => Promise.resolve()
             .then(() => rpc_client.object.abort_object_upload({
                 bucket: BKT,
                 key: obj.key,
@@ -544,7 +544,7 @@ function run_case(array_of_names, case_func, only_initiate) {
 }
 
 function truncated_listing(params, use_upload_id_marker, upload_mode) {
-    return P.resolve()
+    return Promise.resolve()
         .then(function() {
             // Initialization of IsTruncated in order to perform the first while cycle
             var listObjectsResponse = {

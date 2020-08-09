@@ -36,7 +36,7 @@ class ConfigFileStore {
             _id: new mongodb.ObjectId()
         });
         // There shouldn't be more than one record, this is being on the safe side
-        return P.resolve()
+        return Promise.resolve()
             .then(() => this._config_files.validate(item))
             .then(() => this._config_files.col().updateMany({
                 filename: {

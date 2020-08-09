@@ -304,7 +304,7 @@ class NodesMonitor extends EventEmitter {
         //If this server is not the master, redirect the agent to the master
         if (!this._is_master()) {
             dbg.log0('this is not the master node - redirecting to master');
-            return P.resolve(cluster_server.redirect_to_cluster_master())
+            return Promise.resolve(cluster_server.redirect_to_cluster_master())
                 .then(addr => {
                     reply.redirect = url.format({
                         protocol: 'wss',
@@ -400,7 +400,7 @@ class NodesMonitor extends EventEmitter {
     _hide_host(host_nodes) {
         const host_item = this._consolidate_host(host_nodes);
         if (_.some(host_nodes, node => node.force_hide)) return;
-        return P.resolve()
+        return Promise.resolve()
             .then(() => _.each(host_nodes, node => this._hide_node(node)))
             .then(() => this._update_nodes_store('force'))
             .then(() => {
@@ -431,7 +431,7 @@ class NodesMonitor extends EventEmitter {
             return;
         }
 
-        return P.resolve()
+        return Promise.resolve()
             .then(() => {
                 this._set_decommission(item);
                 return this._update_nodes_store('force');
@@ -453,7 +453,7 @@ class NodesMonitor extends EventEmitter {
             return;
         }
 
-        return P.resolve()
+        return Promise.resolve()
             .then(() => {
                 this._clear_decommission(item);
                 return this._update_nodes_store('force');
@@ -575,7 +575,7 @@ class NodesMonitor extends EventEmitter {
             return P.delay(1000).then(() => this._load_from_store());
         }
         dbg.log0('_load_from_store ...');
-        return P.resolve()
+        return Promise.resolve()
             .then(() => NodesStore.instance().find_nodes({ deleted: null }))
             .then(nodes => {
                 if (!this._started) return;
@@ -832,7 +832,7 @@ class NodesMonitor extends EventEmitter {
             clearTimeout(this._next_run_timeout);
             this._next_run_timeout = null;
             this._next_run_time = 0;
-            P.resolve()
+            Promise.resolve()
                 .then(() => this._run())
                 .finally(() => this._schedule_next_run());
         }, delay_ms).unref();
@@ -867,7 +867,7 @@ class NodesMonitor extends EventEmitter {
         item._run_node_serial = item._run_node_serial || new Semaphore(1);
         if (item.node.deleted) return P.reject(new Error(`node ${item.node.name} is deleted`));
         return item._run_node_serial.surround(() =>
-            P.resolve()
+            Promise.resolve()
             .then(() => dbg.log0('_run_node:', item.node.name))
             .then(() => this._get_agent_info(item))
             .then(() => { //If internal or cloud resource, cut down initializing time (in update_rpc_config)
@@ -1007,7 +1007,7 @@ class NodesMonitor extends EventEmitter {
         if (!item.node.permission_tempering && !item.node.issues_report) {
             return;
         }
-        return P.resolve()
+        return Promise.resolve()
             .then(() => {
                 this._clear_untrusted(item);
                 return this._update_nodes_store('force');
@@ -1216,7 +1216,7 @@ class NodesMonitor extends EventEmitter {
 
         first_item.uninstalling = true;
         dbg.log0('_uninstall_deleting_node: uninstalling host', item.node.host_id, 'all nodes are deleted');
-        return P.resolve()
+        return Promise.resolve()
             .then(() => server_rpc.client.agent.uninstall(undefined, {
                 connection: first_item.connection,
             }))
@@ -1498,7 +1498,7 @@ class NodesMonitor extends EventEmitter {
         if (item.node.deleted) return;
         if (!item.node_from_store) return;
         dbg.log0('_test_nodes_validity::', item.node.name);
-        return P.resolve()
+        return Promise.resolve()
             .then(() => P.join(
                 this._test_network_perf(item),
                 this._test_store(item),
@@ -1574,7 +1574,7 @@ class NodesMonitor extends EventEmitter {
 
     _update_existing_nodes(existing_nodes) {
         if (!existing_nodes.length) return;
-        return P.resolve()
+        return Promise.resolve()
             .then(() => NodesStore.instance().bulk_update(existing_nodes))
             .then(res => {
                 // mark failed updates to retry
@@ -1692,7 +1692,7 @@ class NodesMonitor extends EventEmitter {
                     return;
                 }
 
-                return P.resolve()
+                return Promise.resolve()
                     .then(() => {
                         if (item.node.is_internal_node) {
                             return P.reject('Do not support internal_node deletion yet');
@@ -2220,7 +2220,7 @@ class NodesMonitor extends EventEmitter {
         dbg.log0('_rebuild_node: start', item.node.name, act);
         const start_marker = act.stage.marker;
         let blocks_size;
-        return P.resolve()
+        return Promise.resolve()
             .then(() => MDStore.instance().iterate_node_chunks({
                 node_id: item.node._id,
                 marker: start_marker,

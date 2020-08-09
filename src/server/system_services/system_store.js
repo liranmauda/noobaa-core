@@ -269,7 +269,7 @@ class SystemStoreData {
         }
         //Query deleted !== null
         const collection = db_client.instance().collection(name);
-        return P.resolve(collection.findOne({
+        return Promise.resolve(collection.findOne({
                 _id: id,
                 deleted: {
                     $ne: null

@@ -605,7 +605,7 @@ function get_nodes_stats(req) {
 }
 
 function get_ops_stats(req) {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => _.mapValues(ops_aggregation, val => val.get_string_data()));
 }
 
@@ -629,7 +629,7 @@ function get_bucket_sizes_stats(req) {
 }
 
 function get_pool_stats(req) {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => nodes_client.instance().aggregate_nodes_by_pool(null, req.system._id))
         .then(nodes_aggregate_pool => _.map(system_store.data.pools,
             pool => _.get(nodes_aggregate_pool, [
@@ -731,7 +731,7 @@ async function get_cloud_pool_stats(req) {
 }
 
 function get_tier_stats(req) {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => _.map(system_store.data.tiers, tier => {
             let pools = [];
             _.forEach(tier.mirrors, mirror_object => {

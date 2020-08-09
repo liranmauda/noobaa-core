@@ -10,7 +10,6 @@ coretest.setup();
 const _ = require('lodash');
 const mocha = require('mocha');
 const assert = require('assert');
-const P = require('../../util/promise');
 const AgentBlocksVerifier = require('../../server/bg_services/agent_blocks_verifier').AgentBlocksVerifier;
 const mongo_utils = require('../../util/mongo_utils');
 const mongodb = require('mongodb');
@@ -114,7 +113,7 @@ class VerifierMock extends AgentBlocksVerifier {
         });
         this.verified_blocks = _.concat(this.verified_blocks, block_ids);
         console.log('verify_blocks', block_ids, 'node', target_params.address);
-        return P.resolve();
+        return Promise.resolve();
     }
 
 }
@@ -138,7 +137,7 @@ mocha.describe('mocked agent_blocks_verifier', function() {
         const pools = [make_schema_pool('pool1')];
         const blocks = [make_schema_block(chunks[0].frags[0]._id, chunks[0]._id, nodes[0]._id, pools[0]._id)];
         const verifier_mock = new VerifierMock(blocks, nodes, chunks, pools);
-        return P.resolve()
+        return Promise.resolve()
             .then(() => verifier_mock.run_agent_blocks_verifier())
             .then(() => {
                 assert(verifier_mock.verified_blocks.length === 1, self.test.title);
@@ -163,7 +162,7 @@ mocha.describe('mocked agent_blocks_verifier', function() {
         const blocks = [make_schema_block(chunks[0].frags[0]._id, chunks[0]._id, nodes[0]._id, pools[0]._id)];
 
         const verifier_mock = new VerifierMock(blocks, nodes, chunks, pools);
-        return P.resolve()
+        return Promise.resolve()
             .then(() => verifier_mock.run_agent_blocks_verifier())
             .then(() => {
                 assert(verifier_mock.verified_blocks.length === 0, self.test.title);
@@ -189,7 +188,7 @@ mocha.describe('mocked agent_blocks_verifier', function() {
         const blocks = [make_schema_block(chunks[0].frags[0]._id, chunks[0]._id, new mongodb.ObjectId(), pools[0]._id)];
 
         const verifier_mock = new VerifierMock(blocks, [], chunks, pools);
-        return P.resolve()
+        return Promise.resolve()
             .then(() => verifier_mock.run_agent_blocks_verifier())
             .then(() => {
                 assert(verifier_mock.verified_blocks.length === 0, self.test.title);

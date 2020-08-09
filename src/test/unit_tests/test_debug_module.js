@@ -154,7 +154,7 @@ mocha.describe('debug_module', function() {
                 console[l]("console - %s - should be captured", l);
                 return file_content_verify("text", "CONSOLE:: console - " + l + " - should be captured");
             });
-        }, P.resolve());
+        }, Promise.resolve());
     });
 
     mocha.it('fake browser verify logging and console wrapping', function() {

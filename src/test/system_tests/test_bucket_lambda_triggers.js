@@ -139,7 +139,7 @@ async function authenticate() {
 }
 
 function prepare_func(fn) {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => zip_utils.zip_from_files(fn.Files))
         .then(zipfile => zip_utils.zip_to_buffer(zipfile))
         .then(zip_buffer => {

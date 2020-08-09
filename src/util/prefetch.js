@@ -58,7 +58,7 @@ Prefetch.prototype.fetch = function(min_count, max_count) {
     var items = [];
     min_count = min_count || 1;
     max_count = max_count || min_count;
-    return P.resolve(this._fetch(items, min_count, max_count))
+    return Promise.resolve(this._fetch(items, min_count, max_count))
         .then(function() {
             return items.length > 1 ? items : items[0];
         });
@@ -76,7 +76,7 @@ Prefetch.prototype._fetch = function(items, min_count, max_count) {
     this._pop_items(items, max_count);
     // while min_count is not available call prefetch and repeat
     if (items.length < min_count) {
-        return P.resolve(this._prefetch())
+        return Promise.resolve(this._prefetch())
             .then(this._fetch.bind(this, items, min_count, max_count));
     }
 };

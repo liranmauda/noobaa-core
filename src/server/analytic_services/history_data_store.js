@@ -3,7 +3,6 @@
 
 const mongodb = require('mongodb');
 
-const P = require('../../util/promise');
 // const dbg = require('../../util/debug_module')(__filename);
 const config = require('../../../config.js');
 // const pkg = require('../../../package.json');
@@ -34,7 +33,7 @@ class HistoryDataStore {
             system_snapshot: item,
             history_type: 'SYSTEM'
         };
-        return P.resolve()
+        return Promise.resolve()
             .then(() => this._history.validate(record))
             .then(() => this._history.col().insertOne(record))
             .then(() => this._history.col().removeMany({
@@ -55,7 +54,7 @@ class HistoryDataStore {
     }
 
     get_system_version_history() {
-        return P.resolve()
+        return Promise.resolve()
             .then(() => this._history.col().find({
                     history_type: 'VERSION'
                 }, {

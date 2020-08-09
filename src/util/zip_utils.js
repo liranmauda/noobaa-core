@@ -68,7 +68,7 @@ function unzip_to_callback(zipfile, on_entry) {
     return new P((resolve, reject) => zipfile
         .once('error', reject)
         .once('end', resolve)
-        .on('entry', entry => P.resolve()
+        .on('entry', entry => Promise.resolve()
             .then(() => P.fromCallback(cb => zipfile.openReadStream(entry, cb)))
             .then(stream => on_entry(entry, stream))
             .then(() => zipfile.readEntry())
@@ -97,7 +97,7 @@ function unzip_to_dir(zipfile, dir) {
         if (filename.endsWith('/')) {
             return fs_utils.create_path(path_name);
         }
-        return P.resolve()
+        return Promise.resolve()
             .then(() => fs_utils.create_path(path.dirname(path_name)))
             .then(() => fs_utils.write_file_from_stream(path_name, stream));
     });

@@ -289,7 +289,7 @@ function get_potential_masters() {
 
 function send_master_update(is_master, master_address) {
     let system = system_store.data.systems[0];
-    if (!system) return P.resolve();
+    if (!system) return Promise.resolve();
     let hosted_agents_promise = is_master ?
         server_rpc.client.hosted_agents.start() :
         server_rpc.client.hosted_agents.stop();

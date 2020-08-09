@@ -51,7 +51,7 @@ function do_heartbeat({ skip_server_monitor } = {}) {
                     this.cpu_info = os_info.cpu_info;
                 }))
             .then(() => P.join(
-                P.resolve()
+                Promise.resolve()
                 .then(() => {
                     if (current_clustering.is_clusterized) {
                         return MongoCtrl.get_hb_rs_status();
@@ -91,7 +91,7 @@ function do_heartbeat({ skip_server_monitor } = {}) {
                     server_name = heartbeat.health.os_info.hostname;
                 }
                 dbg.log0('writing cluster server heartbeat to DB. heartbeat:', heartbeat);
-                return P.resolve()
+                return Promise.resolve()
                     .then(() => {
                         if (!skip_server_monitor) {
                             return server_monitor.run();
@@ -119,11 +119,11 @@ function do_heartbeat({ skip_server_monitor } = {}) {
                             `^Server .*${current_clustering.owner_secret} configuration is below minimum requirements.*`
                         ));
                 }
-                return P.resolve();
+                return Promise.resolve();
             })
             .return();
     } else {
         dbg.log0('no local cluster info. HB is not written');
-        return P.resolve();
+        return Promise.resolve();
     }
 }

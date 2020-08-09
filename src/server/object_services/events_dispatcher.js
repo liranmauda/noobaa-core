@@ -29,7 +29,7 @@ function run_bucket_triggers(triggers_to_run, bucket, obj, actor, token) {
             $set: { 'lambda_triggers.$.last_run': now },
         });
     }
-    return P.resolve()
+    return Promise.resolve()
         .then(() => system_store.make_changes_in_background({
             update: {
                 buckets: updates

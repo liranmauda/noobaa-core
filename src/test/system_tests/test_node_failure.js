@@ -225,7 +225,7 @@ function test_node_fail_replicate() {
 }
 
 function run_test() {
-    return P.resolve()
+    return Promise.resolve()
         .then(authenticate)
         .then(setup)
         .then(upload_file)

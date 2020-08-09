@@ -727,7 +727,7 @@ async function upload_new_files() {
 }
 
 function run_test(throw_on_fail) {
-    return P.resolve()
+    return Promise.resolve()
         .then(() => log_journal_file(`${CFG_MARKER}${DATASET_NAME}-${JSON.stringify(TEST_CFG)}`))
         .then(() => upload_new_files()
             // aging
@@ -754,7 +754,7 @@ function run_test(throw_on_fail) {
                         } else {
                             action_type = 'RANDOM';
                         }
-                        return P.resolve()
+                        return Promise.resolve()
                             .then(() => act_and_log(action_type));
                     });
             })
@@ -802,7 +802,7 @@ function run_replay() {
             let current_params;
             return promise_utils.pwhile(
                 () => iline < journal.length,
-                () => P.resolve()
+                () => Promise.resolve()
                 .then(() => {
                     //split action from params
                     current_params = JSON.parse(journal[iline].slice(ACTION_MARKER.length));

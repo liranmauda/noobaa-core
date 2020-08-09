@@ -190,9 +190,9 @@ class AgentCLI {
             .then(added_mount_points => {
                 let added_paths = _.differenceWith(added_mount_points, self.params.all_storage_paths,
                     (a, b) => String(a.drive_id) === String(b.drive_id));
-                if (_.isEmpty(added_paths)) return P.resolve();
+                if (_.isEmpty(added_paths)) return Promise.resolve();
                 added_paths = _.filter(added_paths, added_path => !_.includes(self.params.ignore_drives || [], added_path.drive_id));
-                if (_.isEmpty(added_paths)) return P.resolve();
+                if (_.isEmpty(added_paths)) return Promise.resolve();
                 dbg.log0('identified new drives:', added_paths);
                 return self.load(added_paths)
                     .then(function() {
@@ -259,9 +259,9 @@ class AgentCLI {
         return P.all(_.map(paths_to_work_on, function(storage_path_info) {
                 var storage_path = storage_path_info.mount;
                 dbg.log0('root_path', storage_path);
-                return P.resolve()
+                return Promise.resolve()
                     .then(() => fs_utils.create_path(storage_path, fs_utils.PRIVATE_DIR_PERMISSIONS))
-                    .then(() => P.resolve(self.hide_storage_folder(storage_path))
+                    .then(() => Promise.resolve(self.hide_storage_folder(storage_path))
                         .catch(err => {
                             dbg.error('Windows - failed to hide', err.stack || err);
                             // TODO really continue on error?

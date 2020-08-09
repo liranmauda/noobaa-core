@@ -230,7 +230,7 @@ class NodesClient {
     populate_nodes(system_id, docs, doc_id_path, doc_path, fields) {
         const docs_list = docs && !_.isArray(docs) ? [docs] : docs;
         const ids = mongo_utils.uniq_ids(docs_list, doc_id_path);
-        if (!ids.length) return P.resolve(docs);
+        if (!ids.length) return Promise.resolve(docs);
         const params = {
             query: {
                 nodes: _.map(ids, id => ({
@@ -243,7 +243,7 @@ class NodesClient {
             dbg.error('populate_nodes: expected system_id. docs', docs);
             throw new Error('populate_nodes: expected system_id');
         }
-        return P.resolve()
+        return Promise.resolve()
             .then(() => server_rpc.client.node.list_nodes(params, {
                 auth_token: auth_server.make_auth_token({
                     system_id: system_id,
