@@ -253,7 +253,9 @@ class NodesMonitor extends EventEmitter {
     sync_to_store() {
         return P.resolve()
             .then(() => this._run())
-            .return();
+            .then(() => {
+                // do nothing. 
+            });
     }
 
     async sync_storage_to_store() {
@@ -1024,7 +1026,9 @@ class NodesMonitor extends EventEmitter {
                 this._update_status(item);
             })
             .then(() => this._update_nodes_store('force'))
-            .return();
+            .then(() => {
+                // do nothing. 
+            });
     }
 
     _hide_node(item) {

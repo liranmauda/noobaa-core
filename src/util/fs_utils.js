@@ -40,7 +40,9 @@ function file_must_not_exist(file_path) {
  *
  */
 function file_must_exist(file_path) {
-    return fs.statAsync(file_path).return();
+    return fs.statAsync(file_path).then(() => {
+        // do nothing. 
+    });
 }
 
 
@@ -108,7 +110,9 @@ function read_dir_recursive(options) {
                                 'entry error', entry_path, err);
                         });
                 })
-                .return();
+                .then(() => {
+                    // do nothing. 
+                });
         })
         .then(() => {
             // second step: recurse to sub dirs
@@ -215,7 +219,9 @@ function folder_delete(dir) {
 function file_delete(file_name) {
     return fs.unlinkAsync(file_name)
         .catch(ignore_enoent)
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 function full_dir_copy(src, dst, filter_regex) {
@@ -240,7 +246,9 @@ function full_dir_copy(src, dst, filter_regex) {
             throw new Error('Both src and dst must be given');
         }
         ncp(src, dst, ncp_options, callback);
-    }).return();
+    }).then(() => {
+        // do nothing. 
+    });
 }
 
 function tar_pack(tar_file_name, source, ignore_file_changes) {

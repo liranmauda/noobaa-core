@@ -125,7 +125,9 @@ function do_heartbeat({ skip_server_monitor } = {}) {
                 }
                 return Promise.resolve();
             })
-            .return();
+            .then(() => {
+                // do nothing. 
+            });
     } else {
         dbg.log0('no local cluster info. HB is not written');
         return Promise.resolve();

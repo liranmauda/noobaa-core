@@ -64,7 +64,9 @@ class FuncStore {
                     deleted: new Date()
                 }
             }))
-            .return();
+            .then(() => {
+                // do nothing. 
+            });
     }
 
     update_func(func_id, set_updates) {
@@ -74,7 +76,9 @@ class FuncStore {
             }, {
                 $set: set_updates
             }))
-            .return();
+            .then(() => {
+                // do nothing. 
+            });
     }
 
     read_func(system, name, version) {

@@ -269,7 +269,9 @@ function add_member_to_cluster_invoke(req, my_address) {
                 reason: err.toString()
             }, 'add_memeber_to_cluster');
         })
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 
 }
 
@@ -486,7 +488,9 @@ function join_to_cluster(req) {
         // start bg_workers and s3rver to fix stale data\connections issues. maybe we can do it in a more elgant way
         .then(() => MongoCtrl.add_mongo_monitor_program())
         .finally(() => _start_services())
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 function verify_new_ip(req) {
@@ -617,7 +621,9 @@ function update_member_of_cluster(req) {
             console.error('Failed edit of member to cluster', req.rpc_params, 'with', err);
             throw new Error('Failed edit of member to cluster');
         })
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 function news_config_servers(req) {
@@ -646,7 +652,9 @@ function news_replicaset_servers(req) {
     cutil.verify_cluster_id(req.rpc_params.cluster_id);
     dbg.log0('replica set params - IPs:', req.rpc_params.IPs, 'name:', req.rpc_params.name);
     return P.resolve(_update_rs_if_needed(req.rpc_params.IPs, req.rpc_params.name, false))
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 function news_updated_topology(req) {
@@ -750,7 +758,9 @@ function set_debug_level(req) {
                 }));
             }
         })
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 
@@ -777,7 +787,9 @@ function apply_set_debug_level(req) {
                     .then(() => _set_debug_level_internal(req, 0));
             }
         })
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 function _start_services() {
@@ -1059,7 +1071,9 @@ function update_server_conf(req) {
                 desc: audit_desc,
             });
         })
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 function set_hostname_internal(req) {

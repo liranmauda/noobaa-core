@@ -1151,7 +1151,9 @@ function add_bucket_lambda_trigger(req) {
                 }
             });
         })
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 /**
@@ -1179,7 +1181,9 @@ function delete_bucket_lambda_trigger(req) {
                     }
                 }]
             }
-        })).return();
+        })).then(() => {
+            // do nothing. 
+        });
 }
 
 function update_bucket_lambda_trigger(req) {
@@ -1203,7 +1207,9 @@ function update_bucket_lambda_trigger(req) {
                 }]
             }
         }))
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 

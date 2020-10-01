@@ -577,7 +577,9 @@ function delete_namespace_resource(req) {
                 }
             });
         })
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 async function delete_hosts_pool(req, pool) {
@@ -713,7 +715,9 @@ function delete_resource_pool(req, pool) {
                 });
             }
         })
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 function get_associated_buckets(req) {

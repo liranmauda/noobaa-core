@@ -311,7 +311,9 @@ function send_master_update(is_master, master_address) {
             hosted_agents_promise.catch(err => dbg.error('got error on hosted_agents_promise.', err)),
             update_master_promise.catch(err => dbg.error('got error on update_master_promise.', err))
         )
-        .return();
+        .then(() => {
+            // do nothing. 
+        });
 }
 
 function get_min_requirements() {

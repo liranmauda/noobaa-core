@@ -68,7 +68,9 @@ function collect_agent_diagnostics(storage_path) {
                 });
         })
         .finally(() => diag_log.end())
-        .return()
+        .then(() => {
+            // do nothing. 
+        })
         .catch(err => {
             console.error('Error in collecting server diagnostics', err);
             throw new Error('Error in collecting server diagnostics ' + err);
