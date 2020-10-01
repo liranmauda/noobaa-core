@@ -62,7 +62,10 @@ function iterate(array, func) {
         return P.try(() => func(array[i], i, array)).then(next);
     }
 
-    return P.try(next).return(results);
+    return P.try(next)
+        .then(function() {
+            return results;
+        });
 }
 
 
@@ -368,7 +371,9 @@ function map_values(obj, func) {
                 new_obj[key] = res;
             })
         ))
-        .return(new_obj);
+        .then(function() {
+            return new_obj;
+        });
 }
 
 function conditional_timeout(cond, timeout_ms, prom) {
@@ -379,9 +384,9 @@ function conditional_timeout(cond, timeout_ms, prom) {
 }
 
 /*
-* A timeout util build to work nicely with asyc/await, example:
-* await timeout(async () => { ... }, 2000)
-*/
+ * A timeout util build to work nicely with asyc/await, example:
+ * await timeout(async () => { ... }, 2000)
+ */
 function timeout(task, ms) {
     return P.resolve(task())
         .timeout(ms);
@@ -389,12 +394,12 @@ function timeout(task, ms) {
 
 
 /*
-* Wait until an async condition is met
-*
-* @param async_cond - an async condition function with a boolean return value.
-* @param delay_ms - delay number of milliseconds between invocation of the condition.
-* @param timeout_ms.- A timeout to bail out of the loop, will throw timeout error.
-*/
+ * Wait until an async condition is met
+ *
+ * @param async_cond - an async condition function with a boolean return value.
+ * @param delay_ms - delay number of milliseconds between invocation of the condition.
+ * @param timeout_ms.- A timeout to bail out of the loop, will throw timeout error.
+ */
 async function wait_until(async_cond, timeout_ms, delay_ms = 2500) {
     if (_.isUndefined(timeout_ms)) {
         let condition_met = false;

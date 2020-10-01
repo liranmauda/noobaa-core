@@ -50,7 +50,9 @@ class FuncStore {
             .then(() => this._funcs.validate(func))
             .then(() => this._funcs.col().insertOne(func))
             .catch(err => mongo_utils.check_duplicate_key_conflict(err, 'func'))
-            .return(func);
+            .then(function() {
+                return func;
+            });
     }
 
     delete_func(func_id) {

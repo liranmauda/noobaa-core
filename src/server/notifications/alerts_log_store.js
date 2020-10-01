@@ -36,7 +36,9 @@ class AlertsLogStore {
             .then(() => this._alertslogs.validate(alert_log))
             .then(() => this._alertslogs.col().insertOne(alert_log))
             .catch(err => mongo_utils.check_duplicate_key_conflict(err, 'alerts_log'))
-            .return(alert_log);
+            .then(function() {
+                return alert_log;
+            });
     }
 
     get_unread_alerts_count(sysid) {

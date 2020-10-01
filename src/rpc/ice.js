@@ -1496,7 +1496,9 @@ function listen_on_port_range(port_range) {
         server.listen(port);
         // wait for listen even, while also watching for error/close.
         return promise_utils.wait_for_event(server, 'listening')
-            .return(server)
+            .then(function() {
+                return server;
+            })
             .catch(function(err) {
                 dbg.log1('ICE listen_on_port_range: FAILED', port, err);
                 server.close();

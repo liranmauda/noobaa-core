@@ -23,7 +23,9 @@ function zip_from_files(files) {
             }
         }))
         .then(() => zipfile.end())
-        .return(zipfile);
+        .then(function() {
+            return zipfile;
+        });
 }
 
 function zip_from_dir(dir) {
@@ -41,7 +43,9 @@ function zip_from_dir(dir) {
             }
         }))
         .then(() => zipfile.end())
-        .return(zipfile);
+        .then(function() {
+            return zipfile;
+        });
 }
 
 function zip_to_buffer(zipfile) {
@@ -86,7 +90,9 @@ function unzip_to_mem(zipfile) {
                     data: buffer,
                 });
             }))
-        .return(files);
+        .then(function() {
+            return files;
+        });
 }
 
 function unzip_to_dir(zipfile, dir) {

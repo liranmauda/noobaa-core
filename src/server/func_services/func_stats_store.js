@@ -48,7 +48,9 @@ class FuncStatsStore {
             .then(() => this._func_stats.validate(stat))
             .then(() => this._func_stats.col().insertOne(stat))
             .catch(err => mongo_utils.check_duplicate_key_conflict(err, 'func stat'))
-            .return(stat);
+            .then(function() {
+                return stat;
+            });
     }
 
     sample_func_stats({
@@ -77,8 +79,7 @@ class FuncStatsStore {
         const records = await this._func_stats.col()
             .mapReduce(
                 map_func_stats,
-                reduce_func_stats,
-                {
+                reduce_func_stats, {
                     finalize: finalize_func_stats,
                     query: {
                         system: params.system,

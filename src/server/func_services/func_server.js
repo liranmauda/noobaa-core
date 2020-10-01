@@ -291,7 +291,9 @@ function invoke_func(req) {
                 took: Date.now() - time.getTime(),
                 error: res.error ? true : undefined,
             })
-            .return(res)
+            .then(function() {
+                return res;
+            })
         );
 }
 

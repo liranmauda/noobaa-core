@@ -220,7 +220,10 @@ class BlockStoreFs extends BlockStoreBase {
                 this._usage = usage; // object with properties size and count
                 // update usage file
                 let usage_data = JSON.stringify(this._usage);
-                return fs.writeFileAsync(this.usage_path, usage_data).return(usage);
+                return fs.writeFileAsync(this.usage_path, usage_data)
+                    .then(function() {
+                        return usage;
+                    });
             });
     }
 
