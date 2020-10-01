@@ -9,7 +9,6 @@ const moment = require('moment');
 const mongodb = require('mongodb');
 const mime = require('mime');
 
-const P = require('../../util/promise');
 const dbg = require('../../util/debug_module')(__filename);
 const mongo_utils = require('../../util/mongo_utils');
 const mongo_client = require('../../util/mongo_client');
@@ -481,7 +480,7 @@ class MDStore {
 
         dbg.log0('find_objects:', query);
 
-        const [objects, non_paginated, completed, uploading] = await P.join(
+        const [objects, non_paginated, completed, uploading] = await Promise.all([
 
             this._objects.col().find(query, {
                 limit: Math.min(limit, 1000),
@@ -498,7 +497,7 @@ class MDStore {
 
             // uploading count
             this._objects.col().countDocuments(uploading_query)
-        );
+        ]);
 
         return {
             objects,
@@ -1469,14 +1468,14 @@ class MDStore {
         // and then calculates the aproximate number of the total indexed dedup chunks - this was the fastest soultion we found
         // both iterating over the chunks and running a query over all the chunks was too lengthy operations.
         const sample_size = 10000;
-        return P.join(
+        return Promise.all([
                 this._chunks.col().estimatedDocumentCount(),
                 this._chunks.col().aggregate([
                     { $sample: { size: sample_size } },
                     { $match: { dedup_key: { $exists: true } } },
                     { $count: "count" }
                 ]).toArray()
-            )
+            ])
             .then(([total_count, sample_items]) => {
                 if (!sample_items.length) return total_count;
                 return Math.floor(sample_items[0].count * total_count / sample_size);

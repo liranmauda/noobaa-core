@@ -186,11 +186,11 @@ function add_member_to_cluster_invoke(req, my_address) {
         })
         .then(() => {
             dbg.log0(`read mongo certs from /data/mongo/ssl/`);
-            return P.join(
+            return Promise.all([
                 fs.readFileAsync(config.MONGO_DEFAULTS.ROOT_CA_PATH, 'utf8'),
                 fs.readFileAsync(config.MONGO_DEFAULTS.SERVER_CERT_PATH, 'utf8'),
                 fs.readFileAsync(config.MONGO_DEFAULTS.CLIENT_CERT_PATH, 'utf8')
-            );
+            ]);
         })
         .spread((root_ca, server_cert, client_cert) => {
             // after a cluster was initiated, join the new member
@@ -419,11 +419,11 @@ function join_to_cluster(req) {
         .then(() => _stop_services())
         .then(() => {
             dbg.log0(`overwrite mongo certs to /data/mongo/ssl/`);
-            return P.join(
+            return Promise.all([
                 fs.writeFileAsync(config.MONGO_DEFAULTS.ROOT_CA_PATH, req.rpc_params.ssl_certs.root_ca),
                 fs.writeFileAsync(config.MONGO_DEFAULTS.SERVER_CERT_PATH, req.rpc_params.ssl_certs.server_cert),
                 fs.writeFileAsync(config.MONGO_DEFAULTS.CLIENT_CERT_PATH, req.rpc_params.ssl_certs.client_cert)
-            );
+            ]);
         })
         // before joining to cluster stop bg workers to avoid sudden restarts (due to configuration mismatches, ntp, etc.)
         .then(() => {

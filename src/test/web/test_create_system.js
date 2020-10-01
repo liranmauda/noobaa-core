@@ -7,6 +7,8 @@ const mocha = require('mocha');
 const wd = require('selenium-webdriver');
 
 const P = require('../../util/promise');
+// const promise_utils = require('../../util/promise_utils');
+
 const selenium = require('./selenium');
 
 selenium.init_mocha();

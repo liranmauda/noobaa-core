@@ -1499,11 +1499,11 @@ class NodesMonitor extends EventEmitter {
         if (!item.node_from_store) return;
         dbg.log0('_test_nodes_validity::', item.node.name);
         return Promise.resolve()
-            .then(() => P.join(
+            .then(() => Promise.all([
                 this._test_network_perf(item),
                 this._test_store(item),
                 this._test_network_to_server(item)
-            ))
+            ]))
             .then(() => {
                 if (item.io_reported_errors &&
                     Date.now() - item.io_reported_errors > config.NODE_IO_DETENTION_THRESHOLD) {

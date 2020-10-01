@@ -276,13 +276,13 @@ Ice.prototype.accept = function(remote_info) {
  */
 Ice.prototype._add_local_candidates = function() {
     var self = this;
-    return P.join(
+    return Promise.all([
             self._add_udp_candidates(),
             self._add_tcp_active_candidates(),
             self._add_tcp_permanent_passive_candidates(),
             self._add_tcp_transient_passive_candidates(),
             self._add_tcp_simultaneous_open_candidates()
-        )
+        ])
         .then(function() {
             return {
                 credentials: self.local_credentials,
