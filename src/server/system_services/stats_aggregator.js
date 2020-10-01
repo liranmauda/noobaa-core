@@ -569,7 +569,9 @@ function get_nodes_stats(req) {
                     account_id: support_account._id
                 })
             }))
-        .spread((nodes_results, hosts_results) => {
+        .then(res => {
+            let nodes_results = res[0];
+            let hosts_results = res[1];
             //Collect nodes stats
             for (const node of nodes_results.nodes) {
                 if (node.has_issues) {
