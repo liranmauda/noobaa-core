@@ -192,7 +192,10 @@ function add_member_to_cluster_invoke(req, my_address) {
                 fs.readFileAsync(config.MONGO_DEFAULTS.CLIENT_CERT_PATH, 'utf8')
             ]);
         })
-        .spread((root_ca, server_cert, client_cert) => {
+        .then(res => {
+            let root_ca = res[0];
+            let server_cert = res[1];
+            let client_cert = res[2];
             // after a cluster was initiated, join the new member
             dbg.log0('Sending join_to_cluster to', req.rpc_params.address, cutil.get_topology());
             //Send a join_to_cluster command to the new joining server

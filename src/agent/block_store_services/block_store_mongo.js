@@ -69,10 +69,10 @@ class BlockStoreMongo extends BlockStoreBase {
         // Notice that I do not worry about PETABYTES because this is for local use only
         // We should not write PETABYTES to mongo so there should be no problems
         return P.resolve()
-            .then(() => P.join(
+            .then(() => Promise.all([
                 mongo_client.instance().collection(GRID_FS_BUCKET_NAME_FILES).stats(),
                 mongo_client.instance().collection(GRID_FS_BUCKET_NAME_CHUNKS).stats()
-            ))
+            ]))
             .spread((files_res, chunks_res) => ({
                 // Notice that storageSize includes actual storage size and not only block sizes
                 size: ((files_res && files_res.storageSize) || 0) + ((chunks_res && chunks_res.storageSize) || 0),

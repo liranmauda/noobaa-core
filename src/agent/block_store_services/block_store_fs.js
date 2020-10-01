@@ -61,7 +61,7 @@ class BlockStoreFs extends BlockStoreBase {
     }
 
     get_storage_info() {
-        return P.join(
+        return Promise.all([
                 this._get_usage(),
                 os_utils.get_drive_of_path(this.root_path)
                 .catch(err => {
@@ -69,8 +69,10 @@ class BlockStoreFs extends BlockStoreBase {
                     this._test_root_path_exists();
                     throw err;
                 })
-            )
-            .spread((usage, drive) => {
+            ])
+            .then(res => {
+                let usage = res[0];
+                let drive = res[1];
                 const storage = drive.storage;
                 storage.used = usage.size;
                 const total_unreserved = Math.max(storage.total - config.NODES_FREE_SPACE_RESERVE, 0);

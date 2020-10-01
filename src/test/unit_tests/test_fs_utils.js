@@ -5,7 +5,6 @@
 var mocha = require('mocha');
 var assert = require('assert');
 
-var P = require('../../util/promise');
 var fs_utils = require('../../util/fs_utils');
 
 function log(...args) {
@@ -22,10 +21,11 @@ mocha.describe('fs_utils', function() {
     mocha.describe('disk_usage', function() {
 
         mocha.it('should work on the src', function() {
-            return P.join(
-                fs_utils.disk_usage('src/server'),
+            return Promise.all([fs_utils.disk_usage('src/server'),
                 fs_utils.disk_usage('src/test')
-            ).spread((server_usage, test_usage) => {
+            ]).then(res => {
+                let server_usage = res[0];
+                let test_usage = res[1];
                 log('disk_usage of src:', server_usage);
                 log('disk_usage of src/test:', test_usage);
                 assert(test_usage.size / server_usage.size > 0.50,

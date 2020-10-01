@@ -881,7 +881,9 @@ function attempt_server_resolve(req) {
                 return P.fromCallback(callback => request(options, callback), {
                         multiArgs: true
                     })
-                    .spread(function(response, reply) {
+                    .then(function(res) {
+                        let response = res[0];
+                        let reply = res[1];
                         dbg.log0('Received Response From DNS Name', response.statusCode);
                         if (response.statusCode !== 200 || String(reply) !== pkg.version) {
                             dbg.error('version failed');

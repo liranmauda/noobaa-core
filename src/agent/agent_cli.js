@@ -330,7 +330,9 @@ class AgentCLI {
             //hiding storage folder
             return child_process.execAsync('attrib +H ' + current_path)
                 .then(() => Promise.all([os_utils.is_folder_permissions_set(current_path), fs.readdirAsync(current_path)]))
-                .spread(function(permissions_set, noobaa_storage_initialization) {
+                .then(function(res) {
+                    let permissions_set = res[0];
+                    let noobaa_storage_initialization = res[1];
                     if (!permissions_set) {
                         if (_.isEmpty(noobaa_storage_initialization)) {
                             dbg.log0('First time icacls configuration');
