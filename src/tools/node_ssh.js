@@ -19,8 +19,8 @@ let nodes_left;
 if (require.main === module) main();
 
 function main() {
-    return P.join(get_nodes_ips(), read_stdin())
-        .spread(nodes_ssh);
+    return Promise.all([get_nodes_ips(), read_stdin()])
+        .then(([nodes]) => (nodes_ssh(nodes)));
 }
 
 function get_nodes_ips() {
