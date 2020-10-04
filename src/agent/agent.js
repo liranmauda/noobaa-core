@@ -784,7 +784,7 @@ class Agent {
 
         this._test_server_connection();
 
-        return P.resolve()
+        return Promise.resolve()
             .then(() => extended_hb && os_utils.os_info()
                 .then(os_info => {
                     if (this.test_hostname) {
