@@ -569,9 +569,7 @@ function get_nodes_stats(req) {
                     account_id: support_account._id
                 })
             }))
-        .then(res => {
-            let nodes_results = res[0];
-            let hosts_results = res[1];
+        .then(([nodes_results, hosts_results]) => {
             //Collect nodes stats
             for (const node of nodes_results.nodes) {
                 if (node.has_issues) {
