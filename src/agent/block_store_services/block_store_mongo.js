@@ -73,7 +73,7 @@ class BlockStoreMongo extends BlockStoreBase {
                 mongo_client.instance().collection(GRID_FS_BUCKET_NAME_FILES).stats(),
                 mongo_client.instance().collection(GRID_FS_BUCKET_NAME_CHUNKS).stats()
             ))
-            .spread((files_res, chunks_res) => ({
+            .then(([files_res, chunks_res]) => ({
                 // Notice that storageSize includes actual storage size and not only block sizes
                 size: ((files_res && files_res.storageSize) || 0) + ((chunks_res && chunks_res.storageSize) || 0),
                 count: (files_res && files_res.count) || 0
