@@ -8,6 +8,7 @@ const http = require('http');
 const https = require('https');
 
 const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 const Speedometer = require('../../util/speedometer');
 const RandStream = require('../../util/rand_stream');
 
@@ -90,7 +91,7 @@ function upload_file() {
         .then(() => console.log(ts(), 'upload done.', key))
         .catch(err => {
             console.error(ts(), 'UPLOAD ERROR', err);
-            return P.delay(1000);
+            return promise_utils.delay(1000);
         });
 }
 

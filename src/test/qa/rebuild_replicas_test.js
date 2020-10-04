@@ -2,7 +2,7 @@
 'use strict';
 
 const api = require('../../api');
-const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 const { S3OPS } = require('../utils/s3ops');
 const Report = require('../framework/report');
 const argv = require('minimist')(process.argv);
@@ -174,7 +174,7 @@ async function waitForRebuildReplicasParts(file) {
             return true;
         } catch (e) {
             console.log(`Waiting for rebuild replicas parts ${file} - will wait for extra 5 seconds retries ${retries}`);
-            await P.delay(5 * 1000);
+            await promise_utils.delay(5 * 1000);
         }
     }
     console.warn(`Waiting for rebuild replicas parts ${file} Failed`);
@@ -208,7 +208,7 @@ async function waitForRebuildChunks(file) {
             return;
         } catch (e) {
             console.log(`Waiting for rebuild replicas parts ${file} - will wait for extra 5 seconds retries ${retries}`);
-            await P.delay(5 * 1000);
+            await promise_utils.delay(5 * 1000);
         }
     }
     throw new Error(`Waiting for rebuild replicas parts ${file} Failed`);

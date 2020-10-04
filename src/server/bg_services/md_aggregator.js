@@ -3,7 +3,7 @@
 
 const _ = require('lodash');
 const util = require('util');
-const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 const dbg = require('../../util/debug_module')(__filename);
 const config = require('../../../config');
 const MDStore = require('../object_services/md_store').MDStore;
@@ -23,7 +23,7 @@ async function background_worker() {
     );
 }
 
-// returns all buckets from system storewhich are not in deleting state
+// returns all buckets from system store which are not in deleting state
 function get_buckets(system_store) {
     return system_store.data.buckets.filter(b => !b.deleting);
 }
@@ -80,7 +80,7 @@ async function run_md_aggregator(md_store, system_store, target_now, delay) {
                     }
                 });
             }
-            await P.delay(delay);
+            await promise_utils.delay(delay);
         } else {
             has_more = false;
         }

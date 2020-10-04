@@ -7,6 +7,7 @@ const _ = require('lodash');
 const assert = require('assert');
 
 const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 const dbg = require('../../util/debug_module')(__filename);
 const config = require('../../../config');
 const mapper = require('./mapper');
@@ -126,7 +127,7 @@ class GetMapping {
                     }
                     const uniq_tiers = _.uniq(_.map(chunks, 'tier'));
                     await P.map(uniq_tiers, tier => ensure_room_in_tier(tier, bucket));
-                    await P.delay(config.ALLOCATE_RETRY_DELAY_MS);
+                    await promise_utils.delay(config.ALLOCATE_RETRY_DELAY_MS);
                     // TODO Decide if we want to update the chunks mappings when looping
                     // await _prepare_chunks_group({ chunks, move_to_tier: this.move_to_tier, location_info: this.location_info });
                 }

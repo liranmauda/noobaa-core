@@ -7,7 +7,6 @@ const dbg = require('../../util/debug_module')(__filename);
 dbg.set_process_name('MongoMonitor');
 
 const promise_utils = require('../../util/promise_utils');
-const P = require('../../util/promise');
 
 const TEST_STATUS_DELAY = 10000;
 
@@ -65,6 +64,6 @@ promise_utils.pwhile(
     .delay(TEST_STATUS_DELAY)
     .catch(err => {
         dbg.error('error on test_mongo_status:', err);
-        return P.delay(TEST_STATUS_DELAY);
+        return promise_utils.delay(TEST_STATUS_DELAY);
     })
 );

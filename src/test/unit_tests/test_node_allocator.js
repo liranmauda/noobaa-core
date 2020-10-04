@@ -11,6 +11,7 @@ const system_store = require('../../server/system_services/system_store').get_in
 const assert = require('assert');
 const config = require('../../../config');
 const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 
 const POOL = coretest.POOL_LIST[0].name;
 const NODE_FIELDS_FOR_MAP = [
@@ -39,7 +40,7 @@ mocha.describe('node_allocator', function() {
         this.timeout(50000); // eslint-disable-line no-invalid-this
 
         return P.resolve()
-            .delay(10000)
+            .then(() => promise_utils.delay(10000))
             .then(() => system_store.data.pools.find(pool => pool.name === POOL))
             .then(pool => Promise.all([
                 rpc_client.node.allocate_nodes({ pool_id: String(pool._id), fields: NODE_FIELDS_FOR_MAP }),

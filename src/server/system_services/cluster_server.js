@@ -242,7 +242,7 @@ function add_member_to_cluster_invoke(req, my_address) {
         })
         // TODO: solve in a better way
         // added this delay, otherwise the next system_store.load doesn't catch the new servers HB
-        .delay(500)
+        .then(() => promise_utils.delay(500))
         .then(function() {
             dbg.log0('Added member', req.rpc_params.address, 'to cluster. New topology',
                 cutil.pretty_topology(cutil.get_topology()));
@@ -608,7 +608,7 @@ function update_member_of_cluster(req) {
         })
         // TODO: solve in a better way
         // added this delay, otherwise the next system_store.load doesn't catch the new servers HB
-        .delay(1000)
+        .then(() => promise_utils.delay(1000))
         .then(function() {
             dbg.log0('Edited member', req.rpc_params.old_address, 'of cluster. New topology',
                 cutil.pretty_topology(cutil.get_topology()));

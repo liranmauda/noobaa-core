@@ -11,6 +11,7 @@ dbg.set_process_name('test_bucket_lambda_triggers');
 const _ = require('lodash');
 const api = require('../../api');
 const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 const dotenv = require('../../util/dotenv');
 const ops = require('../utils/basic_server_ops');
 const path = require('path');
@@ -282,7 +283,7 @@ async function run_test() {
             id: trigger_id,
             enabled: false
         });
-        await P.delay(TIME_FOR_SDK_TO_UPDATE);
+        await promise_utils.delay(TIME_FOR_SDK_TO_UPDATE);
 
         console.log(`testing trigger not invoked after removed for ${b}`);
         await test_trigger_dont_run_when_shouldnt(bucket1_user, 'file2.dat', b);
@@ -292,7 +293,7 @@ async function run_test() {
             id: trigger_id,
             enabled: true
         });
-        await P.delay(TIME_FOR_SDK_TO_UPDATE);
+        await promise_utils.delay(TIME_FOR_SDK_TO_UPDATE);
         await test_trigger_run_when_should(bucket1_user, 'file3.dat', b);
         // Used for DeleteObjects later on
         await test_trigger_run_when_should(bucket1_user, 'sloth_multiple.dat', b);
@@ -302,7 +303,7 @@ async function run_test() {
             id: trigger_id,
             object_prefix: '/bla'
         });
-        await P.delay(TIME_FOR_SDK_TO_UPDATE);
+        await promise_utils.delay(TIME_FOR_SDK_TO_UPDATE);
 
         await test_trigger_dont_run_when_shouldnt(bucket1_user, '/tmp/file4.dat', b);
         console.log(`changing bucket lambda trigger prefix to /tmp on ${b}`);
@@ -311,7 +312,7 @@ async function run_test() {
             id: trigger_id,
             object_prefix: '/tmp'
         });
-        await P.delay(TIME_FOR_SDK_TO_UPDATE);
+        await promise_utils.delay(TIME_FOR_SDK_TO_UPDATE);
 
         await test_trigger_run_when_should(bucket1_user, '/tmp/file5.dat', b);
         system_info = await client.system.read_system();
@@ -362,7 +363,7 @@ async function test_add_bucket_trigger(type, func, bucketname) {
         func_name: func.FunctionName,
         event_name: type
     });
-    await P.delay(TIME_FOR_SDK_TO_UPDATE);
+    await promise_utils.delay(TIME_FOR_SDK_TO_UPDATE);
     console.log('bucket lambda trigger created.');
 }
 
@@ -390,7 +391,7 @@ async function test_trigger_run_when_should(user, file_param, bucketname) {
             if (err.statusCode === 404) {
                 retries += 1;
                 console.log('file wasn\'t created yet...');
-                await P.delay(TIME_FOR_FUNC_TO_RUN);
+                await promise_utils.delay(TIME_FOR_FUNC_TO_RUN);
             } else {
                 throw new Error(`expecting head to fail with statusCode 404 - File not found but got different error ${err}`);
             }
@@ -412,7 +413,7 @@ async function test_trigger_dont_run_when_shouldnt(user, file_param, bucketname)
         Body: fs.createReadStream(fname)
     };
     await s3.upload(params1).promise();
-    await P.delay(TIME_FOR_FUNC_TO_RUN);
+    await promise_utils.delay(TIME_FOR_FUNC_TO_RUN);
 
     let params2 = {
         Bucket: bucketname,
@@ -462,7 +463,7 @@ async function test_delete_trigger_run(user, file_param, bucketname, multiple) {
             await s3.headObject(params2).promise();
             retries += 1;
             console.log('file wasn\'t deleted yet...');
-            await P.delay(TIME_FOR_FUNC_TO_RUN);
+            await promise_utils.delay(TIME_FOR_FUNC_TO_RUN);
         } catch (err) {
             if (err.statusCode === 404) {
                 file_not_deleted = false;
@@ -493,7 +494,7 @@ async function test_trigger_run_when_should_multi(user, bucketname, files_prefix
         };
         return s3.upload(params1).promise();
     });
-    await P.delay(TIME_FOR_FUNC_TO_RUN * 2); // wait for the functions to run...
+    await promise_utils.delay(TIME_FOR_FUNC_TO_RUN * 2); // wait for the functions to run...
 
     let params2 = {
         Bucket: bucketname,

@@ -18,6 +18,7 @@ const pool_schema = require('./schemas/pool_schema');
 const agent_config_schema = require('./schemas/agent_config_schema');
 const chunk_config_schema = require('./schemas/chunk_config_schema');
 const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 const dbg = require('../../util/debug_module')(__filename);
 const js_utils = require('../../util/js_utils');
 const Semaphore = require('../../util/semaphore');
@@ -636,7 +637,7 @@ class SystemStore extends EventEmitter {
                     util.inspect(changes, { depth: 5 }),
                     'error=', err);
                 retries += 1;
-                await P.delay(delay);
+                await promise_utils.delay(delay);
             }
         }
     }

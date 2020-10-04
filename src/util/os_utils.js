@@ -873,7 +873,7 @@ async function restart_services(services) {
     try {
         dbg.log0(`restart_services: restarting noobaa services: ${services.join(', ')}`);
         await promise_utils.spawn('supervisorctl', ['restart', ...services], { detached: true }, false);
-        await P.delay(5000);
+        await promise_utils.delay(5000);
 
     } catch (err) {
         const msg = `Failed to restart services: ${services.join(', ')}`;

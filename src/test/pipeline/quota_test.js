@@ -2,7 +2,7 @@
 'use strict';
 
 const api = require('../../api');
-const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 const { S3OPS } = require('../utils/s3ops');
 const Report = require('../framework/report');
 const argv = require('minimist')(process.argv);
@@ -103,7 +103,7 @@ async function _upload_files(bucket_name, dataset_size, multiplier) {
         console.log(`Uploading ${file_name} with size ${file_size} MB`);
         try {
             await s3ops.upload_file_with_md5(bucket_name, file_name, file_size, parts_num, multiplier);
-            await P.delay(1 * 1000);
+            await promise_utils.delay(1 * 1000);
         } catch (e) {
             console.error(`${mgmt_ip} FAILED uploading files`);
             throw e;
@@ -122,7 +122,7 @@ async function _wait_no_available_space(bucket_name) {
             if (is_no_available <= 0) {
                 break;
             } else {
-                await P.delay(15 * 1000);
+                await promise_utils.delay(15 * 1000);
             }
         } catch (e) {
             console.error(`Something went wrong with checkAvailableSpace`);
@@ -184,7 +184,7 @@ async function _check_file_in_pool(file_name, pool, bucket_name) {
                 retry += 1;
                 console.error(e);
                 console.log(`Sleeping for 20 sec and retrying`);
-                await P.delay(20 * 1000);
+                await promise_utils.delay(20 * 1000);
             } else {
                 console.error(`chunks_accessible: ${chunks_accessible}`);
                 throw e;
@@ -206,7 +206,7 @@ async function _check_quota(bucket_name, pool, multiplier) {
 
 async function _disable_quota_and_check(bucket_name, pool, multiplier) {
     await bucket_functions.disableQuotaBucket(bucket_name);
-    await P.delay(10 * 1000); //delaying to get pool cool down
+    await promise_utils.delay(10 * 1000); //delaying to get pool cool down
     //Continue to write and see that the writes are passing
     const uploaded_files = await _upload_files(bucket_name, 500, multiplier);
     try {

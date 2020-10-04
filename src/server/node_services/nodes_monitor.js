@@ -574,7 +574,7 @@ class NodesMonitor extends EventEmitter {
         if (!this._started) return;
         if (!NodesStore.instance().is_connected()) {
             dbg.log0('_load_from_store not yet connected');
-            return P.delay(1000).then(() => this._load_from_store());
+            return promise_utils.delay(1000).then(() => this._load_from_store());
         }
         dbg.log0('_load_from_store ...');
         return Promise.resolve()
@@ -596,7 +596,7 @@ class NodesMonitor extends EventEmitter {
             })
             .catch(err => {
                 dbg.log0('_load_from_store ERROR', err.stack || err);
-                return P.delay(1000).then(() => this._load_from_store());
+                return promise_utils.delay(1000).then(() => this._load_from_store());
             });
     }
 
@@ -973,7 +973,7 @@ class NodesMonitor extends EventEmitter {
      * The delay time itself does not matter much, just the order needs to be enforced.
      */
     _run_node_delayed(item) {
-        return P.delay(100)
+        return promise_utils.delay(100)
             .then(() => this._run_node(item));
     }
 

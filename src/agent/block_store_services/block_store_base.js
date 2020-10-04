@@ -5,6 +5,7 @@ const _ = require('lodash');
 const crypto = require('crypto');
 
 const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 const dbg = require('../../util/debug_module')(__filename);
 const config = require('../../../config');
 const js_utils = require('../../util/js_utils');
@@ -441,7 +442,7 @@ class BlockStoreBase {
 async function test_average_latency(count, delay_ms, async_func) {
     // throw the first result which is sometimes skewed
     await async_func();
-    await P.delay(delay_ms);
+    await promise_utils.delay(delay_ms);
     const results = [];
     for (let i = 0; i < count; ++i) {
         const start = time_utils.millistamp();
@@ -451,7 +452,7 @@ async function test_average_latency(count, delay_ms, async_func) {
         // use some jitter delay to avoid serializing on cpu when
         // multiple tests are run together.
         const jitter = 0.5 + Math.random(); // 0.5 - 1.5
-        await P.delay(delay_ms * jitter);
+        await promise_utils.delay(delay_ms * jitter);
     }
     return results;
 }

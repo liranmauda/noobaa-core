@@ -1,8 +1,8 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
-var _ = require('lodash');
-var P = require('../../util/promise');
+const _ = require('lodash');
+const promise_utils = require('../../util/promise_utils');
 var mocha = require('mocha');
 var assert = require('assert');
 var JobQueue = require('../../util/job_queue');
@@ -117,7 +117,7 @@ mocha.describe('job_queue', function() {
                         }
                     }
                     if (job_id % 2 === 0) {
-                        return P.delay(1).then(run_inner);
+                        return promise_utils.delay(1).then(run_inner);
                     } else {
                         run_inner();
                         return {};

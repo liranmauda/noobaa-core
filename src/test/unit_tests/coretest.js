@@ -128,7 +128,7 @@ function setup(options = {}) {
         console.log('= ' + msg + ' '.repeat(l - msg.length - 3) + '=');
         console.log('=' + ' '.repeat(l - 2) + '=');
         console.log('='.repeat(l));
-        await P.delay(500);
+        await promise_utils.delay(500);
     }
 
     mocha.before('coretest-before', async function() {
@@ -220,7 +220,7 @@ function setup(options = {}) {
             }
             await announce('clear_test_pools()');
             await clear_test_pools();
-            await P.delay(1000);
+            await promise_utils.delay(1000);
             await announce('rpc set_disconnected_state()');
             server_rpc.rpc.set_disconnected_state(true);
             await announce('mongo_client disconnect()');
@@ -340,7 +340,7 @@ async function init_test_pools(client, system_name, pools_to_create) {
     CREATED_POOLS = pools_to_create;
 
     await node_server.sync_monitor_to_store();
-    await P.delay(2000);
+    await promise_utils.delay(2000);
     await node_server.sync_monitor_to_store();
 }
 

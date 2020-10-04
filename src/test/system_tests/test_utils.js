@@ -42,7 +42,7 @@ function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) 
                                 if (wait_counter >= MAX_RETRIES) {
                                     throw new Error('Blocks do not exist');
                                 }
-                                return P.delay(1000);
+                                return promise_utils.delay(1000);
                             }
                         } else {
                             condition_correct = true;
@@ -59,7 +59,7 @@ function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) 
                                 if (wait_counter >= MAX_RETRIES) {
                                     throw new Error('Blocks still exist');
                                 }
-                                return P.delay(1000);
+                                return promise_utils.delay(1000);
                             }
                         }
                     });
@@ -98,7 +98,7 @@ async function create_hosts_pool(
                     }
                 });
 
-                await P.delay(2500);
+                await promise_utils.delay(2500);
                 all_hosts_ready = res.hosts.length === host_count;
             }
         },
@@ -120,7 +120,7 @@ async function delete_hosts_pool(
         async () => {
             let pool_exists = true;
             while (pool_exists) {
-                await P.delay(30 * 1000); // 30sec
+                await promise_utils.delay(30 * 1000); // 30sec
                 const system = await rpc_client.system.read_system({});
                 pool_exists = system.pools.find(pool => pool.name === pool_name);
             }

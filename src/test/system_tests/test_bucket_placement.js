@@ -8,13 +8,13 @@ if (argv.log_file) {
 }
 dbg.set_process_name('test_bucket_placement');
 
-var basic_server_ops = require('../utils/basic_server_ops');
-var P = require('../../util/promise');
-var api = require('../../api');
-var _ = require('lodash');
+const basic_server_ops = require('../utils/basic_server_ops');
+const promise_utils = require('../../util/promise_utils');
+const api = require('../../api');
+const _ = require('lodash');
 const test_utils = require('./test_utils');
 
-var dotenv = require('../../util/dotenv');
+const dotenv = require('../../util/dotenv');
 dotenv.load();
 
 
@@ -67,7 +67,7 @@ async function upload_random_file() {
     try {
         console.log('Uploading file ', fkey, 'to', TEST_BUCKET_NAME);
         await basic_server_ops.upload_file(s3_ip, fkey, TEST_BUCKET_NAME, fkey);
-        await P.delay(3000);
+        await promise_utils.delay(3000);
         return fkey;
     } catch (err) {
         console.log('Failed uploading file', err);
@@ -186,7 +186,7 @@ async function perform_quota_tests() {
         throw new Error(`perform_quota_tests should not fail ul 1mb when quota is 1gb ${err}`);
     }
     console.log('waiting for md_aggregation calculations');
-    await P.delay(120000);
+    await promise_utils.delay(120000);
     fl = await basic_server_ops.generate_random_file(30);
     let didFail = false;
     try {

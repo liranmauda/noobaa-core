@@ -1,9 +1,7 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
-// var _ = require('lodash');
-var P = require('../../util/promise');
-var promise_utils = require('../../util/promise_utils');
+const promise_utils = require('../../util/promise_utils');
 var mocha = require('mocha');
 var assert = require('assert');
 var KeysSemaphore = require('../../util/keys_semaphore');
@@ -44,7 +42,7 @@ mocha.describe('keys_semaphore', function() {
             // func1 will not finish before func2 is executed
             return promise_utils.pwhile(
                 () => !func2_executed,
-                () => P.delay(100));
+                () => promise_utils.delay(100));
         }
 
         function func2() {

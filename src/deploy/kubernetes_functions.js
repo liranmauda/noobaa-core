@@ -254,7 +254,7 @@ class KubernetesFunctions {
                         const external_ip = _.get(service, 'spec.externalIPs.0');
                         address = ingress || hostname || external_ip;
                         if (!address) {
-                            await P.delay(delay);
+                            await promise_utils.delay(delay);
                         }
                     }
                     return { address, ports };
@@ -282,7 +282,7 @@ class KubernetesFunctions {
                             throw new Error('not ready');
                         }
                     } catch (err) {
-                        await P.delay(delay);
+                        await promise_utils.delay(delay);
                     }
                 }
                 console.log(`pod ${pod_name} is ready`);

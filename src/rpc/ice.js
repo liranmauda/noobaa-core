@@ -1502,7 +1502,7 @@ function listen_on_port_range(port_range) {
             .catch(function(err) {
                 dbg.log1('ICE listen_on_port_range: FAILED', port, err);
                 server.close();
-                return P.delay(1).then(try_to_listen);
+                return promise_utils.delay(1).then(try_to_listen);
             });
     }
 }

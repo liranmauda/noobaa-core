@@ -1,7 +1,7 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
-const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 
 class CloudFunction {
 
@@ -96,7 +96,7 @@ class CloudFunction {
                         break;
                     } else {
                         console.log('Pool ' + poolName + ' has status ' + status + ' waiting for OPTIMAL extra 5 seconds');
-                        await P.delay(5 * 1000);
+                        await promise_utils.delay(5 * 1000);
                     }
                 }
             } catch (e) {

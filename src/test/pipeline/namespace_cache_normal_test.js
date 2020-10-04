@@ -4,7 +4,6 @@
 const assert = require('assert');
 const promise_utils = require('../../util/promise_utils');
 const config = require('../../../config');
-const P = require('../../util/promise');
 
 const test_scenarios = [
     'object cached during read to namespace bucket',
@@ -253,7 +252,7 @@ async function run_namespace_cache_tests_non_range_read({ type, ns_context }) {
                 return ret;
             });
 
-        const delete_prom = P.delay(50).then(() => ns_context.delete_from_noobaa(type, file_name));
+        const delete_prom = promise_utils.delay(50).then(() => ns_context.delete_from_noobaa(type, file_name));
 
         return Promise.all([read_prom, delete_prom])
             .then(ret => {
@@ -273,7 +272,7 @@ async function run_namespace_cache_tests_non_range_read({ type, ns_context }) {
                 return ret;
             });
 
-        const new_upload_prom = P.delay(50).then(() => ns_context.upload_via_noobaa_endpoint(type, file_name));
+        const new_upload_prom = promise_utils.delay(50).then(() => ns_context.upload_via_noobaa_endpoint(type, file_name));
 
         return Promise.all([read_prom, new_upload_prom])
             .then(ret => {
@@ -312,7 +311,7 @@ async function run_namespace_cache_tests_non_range_read({ type, ns_context }) {
         let obj_md = await ns_context.get_via_noobaa(type, file_name, { IfMatch: md5 });
         assert(obj_md.etag === md5);
 
-        await P.delay(100);
+        await promise_utils.delay(100);
         await ns_context.validate_md5_between_hub_and_cache({
             type,
             force_cache_read: true,
@@ -358,7 +357,7 @@ async function run_namespace_cache_tests_non_range_read({ type, ns_context }) {
 
         // Overwrite the object on hub before ttl expires. Ensure that the precondition evaluation is
         // on the cached object.
-        await P.delay(2000);
+        await promise_utils.delay(2000);
         const md_upload_hub = await ns_context.upload_directly_to_cloud(type, file_name);
         const etag_upload_hub = md_upload_hub.md5;
         const md_get_hub = await ns_context.get_via_cloud(type, file_name);

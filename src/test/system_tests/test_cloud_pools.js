@@ -207,7 +207,7 @@ function verify_object_parts_on_cloud_nodes(replicas_in_tier, bucket_name, objec
                             if (diff > abort_timeout_sec * 1000) {
                                 throw new Error('aborted verify_object_parts_on_cloud_nodes after ' + abort_timeout_sec + ' seconds');
                             }
-                            return P.delay(500);
+                            return promise_utils.delay(500);
                         }
                     });
             })

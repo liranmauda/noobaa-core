@@ -127,7 +127,7 @@ function wait_machine_state(project, authClient, zone, machine, state) {
                     c_state = machine_info.status;
                     console.log('Current state is: ' + c_state + ' waiting for: ' + state + ' - will wait for extra 5 seconds');
                 })
-                .delay(5000));
+                .then(() => promise_utils.delay(5000)));
         });
 }
 

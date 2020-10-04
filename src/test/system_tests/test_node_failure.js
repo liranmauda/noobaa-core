@@ -103,7 +103,7 @@ function _list_nodes(retries) {
                     throw new Error(msg + `aborting after ${TEST_CTX.max_init_retries} retries`);
                 }
                 console.warn(msg + `retry in ${TEST_CTX.init_delay} seconds`);
-                return P.delay(TEST_CTX.init_delay * 1000)
+                return promise_utils.delay(TEST_CTX.init_delay * 1000)
                     .then(() => _list_nodes(total_tries + 1));
             }
             return reply;
@@ -150,7 +150,7 @@ function setup() {
         .then(() => {
             console.log('created %s agents. waiting for %s seconds to init', TEST_CTX.num_of_agents, TEST_CTX.init_delay);
         })
-        .delay(TEST_CTX.init_delay * 1000)
+        .then(() => promise_utils.delay(TEST_CTX.init_delay * 1000))
         .then(() => create_test_pool())
         .then(() => create_test_bucket());
 }
@@ -217,7 +217,7 @@ function test_node_fail_replicate() {
         .then(() => {
             console.log(`removed agent ${node}. waiting for 60 seconds for the change to take place`);
         })
-        .delay(60000)
+        .then(() => promise_utils.delay(60000))
         .then(() => promise_utils.retry(10, 5000, () => {
             read_mappings();
             validate_mappings();

@@ -3,7 +3,7 @@
 
 const _ = require('lodash');
 const api = require('../../api');
-const P = require('../../util/promise');
+const promise_utils = require('../../util/promise_utils');
 const { S3OPS } = require('../utils/s3ops');
 const Report = require('../framework/report');
 const argv = require('minimist')(process.argv);
@@ -381,7 +381,7 @@ async function check_account_access(email) {
 
 async function disable_s3_Access_and_check(email) {
     await edit_s3Access(email, false);
-    await P.delay(10 * 1000);
+    await promise_utils.delay(10 * 1000);
     const keys = await check_account_access(email);
     const s3ops = new S3OPS({
         ip: TEST_CFG.s3_ip,
@@ -420,13 +420,13 @@ async function checkAccountFeatures() {
     }
     await reset_password(email);
     await login_user(email);
-    await P.delay(10 * 1000);
+    await promise_utils.delay(10 * 1000);
     if (TEST_CFG.skip_delete) {
         console.log('Deleting skipped');
     } else {
         await login_user(DEFAULT_EMAIL);
         await delete_account(email);
-        await P.delay(10 * 1000);
+        await promise_utils.delay(10 * 1000);
         await verify_account_in_system(email, false);
     }
 }
@@ -444,14 +444,14 @@ async function create_delete_accounts(cycle_num, count) {
         }
         console.log(`Created account is ${email} with access s3 ${TEST_CFG.s3_access}`);
         await verify_account_in_system(email, true);
-        await P.delay(10 * 1000);
+        await promise_utils.delay(10 * 1000);
         if (TEST_CFG.skip_delete) {
             if (account_num === 1) {
                 console.log('Deleting skipped');
             }
         } else {
             await delete_account(email);
-            await P.delay(10 * 1000);
+            await promise_utils.delay(10 * 1000);
             await verify_account_in_system(email, false);
         }
     }
@@ -472,7 +472,7 @@ async function main() {
             await rpc.disconnect_all();
             await login_user(DEFAULT_EMAIL);
             await create_delete_accounts(cycle, TEST_CFG.accounts_number);
-            await P.delay(10 * 1000);
+            await promise_utils.delay(10 * 1000);
         } catch (err) {
             console.error('something went wrong ' + err + errors);
             failures_in_test = true;

@@ -145,7 +145,7 @@ async function upgrade_agent() {
             dbg.error(`failed moving ${old_path} to ${new_path}`);
         }
     }
-    await P.delay(2000); // Not sure why this is necessary, but it is.
+    await promise_utils.delay(2000); // Not sure why this is necessary, but it is.
 
     dbg.log0('running agent installation command: ', CONFIGURATION.INSTALLATION_COMMAND);
     await promise_utils.exec(CONFIGURATION.INSTALLATION_COMMAND);

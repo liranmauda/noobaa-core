@@ -194,7 +194,7 @@ EventsGenerator.prototype.generate_alerts = function(num, pri) {
                 .then(() => Dispatcher.instance().alert(priorites[prichosen],
                     sysid,
                     ALERTS_SAMPLES[alchosen]))
-                .delay(1000);
+                .then(() => promise_utils.delay(1000));
         });
 };
 
@@ -245,7 +245,7 @@ EventsGenerator.prototype.generate_audit = function(num, cat) {
             const chosen = Math.floor(Math.random() * (logs_size));
             return P.resolve()
                 .then(() => Dispatcher.instance().activity(_.clone(events_pool[chosen])))
-                .delay(1000);
+                .then(() => promise_utils.delay(1000));
         });
 };
 EventsGenerator.prototype.send_alert = function(alert, sev, rule) {
@@ -268,7 +268,7 @@ EventsGenerator.prototype.send_alert = function(alert, sev, rule) {
                 );
             }
         })
-        .delay(500);
+        .then(() => promise_utils.delay(500));
 };
 
 EventsGenerator.prototype.print_usage = function() {

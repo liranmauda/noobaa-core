@@ -94,7 +94,7 @@ class HostedAgents {
                     dbg.log0(`hosted_agent_stats_values - ${agent}: ` + agent_stats_keys.map(key => agent_stats[key]).join(', '));
                 }
             }
-            return P.delay(60000);
+            return promise_utils.delay(60000);
         });
     }
 
