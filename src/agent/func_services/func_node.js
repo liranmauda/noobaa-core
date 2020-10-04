@@ -7,7 +7,6 @@ const path = require('path');
 const child_process = require('child_process');
 // const crypto = require('crypto');
 
-const P = require('../../util/promise');
 const promise_utils = require('../../util/promise_utils');
 const dbg = require('../../util/debug_module')(__filename);
 const { RpcError, RPC_BUFFERS } = require('../../rpc');
@@ -30,7 +29,7 @@ class FuncNode {
 
     invoke_func(req) {
         return this._load_func_code(req)
-            .then(func => new P((resolve, reject) => {
+            .then(func => new Promise((resolve, reject) => {
                 const proc = child_process.fork(FUNC_PROC_PATH, [], {
                         cwd: func.code_dir,
                         stdio: 'inherit',

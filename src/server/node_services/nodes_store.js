@@ -104,7 +104,7 @@ class NodesStore {
             'executing bulk with', num_update, 'updates',
             'and', num_insert, 'inserts');
         return Promise.resolve()
-            .then(() => new P(resolve => {
+            .then(() => new Promise(resolve => {
                 // execute returns both the err and a result with details on the error
                 // we use the result with details for fine grain error handling per bulk item
                 // returning which items were updated and which failed

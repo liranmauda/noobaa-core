@@ -13,7 +13,6 @@ const path = require('path');
 const dbg = require('../util/debug_module')(__filename);
 dbg.set_process_name('agent_wrapper');
 
-const P = require('../util/promise');
 const fs_utils = require('../util/fs_utils');
 const os_utils = require('../util/os_utils');
 const promise_utils = require('../util/promise_utils');
@@ -49,7 +48,7 @@ let address = "";
 let new_backup_dir = CONFIGURATION.BACKUP_DIR;
 
 function _download_file(request_url, output) {
-    return new P((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         request.get({
                 url: request_url,
                 strictSSL: false,
@@ -66,7 +65,7 @@ function _download_file(request_url, output) {
 }
 
 async function run_agent_cli(agent_args = []) {
-    return new P((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         const args = [CONFIGURATION.AGENT_CLI, ...agent_args];
         const agent_cli_proc = child_process.spawn('./node', args, {
             stdio: ['ignore', 'ignore', 'ignore', 'ipc'],

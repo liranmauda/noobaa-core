@@ -265,7 +265,7 @@ function tar_pack(tar_file_name, source, ignore_file_changes) {
 }
 
 function write_file_from_stream(file_path, read_stream) {
-    return new P((resolve, reject) => read_stream
+    return new Promise((resolve, reject) => read_stream
         .once('error', reject)
         .pipe(fs.createWriteStream(file_path))
         .once('error', reject)

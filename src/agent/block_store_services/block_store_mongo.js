@@ -161,7 +161,7 @@ class BlockStoreMongo extends BlockStoreBase {
             })
             .then(() => {
                 dbg.log3('writing block id to mongo: ', block_name);
-                return new P((resolve, reject) => {
+                return new Promise((resolve, reject) => {
                     const upload_stream = this._blocks_fs.gridfs().openUploadStream(block_name, {
                         metadata: block_metadata
                     });

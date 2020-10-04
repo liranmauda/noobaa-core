@@ -65,7 +65,7 @@ function unzip_from_file(file_path) {
 }
 
 function unzip_to_callback(zipfile, on_entry) {
-    return new P((resolve, reject) => zipfile
+    return new Promise((resolve, reject) => zipfile
         .once('error', reject)
         .once('end', resolve)
         .on('entry', entry => Promise.resolve()
