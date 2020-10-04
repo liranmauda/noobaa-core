@@ -53,9 +53,7 @@ class RpcHttpServer extends events.EventEmitter {
             http.createServer();
         this.install_on_server(server, options.default_handler);
         return P.fromCallback(callback => server.listen(port, callback))
-            .then(function() {
-                return server;
-            });
+            .then(() => server);
     }
 
     /**

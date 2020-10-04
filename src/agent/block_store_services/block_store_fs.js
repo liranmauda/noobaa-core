@@ -70,9 +70,7 @@ class BlockStoreFs extends BlockStoreBase {
                     throw err;
                 })
             ])
-            .then(res => {
-                let usage = res[0];
-                let drive = res[1];
+            .then(([usage, drive]) => {
                 const storage = drive.storage;
                 storage.used = usage.size;
                 const total_unreserved = Math.max(storage.total - config.NODES_FREE_SPACE_RESERVE, 0);
@@ -221,9 +219,7 @@ class BlockStoreFs extends BlockStoreBase {
                 // update usage file
                 let usage_data = JSON.stringify(this._usage);
                 return fs.writeFileAsync(this.usage_path, usage_data)
-                    .then(function() {
-                        return usage;
-                    });
+                    .then(() => usage);
             });
     }
 

@@ -62,10 +62,7 @@ function do_heartbeat({ skip_server_monitor } = {}) {
                 os_utils.read_drives(),
                 os_utils.get_raw_storage()
             ]))
-            .then(res => {
-                let mongo_status = res[0];
-                let drives = res[1];
-                let raw_storage = res[2];
+            .then(([mongo_status, drives, raw_storage]) => {
                 let root = drives.find(drive => drive.mount === '/');
                 if (root) {
                     root.storage.total = raw_storage;
@@ -126,7 +123,7 @@ function do_heartbeat({ skip_server_monitor } = {}) {
                 return Promise.resolve();
             })
             .then(() => {
-                // do nothing. 
+                // return nothing. 
             });
     } else {
         dbg.log0('no local cluster info. HB is not written');

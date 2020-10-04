@@ -127,9 +127,7 @@ function prepare_buckets_with_objects() {
         })
         .then(() => control_services('restart', ['all']))
         .then(() => wait_for_s3_and_web(SERVICES_WAIT_IN_SECONDS))
-        .then(function() {
-            return buckets_used;
-        });
+        .then(() => buckets_used);
 }
 
 function calculate_expected_storage_stats_for_buckets(buckets_array, storage_read_by_bucket) {

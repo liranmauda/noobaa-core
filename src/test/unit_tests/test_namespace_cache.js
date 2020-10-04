@@ -2,7 +2,6 @@
 'use strict';
 
 const _ = require('lodash');
-const P = require('../../util/promise');
 const mocha = require('mocha');
 const assert = require('assert');
 const crypto = require('crypto');
@@ -29,7 +28,7 @@ function random_object(size) {
     const bucket = `bucket${rand_number}`;
     const key = `obj${rand_number}`;
     console.log(`creating object for test: key: bucket: ${bucket} key: ${key} size: ${size}`);
-    return { bucket, key, size, buf, etag, last_modified: new Date()};
+    return { bucket, key, size, buf, etag, last_modified: new Date() };
 }
 
 function reset_metrics(ns_cache) {
@@ -271,13 +270,12 @@ class MockNamespace {
                 } else if (params.async_get_last_modified_time) {
                     create_time = await params.async_get_last_modified_time();
                 }
-                this._recorder.add_obj(this.type, params.bucket, params.key,
-                    {
-                        etag: etag,
-                        create_time: create_time,
-                        buf: this._buf,
-                        size: params.size,
-                    });
+                this._recorder.add_obj(this.type, params.bucket, params.key, {
+                    etag: etag,
+                    create_time: create_time,
+                    buf: this._buf,
+                    size: params.size,
+                });
                 resolve({ etag, last_modified_time: create_time });
             });
             params.source_stream.on('finish', async () => {
@@ -310,8 +308,16 @@ class MockNamespace {
     }
 }
 
-async function create_namespace_cache_and_read_obj({ recorder, object_sdk, ttl_ms, size, start, end,
-    trigger_cache_err, trigger_hub_err }) {
+async function create_namespace_cache_and_read_obj({
+    recorder,
+    object_sdk,
+    ttl_ms,
+    size,
+    start,
+    end,
+    trigger_cache_err,
+    trigger_hub_err
+}) {
     const hub = new MockNamespace({ type: 'hub', recorder, slow_write: true, trigger_err: trigger_hub_err });
     const cache = new MockNamespace({ type: 'cache', recorder, trigger_err: trigger_cache_err });
     const ns_cache = new NamespaceCache({
@@ -369,7 +375,9 @@ mocha.describe('namespace caching: upload scenarios', () => {
 
         const { bucket, key, size, buf, etag } = random_object(8);
         const params = {
-            bucket, key, size,
+            bucket,
+            key,
+            size,
             source_stream: new MockReaderStream({ type: 's3_client', source_buf: buf }).reader,
         };
         _.set(object_sdk, 'rpc_client.object.update_object_md', _obj => {
@@ -390,13 +398,15 @@ mocha.describe('namespace caching: upload scenarios', () => {
     mocha.it('hub upload failure: object not cached', async () => {
         const ns_cache = new NamespaceCache({
             namespace_hub: new MockNamespace({ type: 'hub', recorder, trigger_err: 'write' }),
-            namespace_nb: new MockNamespace({ type: 'cache', recorder, trigger_err: 'write'}),
+            namespace_nb: new MockNamespace({ type: 'cache', recorder, trigger_err: 'write' }),
             caching: { ttl_ms },
         });
 
         const { bucket, key, size, buf } = random_object(8);
         const params = {
-            bucket, key, size,
+            bucket,
+            key,
+            size,
             source_stream: new MockReaderStream({ type: 's3_client', source_buf: buf }).reader,
         };
 
@@ -424,7 +434,9 @@ mocha.describe('namespace caching: upload scenarios', () => {
 
         const { bucket, key, size, buf, etag } = random_object(8);
         const params = {
-            bucket, key, size,
+            bucket,
+            key,
+            size,
             source_stream: new MockReaderStream({ type: 's3_client', source_buf: buf }).reader,
         };
 
@@ -703,7 +715,7 @@ mocha.describe('namespace caching: read scenarios that object is cached', () => 
                 return cache_obj.etag === obj.etag;
             } catch (err) {
                 if (err.rpc_code !== 'NO_SUCH_UPLOAD') throw err;
-            return false;
+                return false;
             }
         }, 2000, 100);
 
@@ -789,7 +801,9 @@ mocha.describe('namespace caching: large objects', () => {
 
         const { bucket, key, size, buf, etag } = random_object(free);
         const params = {
-            bucket, key, size,
+            bucket,
+            key,
+            size,
             source_stream: new MockReaderStream({ type: 's3_client', source_buf: buf }).reader,
         };
         const ret = await ns_cache.upload_object(params, object_sdk);
@@ -801,7 +815,11 @@ mocha.describe('namespace caching: large objects', () => {
 
     mocha.it('large object not cached during read', async () => {
         const { obj } = await create_namespace_cache_and_read_obj({
-            recorder, size: free + 10, ttl_ms, object_sdk });
+            recorder,
+            size: free + 10,
+            ttl_ms,
+            object_sdk
+        });
         await promise_utils.delay(100);
         const cache_obj_create_time = recorder.get_event('cache', obj.bucket, obj.key, EVENT_CREATE_OBJ_MD);
         assert(_.isUndefined(cache_obj_create_time));
@@ -1053,7 +1071,13 @@ mocha.describe('namespace caching: range read scenarios', () => {
         // end is exclusive
         const end = start + 200;
         const { obj } = await create_namespace_cache_and_read_obj({
-            recorder, size, ttl_ms, object_sdk, start, end });
+            recorder,
+            size,
+            ttl_ms,
+            object_sdk,
+            start,
+            end
+        });
 
         await promise_utils.wait_until(() => {
             try {
@@ -1078,7 +1102,13 @@ mocha.describe('namespace caching: range read scenarios', () => {
         // end is exclusive
         const end = start + free + 100;
         const { obj } = await create_namespace_cache_and_read_obj({
-            recorder, size, ttl_ms, object_sdk: object_sdk_large_range_read, start, end });
+            recorder,
+            size,
+            ttl_ms,
+            object_sdk: object_sdk_large_range_read,
+            start,
+            end
+        });
 
         await promise_utils.delay(100);
         try {
@@ -1095,9 +1125,12 @@ mocha.describe('namespace caching: range read scenarios', () => {
         // end is exclusive
         let end = start + 100;
         const { ns_cache, obj, cache } = await create_namespace_cache_and_read_obj({
-            recorder, size, ttl_ms,
+            recorder,
+            size,
+            ttl_ms,
             object_sdk: object_sdk,
-            start, end,
+            start,
+            end,
         });
         await promise_utils.wait_until(() => {
             try {
@@ -1172,10 +1205,15 @@ mocha.describe('namespace caching: delete scenario', () => {
     });
 
     mocha.it('cache obj is still deleted if hub delete failure (should cache obj be kept?)', async () => {
-        const { ns_cache, obj } = await create_namespace_cache_and_read_obj({ recorder, size: 8, ttl_ms, object_sdk,
-            trigger_hub_err: 'delete'});
+        const { ns_cache, obj } = await create_namespace_cache_and_read_obj({
+            recorder,
+            size: 8,
+            ttl_ms,
+            object_sdk,
+            trigger_hub_err: 'delete'
+        });
 
-         const params = {
+        const params = {
             bucket: obj.bucket,
             key: obj.key
         };
@@ -1200,12 +1238,17 @@ mocha.describe('namespace caching: delete scenario', () => {
     });
 
     mocha.it('delete multiple objects: error in cache', async () => {
-        const { ns_cache, obj } = await create_namespace_cache_and_read_obj({ recorder, size: 8, ttl_ms, object_sdk,
-            trigger_cache_err: 'multi-deletes' });
+        const { ns_cache, obj } = await create_namespace_cache_and_read_obj({
+            recorder,
+            size: 8,
+            ttl_ms,
+            object_sdk,
+            trigger_cache_err: 'multi-deletes'
+        });
 
         const params = {
             bucket: obj.bucket,
-            objects: [ {
+            objects: [{
                 key: obj.key
             }],
         };
@@ -1218,12 +1261,17 @@ mocha.describe('namespace caching: delete scenario', () => {
     });
 
     mocha.it('delete multiple objects: error in hub', async () => {
-        const { ns_cache, obj } = await create_namespace_cache_and_read_obj({ recorder, size: 8, ttl_ms, object_sdk,
-            trigger_hub_err: 'multi-deletes' });
+        const { ns_cache, obj } = await create_namespace_cache_and_read_obj({
+            recorder,
+            size: 8,
+            ttl_ms,
+            object_sdk,
+            trigger_hub_err: 'multi-deletes'
+        });
 
         const params = {
             bucket: obj.bucket,
-            objects: [ {
+            objects: [{
                 key: obj.key
             }],
         };

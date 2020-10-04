@@ -109,7 +109,7 @@ class AgentBlocksVerifier {
                 });
             })
             .then(() => {
-                // do nothing. 
+                // return nothing. 
             });
     }
 

@@ -262,14 +262,13 @@ function range_md_aggregator({
             md_store.aggregate_blocks_by_create_dates(from_time, till_time),
             md_store.aggregate_blocks_by_delete_dates(from_time, till_time)
         ])
-        .then(res => {
-            let existing_chunks_aggregate = res[0];
-            let deleted_chunks_aggregate = res[1];
-            let existing_objects_aggregate = res[2];
-            let deleted_objects_aggregate = res[3];
-            let existing_blocks_aggregate = res[4];
-            let deleted_blocks_aggregate = res[5];
-
+        .then(([existing_chunks_aggregate,
+            deleted_chunks_aggregate,
+            existing_objects_aggregate,
+            deleted_objects_aggregate,
+            existing_blocks_aggregate,
+            deleted_blocks_aggregate
+        ]) => {
             dbg.log3('range_md_aggregator:',
                 'from_time', from_time,
                 'till_time', till_time,

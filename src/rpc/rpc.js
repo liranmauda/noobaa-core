@@ -905,9 +905,7 @@ class RPC extends EventEmitter {
         const tcp_server = new RpcTcpServer(tls_options);
         tcp_server.on('connection', conn => this._accept_new_connection(conn));
         return Promise.resolve(tcp_server.listen(port))
-            .then(function() {
-                return tcp_server;
-            });
+            .then(() => tcp_server);
     }
 
 
@@ -921,9 +919,7 @@ class RPC extends EventEmitter {
         const ntcp_server = new RpcNtcpServer(tls_options);
         ntcp_server.on('connection', conn => this._accept_new_connection(conn));
         return Promise.resolve(ntcp_server.listen(port))
-            .then(function() {
-                return ntcp_server;
-            });
+            .then(() => ntcp_server);
     }
 
 

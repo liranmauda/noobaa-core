@@ -100,9 +100,7 @@ function _calculate_free_mem(count_mongo_reserved_as_free) {
                 .then(cached_mem_in_kb => {
                     res += (cached_mem_in_kb * KB_TO_BYTE);
                 }))
-            .then(function() {
-                return res;
-            });
+            .then(() => res);
     }
     return res;
 }

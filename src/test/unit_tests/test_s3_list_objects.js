@@ -598,8 +598,6 @@ function truncated_listing(params, use_upload_id_marker, upload_mode) {
 
                             });
                     })
-                .then(function() {
-                    return listObjectsResponse;
-                });
+                .then(() => listObjectsResponse);
         });
 }

@@ -52,9 +52,7 @@ class NodesStore {
             .then(() => this._nodes.validate(node))
             .then(() => this._nodes.col().insertOne(node))
             .catch(err => mongo_utils.check_duplicate_key_conflict(err, 'node'))
-            .then(function() {
-                return node;
-            });
+            .then(() => node);
     }
 
     db_delete_nodes(node_ids) {

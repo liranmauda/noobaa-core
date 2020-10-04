@@ -857,9 +857,7 @@ class Agent {
                 //     }
                 // });
             })
-            .then(function() {
-                return reply;
-            });
+            .then(() => reply);
     }
 
     async get_agent_storage_info(req) {
@@ -1003,9 +1001,7 @@ class Agent {
                 });
         };
 
-        return P.all(_.times(concur, next)).then(function() {
-            return reply;
-        });
+        return P.all(_.times(concur, next)).then(() => reply);
     }
 
     collect_diagnostics(req) {

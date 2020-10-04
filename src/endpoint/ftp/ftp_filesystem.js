@@ -91,10 +91,6 @@ class FtpFileSystemNB {
                 limit: 100
             }))
             .then(res => {
-                console.log(res);
-                return res;
-            })
-            .then(res => {
                 console.log(`in get - got res = `, res);
                 if (res.objects.length) {
                     const object_md = res.objects[0];

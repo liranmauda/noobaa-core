@@ -44,9 +44,7 @@ class ActivityLogStore {
             .then(() => this._activitylogs.validate(activity_log))
             .then(() => this._activitylogs.col().insertOne(activity_log))
             .catch(err => mongo_utils.check_duplicate_key_conflict(err, 'audit_log'))
-            .then(function() {
-                return activity_log;
-            });
+            .then(() => activity_log);
     }
 
     read_activity_log(query) {

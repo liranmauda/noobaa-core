@@ -48,9 +48,7 @@ class FuncStatsStore {
             .then(() => this._func_stats.validate(stat))
             .then(() => this._func_stats.col().insertOne(stat))
             .catch(err => mongo_utils.check_duplicate_key_conflict(err, 'func stat'))
-            .then(function() {
-                return stat;
-            });
+            .then(() => stat);
     }
 
     sample_func_stats({

@@ -618,7 +618,7 @@ function test() {
                 return P.join(
                         P.ninvoke(socket, 'send', req, 0, req.length, stun_url.port, stun_url.hostname),
                         P.ninvoke(socket, 'send', ind, 0, ind.length, stun_url.port, stun_url.hostname))
-                    .then(promise_utils.delay(stun.INDICATION_INTERVAL * chance.floating(stun.INDICATION_JITTER)))
+                    .then(() => promise_utils.delay(stun.INDICATION_INTERVAL * chance.floating(stun.INDICATION_JITTER)))
                     .then(loop);
             }
         });

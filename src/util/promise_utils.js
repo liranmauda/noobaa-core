@@ -64,10 +64,7 @@ function iterate(array, func) {
         return P.try(() => func(array[i], i, array)).then(next);
     }
 
-    return P.try(next)
-        .then(function() {
-            return results;
-        });
+    return Promise.resolve().then(next).then(() => results);
 }
 
 
@@ -381,9 +378,7 @@ function map_values(obj, func) {
                 new_obj[key] = res;
             })
         ))
-        .then(function() {
-            return new_obj;
-        });
+        .then(() => new_obj);
 }
 
 function conditional_timeout(cond, timeout_ms, prom) {
