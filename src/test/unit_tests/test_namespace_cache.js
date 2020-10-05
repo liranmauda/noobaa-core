@@ -2,6 +2,7 @@
 'use strict';
 
 const _ = require('lodash');
+const P = require('../../util/promise');
 const mocha = require('mocha');
 const assert = require('assert');
 const crypto = require('crypto');
@@ -263,7 +264,7 @@ class MockNamespace {
 
                 if (this._slow_write) {
                     console.log(`${this.type} mock: bucket ${params.bucket} key ${params.key} slowing down write......`);
-                    await promise_utils.delay(100);
+                    await P.delay(100);
                 }
                 if (params.last_modified_time) {
                     create_time = params.last_modified_time;
@@ -564,7 +565,7 @@ mocha.describe('namespace caching: read scenarios and fresh objects', () => {
         params.object_md = object_md;
         await ns_cache.read_object_stream(params, object_sdk);
 
-        await promise_utils.delay(100);
+        await P.delay(100);
         const cache_obj = recorder.get_obj('cache', obj.bucket, obj.key);
         assert(!_.isUndefined(cache_obj));
     });
@@ -600,7 +601,7 @@ mocha.describe('namespace caching: read scenarios that object is cached', () => 
         };
 
         const old_cache_last_valid_time = obj_md.cache_last_valid_time;
-        await promise_utils.delay(ttl_ms + 100);
+        await P.delay(ttl_ms + 100);
         _.set(object_sdk, 'rpc_client.object.update_object_md', _obj => {
             cache.update_obj(_obj);
         });
@@ -634,7 +635,7 @@ mocha.describe('namespace caching: read scenarios that object is cached', () => 
         };
 
         const old_cache_last_valid_time = cache_obj_md.cache_last_valid_time;
-        await promise_utils.delay(ttl_ms + 100);
+        await P.delay(ttl_ms + 100);
         _.set(object_sdk, 'rpc_client.object.update_object_md', _obj => {
             cache.update_obj(_obj);
         });
@@ -767,7 +768,7 @@ mocha.describe('namespace caching: proxy get request with partNumber query to hu
         const hub_obj_create_time = recorder.get_event('hub', obj.bucket, obj.key, EVENT_CREATE_OBJ_MD);
         assert(!_.isUndefined(hub_obj_create_time));
 
-        await promise_utils.delay(50);
+        await P.delay(50);
         const cache_obj_create_time = recorder.get_event('cache', obj.bucket, obj.key, EVENT_CREATE_OBJ_MD);
         assert(_.isUndefined(cache_obj_create_time));
     });
@@ -808,7 +809,7 @@ mocha.describe('namespace caching: large objects', () => {
         };
         const ret = await ns_cache.upload_object(params, object_sdk);
         assert(ret.etag === etag);
-        await promise_utils.delay(10);
+        await P.delay(10);
         const cache_obj_create_time = recorder.get_event('cache', bucket, key, EVENT_CREATE_OBJ_MD);
         assert(_.isUndefined(cache_obj_create_time));
     });
@@ -820,7 +821,7 @@ mocha.describe('namespace caching: large objects', () => {
             ttl_ms,
             object_sdk
         });
-        await promise_utils.delay(100);
+        await P.delay(100);
         const cache_obj_create_time = recorder.get_event('cache', obj.bucket, obj.key, EVENT_CREATE_OBJ_MD);
         assert(_.isUndefined(cache_obj_create_time));
     });
@@ -1028,7 +1029,7 @@ mocha.describe('namespace caching: range read scenarios', () => {
         params.object_md = object_md;
         await ns_cache.read_object_stream(params, object_sdk);
 
-        await promise_utils.delay(100);
+        await P.delay(100);
         const cache_obj = recorder.get_obj('cache', obj.bucket, obj.key);
         assert(cache_obj.num_parts === 0);
     });
@@ -1060,7 +1061,7 @@ mocha.describe('namespace caching: range read scenarios', () => {
         params.object_md = object_md;
         await ns_cache.read_object_stream(params, object_sdk);
 
-        await promise_utils.delay(100);
+        await P.delay(100);
         const cache_obj = recorder.get_obj('cache', obj.bucket, obj.key);
         assert(cache_obj.num_parts === 0);
     });
@@ -1110,7 +1111,7 @@ mocha.describe('namespace caching: range read scenarios', () => {
             end
         });
 
-        await promise_utils.delay(100);
+        await P.delay(100);
         try {
             recorder.get_obj('cache', obj.bucket, obj.key);
             assert(false);

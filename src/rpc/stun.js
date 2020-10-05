@@ -2,10 +2,9 @@
 /* eslint-disable no-bitwise */
 'use strict';
 
-const _ = require('lodash');
-const util = require('util');
-const P = require('../util/promise');
-const promise_utils = require('../util/promise_utils');
+var _ = require('lodash');
+var util = require('util');
+var P = require('../util/promise');
 var url = require('url');
 // var util = require('util');
 var dgram = require('dgram');
@@ -618,7 +617,7 @@ function test() {
                 return P.join(
                         P.ninvoke(socket, 'send', req, 0, req.length, stun_url.port, stun_url.hostname),
                         P.ninvoke(socket, 'send', ind, 0, ind.length, stun_url.port, stun_url.hostname))
-                    .then(() => promise_utils.delay(stun.INDICATION_INTERVAL * chance.floating(stun.INDICATION_JITTER)))
+                    .delay(stun.INDICATION_INTERVAL * chance.floating(stun.INDICATION_JITTER))
                     .then(loop);
             }
         });

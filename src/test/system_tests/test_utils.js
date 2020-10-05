@@ -2,6 +2,7 @@
 'use strict';
 
 var _ = require('lodash');
+const P = require('../../util/promise');
 const promise_utils = require('../../util/promise_utils');
 
 function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) {
@@ -41,7 +42,7 @@ function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) 
                                 if (wait_counter >= MAX_RETRIES) {
                                     throw new Error('Blocks do not exist');
                                 }
-                                return promise_utils.delay(1000);
+                                return P.delay(1000);
                             }
                         } else {
                             condition_correct = true;
@@ -58,7 +59,7 @@ function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) 
                                 if (wait_counter >= MAX_RETRIES) {
                                     throw new Error('Blocks still exist');
                                 }
-                                return promise_utils.delay(1000);
+                                return P.delay(1000);
                             }
                         }
                     });
@@ -97,7 +98,7 @@ async function create_hosts_pool(
                         }
                     });
 
-                    await promise_utils.delay(2500);
+                    await P.delay(2500);
                     all_hosts_ready = res.hosts.length === host_count;
                 }
             },
@@ -119,7 +120,7 @@ async function delete_hosts_pool(
         async () => {
                 let pool_exists = true;
                 while (pool_exists) {
-                    await promise_utils.delay(30 * 1000); // 30sec
+                    await P.delay(30 * 1000); // 30sec
                     const system = await rpc_client.system.read_system({});
                     pool_exists = system.pools.find(pool => pool.name === pool_name);
                 }
