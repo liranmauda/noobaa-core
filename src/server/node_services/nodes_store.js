@@ -67,7 +67,7 @@ class NodesStore {
     }
 
     update_node_by_id(node_id, updates, options) {
-        return Promise.resolve(this._nodes.col().updateOne({
+        return P.resolve(this._nodes.col().updateOne({
                 _id: this.make_node_id(node_id)
             }, updates, options))
             .then(res => mongo_utils.check_update_one(res, 'node'));
@@ -103,7 +103,7 @@ class NodesStore {
         dbg.log0('bulk_update:',
             'executing bulk with', num_update, 'updates',
             'and', num_insert, 'inserts');
-        return Promise.resolve()
+        return P.resolve()
             .then(() => new Promise(resolve => {
                 // execute returns both the err and a result with details on the error
                 // we use the result with details for fine grain error handling per bulk item
