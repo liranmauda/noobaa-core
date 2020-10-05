@@ -3,7 +3,6 @@
 
 const _ = require('lodash');
 const P = require('../../util/promise');
-const promise_utils = require('../../util/promise_utils');
 const api = require('../../api');
 const crypto = require('crypto');
 const ssh_functions = require('./ssh_functions');
@@ -161,7 +160,7 @@ class AgentFunctions {
                 retry += 1;
                 if (retry !== 1) {
                     console.log(`sleeping for 1 min`);
-                    await promise_utils.delay(60 * 1000);
+                    await P.delay(60 * 1000);
                 }
                 const listNodes = await this.list_nodes(mgmt_ip, mgmt_port_https);
                 const decommissioned_nodes = listNodes.filter(node => node.mode === 'DECOMMISSIONED');
@@ -199,7 +198,7 @@ class AgentFunctions {
                 console.log('skipping', host.name);
             }
         });
-        await promise_utils.delay(120 * 1000);
+        await P.delay(120 * 1000);
         const listNods = await this.list_nodes(mgmt_ip, mgmt_port_https);
         console.warn(`${Yellow}Num nodes after the delete agent are ${listNods.length}${NC}`);
     }
@@ -211,7 +210,7 @@ class AgentFunctions {
         // for (const agent of stopped_agents) {
         //     await stop_agent(azf, agent);
         // }
-        // await promise_utils.delay(100 * 1000);
+        // await P.delay(100 * 1000);
         // const offlineAgentsAfter = await number_offline_nodes(mgmt_ip, mgmt_port_https);
         // const offlineExpected = offlineAgents + amount;
         // if (offlineAgentsAfter === offlineExpected) {
@@ -242,7 +241,7 @@ class AgentFunctions {
                 }
             } catch (e) {
                 console.log(`Current agents number is: ${agents}, waiting 5 extra seconds for: ${numberAgents}`);
-                await promise_utils.delay(5 * 1000);
+                await P.delay(5 * 1000);
             }
         }
         console.warn(`We expected ${agents}, and got ${numberAgents}`);

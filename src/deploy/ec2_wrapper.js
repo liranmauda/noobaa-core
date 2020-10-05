@@ -1,16 +1,16 @@
 /* Copyright (C) 2016 NooBaa */
 "use strict";
 
-const _ = require('lodash');
-const P = require('../util/promise');
-const fs = require('fs');
-const path = require('path');
-const util = require('util');
-const dotenv = require('../util/dotenv');
-const argv = require('minimist')(process.argv);
-const AWS = require('aws-sdk');
-const promise_utils = require('../util/promise_utils');
-const moment = require('moment');
+var _ = require('lodash');
+var P = require('../util/promise');
+var fs = require('fs');
+var path = require('path');
+var util = require('util');
+var dotenv = require('../util/dotenv');
+var argv = require('minimist')(process.argv);
+var AWS = require('aws-sdk');
+var promise_utils = require('../util/promise_utils');
+var moment = require('moment');
 
 /**
  *
@@ -413,7 +413,7 @@ function put_object(ip, source, bucket, key, timeout, throw_on_error) {
                                         throw new Error(err2);
                                     }
                                 } else {
-                                    return promise_utils.delay(10000);
+                                    return P.delay(10000);
                                 }
                             });
                     });

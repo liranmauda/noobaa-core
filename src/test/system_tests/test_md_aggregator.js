@@ -178,7 +178,7 @@ function run_test() {
             console.log('Waiting for calculations', buckets);
             test_buckets = buckets;
         })
-        .then(() => promise_utils.delay(5 * 60 * 1000))
+        .delay(5 * 60 * 1000)
         .then(() => client.system.read_system({}))
         .then(sys_res => {
             let storage_by_bucket = {};
@@ -263,7 +263,7 @@ function wait_for_mongodb_to_start(max_seconds_to_wait) {
                             console.error('Too many retries after restart mongodb', err);
                             throw new Error('Too many retries');
                         }
-                        return promise_utils.delay(1000);
+                        return P.delay(1000);
                     });
             })
         .then(() => {
@@ -298,7 +298,7 @@ function wait_for_server_to_start(max_seconds_to_wait, port) {
                             console.error('Too many retries after restart server', err);
                             throw new Error('Too many retries');
                         }
-                        return promise_utils.delay(1000);
+                        return P.delay(1000);
                     });
             })
         .then(() => {

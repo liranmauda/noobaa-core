@@ -9,7 +9,6 @@ const mongodb = require('mongodb');
 const EventEmitter = require('events').EventEmitter;
 
 const P = require('./promise');
-const promise_utils = require('./promise_utils');
 const dbg = require('./debug_module')(__filename);
 const config = require('../../config.js');
 const js_utils = require('./js_utils');
@@ -154,7 +153,7 @@ class MongoClient extends EventEmitter {
                 client = null;
                 this.mongo_client = null;
             }
-            await promise_utils.delay(config.MONGO_DEFAULTS.CONNECT_RETRY_INTERVAL);
+            await P.delay(config.MONGO_DEFAULTS.CONNECT_RETRY_INTERVAL);
             return this._connect(skip_init_db);
         }
     }
@@ -450,7 +449,7 @@ class MongoClient extends EventEmitter {
                                 // wait 5 seconds before retesting
                             } catch (err) {
                                 dbg.warn('waiting for all members to be operational. current status =', util.inspect(rs_status));
-                                await promise_utils.delay(5000);
+                                await P.delay(5000);
                             }
                         }
                     }
@@ -465,7 +464,7 @@ class MongoClient extends EventEmitter {
                             dbg.error('db is still down. got error on db.stats():', err.message);
 
                         }
-                        if (db_is_down) await promise_utils.delay(2000);
+                        if (db_is_down) await P.delay(2000);
                     }
                 })
                 .timeout(timeout);
@@ -504,7 +503,7 @@ class MongoClient extends EventEmitter {
                 }
                 const DELAY = 10 * 1000;
                 dbg.error(`failed to set feature compatability version to ${version}. retrying in ${DELAY / 1000} seconds`, err);
-                await promise_utils.delay(10000);
+                await P.delay(10000);
             }
         }
     }

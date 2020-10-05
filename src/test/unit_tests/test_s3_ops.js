@@ -11,7 +11,7 @@ const http_utils = require('../../util/http_utils');
 const mocha = require('mocha');
 const assert = require('assert');
 const querystring = require('querystring');
-const promise_utils = require('../../util/promise_utils');
+const P = require('../../util/promise');
 
 // If any of these variables are not defined,
 // use the noobaa endpoint to create buckets
@@ -492,7 +492,7 @@ mocha.describe('s3_ops', function() {
 
             if (!caching) return;
             const query_params = { get_from_cache: true };
-            await promise_utils.delay(300);
+            await P.delay(300);
             const res2 = await s3.listObjects({ Bucket: bucket_name }).on('build', req => {
                 if (!caching) return;
                 const sep = req.httpRequest.search() ? '&' : '?';

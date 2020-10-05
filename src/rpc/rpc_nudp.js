@@ -7,7 +7,7 @@ let P = require('../util/promise');
 let RpcBaseConnection = require('./rpc_base_conn');
 let nb_native = require('../util/nb_native');
 let stun = require('./stun');
-const promise_utils = require('../util/promise_utils');
+// let promise_utils = require('../util/promise_utils');
 // let dbg = require('../util/debug_module')(__filename);
 
 /**
@@ -47,7 +47,7 @@ class RpcNudpConnection extends RpcBaseConnection {
         this._init_nudp();
         return P.ninvoke(this.nudp, 'bind', port, '0.0.0.0')
             // TODO emit event from native code?
-            .then(out_port => promise_utils.delay(1000))
+            .then(out_port => P.delay(1000))
             .then(() => this.emit('connect'))
             .catch(err => this.emit('error', err));
     }

@@ -59,7 +59,7 @@ async function wait_for_server(ip, wait_for_version) {
             return body;
         } catch (err) {
             console.log('not up yet...', err.message);
-            await promise_utils.delay(5000);
+            await P.delay(5000);
         }
     }
 }
@@ -219,7 +219,7 @@ function wait_on_agents_upgrade(ip) {
             //Timeout at 10 minutes
             var old_agents = true;
             var wait_time = 0;
-            return promise_utils.delay(5000).then(function() {
+            return P.delay(5000).then(function() {
                 return promise_utils.pwhile(
                     function() {
                         return old_agents;
@@ -243,7 +243,7 @@ function wait_on_agents_upgrade(ip) {
                                     }
                                     console.log('waiting for agents to upgrade');
                                     wait_time += 5;
-                                    return promise_utils.delay(5000);
+                                    return P.delay(5000);
                                 }
                             });
                     });

@@ -6,8 +6,6 @@ const mocha = require('mocha');
 const assert = require('assert');
 
 const P = require('../../util/promise');
-const promise_utils = require('../../util/promise_utils');
-
 const WaitQueue = require('../../util/wait_queue');
 
 mocha.describe('wait_queue', function() {
@@ -43,7 +41,7 @@ mocha.describe('wait_queue', function() {
                 wq.wakeup();
 
             })
-            .then(() => promise_utils.delay(10))
+            .delay(10)
             .then(function() {
                 assert.strictEqual(wq.length, 0);
                 assert.strictEqual(woke, 1);
@@ -58,7 +56,7 @@ mocha.describe('wait_queue', function() {
                 wq.wakeup();
 
             })
-            .then(() => promise_utils.delay(10))
+            .delay(10)
             .then(function() {
                 assert.strictEqual(wq.length, 0);
                 assert.strictEqual(woke, 2);
@@ -91,7 +89,7 @@ mocha.describe('wait_queue', function() {
                 wq.wakeup(item, error);
                 return promise;
             })
-            .then(() => promise_utils.delay(10))
+            .delay(10)
             .then(function() {
                 // This is an error since we should reject and not resolve
                 assert.strictEqual('Majestic', 'Sloth');

@@ -10,7 +10,6 @@ const chance = require('chance')();
 const memwatch = null; //require('memwatch');
 
 const P = require('../util/promise');
-const promise_utils = require('../util/promise_utils');
 const dbg = require('../util/debug_module')(__filename);
 const RPC = require('./rpc');
 const RpcSchema = require('./rpc_schema');
@@ -58,7 +57,7 @@ argv.novalidation = argv.novalidation || false;
 // retry delay in seconds on failures
 argv.retry = argv.retry || undefined;
 const retry_ms = 1000 * (Number(argv.retry) || 0);
-const retry_func = argv.retry && (() => promise_utils.delay(retry_ms));
+const retry_func = argv.retry && (() => P.delay(retry_ms));
 
 let target_addresses;
 

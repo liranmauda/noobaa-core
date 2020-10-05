@@ -7,7 +7,6 @@ const mongodb = require('mongodb');
 const assert = require('assert');
 
 const P = require('../../util/promise');
-const promise_utils = require('../../util/promise_utils');
 //const report_schema = require('./report_schema'); //NBNB TODO add schema verification
 require('../../util/dotenv').load();
 
@@ -144,7 +143,7 @@ Didn't Run: ${JSON.stringify(
                 retries -= 1;
                 if (retries) {
                     console.error(`Failed connecting to mongo, will retry in 30s retry`, err);
-                    await promise_utils.delay(this._mongo_connect_delay);
+                    await P.delay(this._mongo_connect_delay);
                 } else {
                     throw new Error('Error connecting to remote mongo');
                 }

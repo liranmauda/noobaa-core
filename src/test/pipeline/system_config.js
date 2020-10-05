@@ -3,7 +3,7 @@
 
 const _ = require('lodash');
 const api = require('../../api');
-const promise_utils = require('../../util/promise_utils');
+const P = require('../../util/promise');
 const Report = require('../framework/report');
 const argv = require('minimist')(process.argv);
 const server_ops = require('../utils/server_functions');
@@ -80,7 +80,7 @@ async function set_maintenance_mode(duration, delay_in_sec) {
         console.log(`Setting maintenance mode duration to ${duration}`);
         await client.system.set_maintenance_mode({ duration });
         console.log(`Sleeping for ${delay_in_sec} sec`);
-        await promise_utils.delay(delay_in_sec * 1000);
+        await P.delay(delay_in_sec * 1000);
     } catch (e) {
         await report.fail(`set_maintenance_mode`);
         throw new Error('Test set_maintenance_mode_and_check Failed');
@@ -93,7 +93,7 @@ async function set_maintenance_mode_and_check() {
         await set_maintenance_mode(1, 10);
         await check_maintenance_mode(true);
         console.log(`Sleeping for 60 sec`);
-        await promise_utils.delay(60 * 1000);
+        await P.delay(60 * 1000);
         await check_maintenance_mode(false);
         await set_maintenance_mode(30, 10);
         await set_maintenance_mode(0, 10);
@@ -188,7 +188,7 @@ async function set_diagnose_system_and_check() {
     try {
         console.log(`Setting Diagnostic`);
         const diagnose_system = await client.cluster_server.diagnose_system({});
-        await promise_utils.delay(40 * 1000);
+        await P.delay(40 * 1000);
         if (diagnose_system.includes(`/public/${system}_cluster_diagnostics.tgz`)) {
             console.log(`The diagnose system file is: ${diagnose_system} - as should `);
             await report.success(`set_diagnose_system`);

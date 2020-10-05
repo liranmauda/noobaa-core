@@ -3,7 +3,7 @@
 
 const mongodb = require('mongodb');
 
-const promise_utils = require('../../util/promise_utils');
+const P = require('../../util/promise');
 const Reporter = require('./report.js');
 
 
@@ -23,7 +23,7 @@ class ConsolidateReports {
                 retries -= 1;
                 if (retries) {
                     console.error(`Failed connecting to mongo, will retry in 30s retry`, err);
-                    await promise_utils.delay(this._mongo_connect_delay);
+                    await P.delay(this._mongo_connect_delay);
                 } else {
                     throw new Error('Error connecting to remote mongo');
                 }

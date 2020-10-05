@@ -4,7 +4,7 @@
 const _ = require('lodash');
 const api = require('../../api');
 const crypto = require('crypto');
-const promise_utils = require('../../util/promise_utils');
+const P = require('../../util/promise');
 const { S3OPS } = require('../utils/s3ops');
 const blobops = require('../utils/blobops');
 const Report = require('../framework/report');
@@ -388,7 +388,7 @@ async function update_read_write_and_check(clouds, name, read_resources, write_r
         report.fail('update namespace bucket w resource');
         throw new Error(e);
     }
-    await promise_utils.delay(30 * 1000);
+    await P.delay(30 * 1000);
     console.error(`${RED}TODO: REMOVE THIS DELAY, IT IS TEMP OVERRIDE FOR BUG #4831${NC}`);
     const uploaded_file_name = await upload_via_noobaa({ type: run_on_clouds[0], bucket: name });
     //checking that the file was written into the read/write cloud

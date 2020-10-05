@@ -235,7 +235,7 @@ async function verify_object_health(
                 throw new Error('aborted test after ' + TEST_CTX.timeout + ' seconds');
             }
 
-            await promise_utils.delay(1000);
+            await P.delay(1000);
         }
     }
 

@@ -3,7 +3,7 @@
 
 const api = require('../../api');
 const Report = require('../framework/report');
-const promise_utils = require('../../util/promise_utils');
+const P = require('../../util/promise');
 
 let report = new Report();
 
@@ -55,7 +55,7 @@ async function wait_for_system_ready(server_ip, port, protocol, timeout = 600 * 
             has_account = account_stat.has_accounts;
             if (has_account) break;
         } catch (e) {
-            await promise_utils.delay(5 * 1000);
+            await P.delay(5 * 1000);
         }
     }
     if (!has_account) {

@@ -69,7 +69,7 @@ class AgentCLI {
                     dbg.log0(`agent_stats_values - ${agent}: ` + agent_stats_keys.map(key => agent_stats[key]).join(', '));
                 }
             }
-            return promise_utils.delay(60000);
+            return P.delay(60000);
         });
     }
 
@@ -204,7 +204,7 @@ class AgentCLI {
     }
 
     rename_agent_storage(mount_points) {
-        if (process.platform === 'darwin') return; // skip rename in mac os
+        if (os.type() === 'Darwin') return; // skip rename in mac os
         dbg.log0(`looking for agent_storage folder and renaming to noobaa_storage`);
         return P.map(mount_points, mount_point => {
             let old_path = mount_point.mount.replace('noobaa_storage', 'agent_storage');
@@ -229,7 +229,7 @@ class AgentCLI {
     }
 
     update_ignored_drives(mount_points) {
-        if (process.platform === 'darwin') return mount_points; // skip rename in mac os
+        if (os.type() === 'Darwin') return mount_points; // skip rename in mac os
         this.params.ignore_drives = this.params.ignore_drives || [];
         return P.map(mount_points, mount_point => {
             if (mount_point.temporary_drive) {
@@ -621,7 +621,7 @@ class AgentCLI {
             .timeout(CREATE_TOKEN_RESPONSE_TIMEOUT)
             .catch(err => {
                 dbg.error('create_auth_token failed', err);
-                return promise_utils.delay(CREATE_TOKEN_RETRY_INTERVAL)
+                return P.delay(CREATE_TOKEN_RETRY_INTERVAL)
                     .then(() => this.create_auth_token(auth_params));
             });
     }
@@ -711,7 +711,7 @@ function main() {
     }
 
     // if scale is not passed but this is dev env, use scale of 1 to generate test hosts
-    if (!argv.scale && process.platform === 'darwin') {
+    if (!argv.scale && os.type() === 'Darwin') {
         argv.scale = 1;
     }
 

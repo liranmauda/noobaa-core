@@ -3,6 +3,7 @@
 
 const _ = require('lodash');
 const crypto = require('crypto');
+const P = require('../../util/promise');
 const promise_utils = require('../../util/promise_utils');
 const { ObjectAPIFunctions } = require('../utils/object_api_functions');
 
@@ -378,7 +379,7 @@ class NamespaceContext {
     async delay(delay_ms) {
         const _delay_ms = _.defaultTo(delay_ms, this.cache_ttl_ms + 1000);
         console.log(`${BLUE}waiting for ttl to expire in ${_delay_ms} ms......${NC}`);
-        await promise_utils.delay(_delay_ms);
+        await P.delay(_delay_ms);
     }
 
     async run_test_case(test_desc, cloud_type, test_case_fn) {

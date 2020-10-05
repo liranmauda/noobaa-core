@@ -46,40 +46,37 @@ class SupervisorCtrl {
             .then(() => promise_utils.exec('supervisorctl update'));
     }
 
-    async restart(services) {
-        try {
-            await promise_utils.spawn('supervisorctl', ['restart', services.join(' ')], {
+    restart(services) {
+        return promise_utils.spawn('supervisorctl', ['restart', services.join(' ')], {
                 detached: true
-            }, false);
-            await promise_utils.delay(5000); //TODO:: Better solution
-        } catch (err) {
-            console.error('failed to restart services', services);
-            throw new Error('failed to restart services ' + services + err);
-        }
+            }, false)
+            .delay(5000) //TODO:: Better solution
+            .catch(function(err) {
+                console.error('failed to restart services', services);
+                throw new Error('failed to restart services ' + services + err);
+            });
     }
 
-    async start(services) {
-        try {
-            await promise_utils.spawn('supervisorctl', ['start', services.join(' ')], {
+    start(services) {
+        return promise_utils.spawn('supervisorctl', ['start', services.join(' ')], {
                 detached: true
-            }, false);
-            await promise_utils.delay(5000); //TODO:: Better solution
-        } catch (err) {
-            console.error('failed to start services', services);
-            throw new Error('failed to start services ' + services + err);
-        }
+            }, false)
+            .delay(5000) //TODO:: Better solution
+            .catch(function(err) {
+                console.error('failed to start services', services);
+                throw new Error('failed to start services ' + services + err);
+            });
     }
 
-    async stop(services) {
-        try {
-            await promise_utils.spawn('supervisorctl', ['stop', services.join(' ')], {
+    stop(services) {
+        return promise_utils.spawn('supervisorctl', ['stop', services.join(' ')], {
                 detached: true
-            }, false);
-            await promise_utils.delay(5000); //TODO:: Better solution
-        } catch (err) {
-            console.error('failed to stop services', services);
-            throw new Error('failed to stop services ' + services + err);
-        }
+            }, false)
+            .delay(5000) //TODO:: Better solution
+            .catch(function(err) {
+                console.error('failed to stop services', services);
+                throw new Error('failed to stop services ' + services + err);
+            });
     }
 
     async list() {
@@ -186,16 +183,15 @@ class SupervisorCtrl {
             .then(() => this.apply_changes());
     }
 
-    async restart_supervisord() {
-        try {
-            await promise_utils.spawn('/etc/init.d/supervisord', ['restart'], {
+    restart_supervisord() {
+        return promise_utils.spawn('/etc/init.d/supervisord', ['restart'], {
                 detached: true
-            }, false);
-            await promise_utils.delay(5000); //TODO:: Better solution
-        } catch (err) {
-            console.error('failed to restart supervisor daemon');
-            throw new Error('failed to restart supervisor daemon ' + err);
-        }
+            }, false)
+            .delay(5000) //TODO:: Better solution
+            .catch(function(err) {
+                console.error('failed to restart supervisor daemon');
+                throw new Error('failed to restart supervisor daemon ' + err);
+            });
     }
 
     // Internals

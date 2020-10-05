@@ -8,7 +8,6 @@ const crypto = require('crypto');
 const assert = require('assert');
 
 const P = require('../util/promise');
-const promise_utils = require('../util/promise_utils');
 const dbg = require('../util/debug_module')(__filename);
 const config = require('../../config');
 const nb_native = require('../util/nb_native');
@@ -261,7 +260,7 @@ class MapClient {
                 if (err.rpc_code === 'NO_BLOCK_STORE_SPACE') throw err;
                 retries += 1;
                 if (retries > config.IO_WRITE_BLOCK_RETRIES) throw err;
-                await promise_utils.delay(config.IO_WRITE_RETRY_DELAY_MS);
+                await P.delay(config.IO_WRITE_RETRY_DELAY_MS);
             }
         }
     }
@@ -284,7 +283,7 @@ class MapClient {
                 if (err.rpc_code === 'NO_BLOCK_STORE_SPACE') throw err;
                 retries += 1;
                 if (retries > config.IO_REPLICATE_BLOCK_RETRIES) throw err;
-                await promise_utils.delay(config.IO_REPLICATE_RETRY_DELAY_MS);
+                await P.delay(config.IO_REPLICATE_RETRY_DELAY_MS);
             }
         }
     }
