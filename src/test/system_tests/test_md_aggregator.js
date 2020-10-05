@@ -60,7 +60,7 @@ function control_services(command, services) {
 
 // Does the Auth and returns the nodes in the system
 function create_bucket(bucket_name) {
-    return Promise.resolve()
+    return P.resolve()
         .then(() => client.tier.create_tier({
             name: `${bucket_name}tier`,
             attached_pools: ['first-pool'],
@@ -83,7 +83,7 @@ function create_bucket(bucket_name) {
 
 function upload_file_to_bucket(bucket_name) {
     let fkey;
-    return Promise.resolve()
+    return P.resolve()
         .then(() => basic_server_ops.generate_random_file(1))
         .then(fl => {
             fkey = fl;
@@ -103,7 +103,7 @@ function prepare_buckets_with_objects() {
             const cycle_bucket_name = `slothaggregator${cycle}`;
 
             //TODO:: used to update system time by milli cycke_jump * FIVE_MINUTES_IN_MILLI
-            return Promise.resolve()
+            return P.resolve()
                 .then(() => create_bucket(cycle_bucket_name))
                 .then(() => upload_file_to_bucket(cycle_bucket_name))
                 .then(fkey => {

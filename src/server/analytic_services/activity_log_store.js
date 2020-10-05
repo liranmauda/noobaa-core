@@ -50,7 +50,7 @@ class ActivityLogStore {
     read_activity_log(query) {
         const { skip = 0, limit = 100 } = query;
         let selector = this._create_selector(query);
-        return Promise.resolve()
+        return P.resolve()
             .then(() => this._activitylogs.col().find(selector)
                 .skip(skip)
                 .limit(limit)

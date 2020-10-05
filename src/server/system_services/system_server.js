@@ -119,7 +119,7 @@ function _resolve_routing(hint) {
 }
 
 function _initialize_debug_level(system) {
-    return Promise.resolve()
+    return P.resolve()
         .then(() => {
             // The purpose of this code is to initialize the debug level
             // on server's startup, to synchronize the db with the actual value
@@ -419,7 +419,8 @@ async function _create_owner_account(
 
 async function _configure_system_address(system_id, account_id) {
     const system_address = (process.env.CONTAINER_PLATFORM === 'KUBERNETES') ?
-        await os_utils.discover_k8s_services() : [];
+        await os_utils.discover_k8s_services() :
+        [];
 
     // This works because the lists are always sorted, see discover_k8s_services().
     const { system_address: curr_address } = system_store.data.systems[0] || {};
@@ -486,7 +487,7 @@ function read_system(req) {
                 dbg.error('failed getting updated rs_status on read_system', err);
             }) : undefined,
 
-        funcs: Promise.resolve()
+        funcs: P.resolve()
             // using default domain - will serve the list_funcs from web_server so if
             // endpoint is down it will not fail the read_system
             .then(() => server_rpc.client.func.list_funcs({}, {
@@ -850,7 +851,7 @@ function attempt_server_resolve(req) {
     //If already in IP form, no need for resolving
     if (net.isIP(req.rpc_params.server_name)) {
         dbg.log2('attempt_server_resolve received an IP form', req.rpc_params.server_name);
-        return Promise.resolve({ valid: true });
+        return P.resolve({ valid: true });
     }
 
     dbg.log0('attempt_server_resolve', req.rpc_params.server_name);

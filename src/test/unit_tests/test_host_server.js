@@ -9,6 +9,8 @@ coretest.setup({ pools_to_create: [coretest.POOL_LIST[0]] });
 const mocha = require('mocha');
 const assert = require('assert');
 
+const P = require('../../util/promise');
+
 mocha.describe('host_server', function() {
 
     const { rpc_client } = coretest;
@@ -17,7 +19,7 @@ mocha.describe('host_server', function() {
         this.timeout(20000); // eslint-disable-line no-invalid-this
 
         let hosts;
-        return Promise.resolve()
+        return P.resolve()
             .then(() => rpc_client.host.list_hosts({}))
             .then(res => {
                 hosts = res.hosts;

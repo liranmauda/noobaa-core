@@ -118,18 +118,18 @@ function install() {
     if (argv.install === 'dos') {
         return install_func(dos_func);
     }
-    return Promise.resolve()
+    return P.resolve()
         .then(() => install_func(word_count_func))
         .then(() => install_func(dos_func));
 }
 
 function install_func(fn) {
     console.log('Creating Function:', fn);
-    return Promise.resolve()
+    return P.resolve()
         .then(() => prepare_func(fn))
         .then(() => P.fromCallback(callback => lambda.deleteFunction({
-                FunctionName: fn.FunctionName,
-            }, callback))
+            FunctionName: fn.FunctionName,
+        }, callback))
             .catch(err => {
                 console.log('Delete function if exist:', fn.FunctionName, err.message);
             }))
@@ -143,14 +143,14 @@ function clear() {
             f => P.fromCallback(callback => lambda.deleteFunction({
                 FunctionName: f.FunctionName,
             }, callback))
-            .catch(err => {
-                console.log('Delete function if exist:.', f.FunctionName, err.message);
-            })
+                .catch(err => {
+                    console.log('Delete function if exist:.', f.FunctionName, err.message);
+                })
         ));
 }
 
 function prepare_func(fn) {
-    return Promise.resolve()
+    return P.resolve()
         .then(() => zip_utils.zip_from_files(fn.Files))
         .then(zipfile => zip_utils.zip_to_buffer(zipfile))
         .then(zip_buffer => {
@@ -166,11 +166,11 @@ function test() {
         FunctionName: dos_func.FunctionName,
         Payload: JSON.stringify(DOS_EVENT),
     } : {
-        FunctionName: word_count_func.FunctionName,
-        Payload: JSON.stringify(SP_EVENT)
-        // FunctionName: create_account_func.FunctionName,
-        // Payload: JSON.stringify(CA_EVENT)
-    };
+            FunctionName: word_count_func.FunctionName,
+            Payload: JSON.stringify(SP_EVENT)
+            // FunctionName: create_account_func.FunctionName,
+            // Payload: JSON.stringify(CA_EVENT)
+        };
     console.log('Testing', params);
     return P.fromCallback(callback => lambda.invoke(params, callback))
         .then(res => console.log('Result:', res));

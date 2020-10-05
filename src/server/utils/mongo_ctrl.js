@@ -321,7 +321,7 @@ MongoCtrl.prototype._add_new_mongos_program = function(cfg_array) {
     program_obj.autostart = 'true';
     program_obj.priority = '1';
 
-    return Promise.resolve()
+    return P.resolve()
         .then(() => SupervisorCtl.remove_program('mongos')) //remove old mongos with old cfg_array
         .then(() => SupervisorCtl.add_program(program_obj));
 };
@@ -366,7 +366,7 @@ MongoCtrl.prototype._remove_single_mongo_program = function() {
 
 MongoCtrl.prototype._refresh_services_list = function() {
     //TODO:: add real status form mongo per each
-    return Promise.resolve()
+    return P.resolve()
         .then(() => SupervisorCtl.get_mongo_services())
         .then(mongo_services => {
             this._mongo_services = mongo_services;

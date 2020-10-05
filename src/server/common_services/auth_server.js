@@ -5,6 +5,7 @@ const _ = require('lodash');
 const bcrypt = require('bcrypt');
 const ip_module = require('ip');
 
+const P = require('../../util/promise');
 const dbg = require('../../util/debug_module')(__filename);
 const { RpcError } = require('../../rpc');
 const net_utils = require('../../util/net_utils');
@@ -45,7 +46,7 @@ function create_auth(req) {
     var target_account;
     var system;
 
-    return Promise.resolve()
+    return P.resolve()
         .then(() => {
 
             // if email is not provided we skip finding target_account by email
@@ -62,7 +63,7 @@ function create_auth(req) {
             // using credentials.
             if (!password) return;
 
-            return Promise.resolve()
+            return P.resolve()
                 .then(() => bcrypt.compare(password.unwrap(), target_account.password.unwrap()))
                 .then(match => {
                     dbg.log0('password mismatch', email, system_name);

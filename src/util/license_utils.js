@@ -22,7 +22,7 @@ const GPL_TYPE = 'GPL';
 class LicenseDetector extends events.EventEmitter {
 
     init_templates() {
-        if (this.LICENSE_TEMPLATES) return Promise.resolve();
+        if (this.LICENSE_TEMPLATES) return P.resolve();
         const templates_dir = path.join(__dirname, 'license_templates');
         return fs.readdirAsync(templates_dir)
             .map(name => fs.readFileAsync(path.join(templates_dir, name), 'utf8')
@@ -117,7 +117,7 @@ class LicenseScanner extends events.EventEmitter {
                     url = '',
                     license = ''
                 ] = l.split('|');
-                if (!name && !version && !url && !license) return Promise.resolve();
+                if (!name && !version && !url && !license) return P.resolve();
                 const paths = [
                     `/usr/share/doc/${name}-${version}`,
                     `/usr/share/doc/${name}`,
@@ -216,7 +216,7 @@ class LicenseScanner extends events.EventEmitter {
     scan_code_file(file_path) {
         const buffer = Buffer.allocUnsafe(10 * 1024);
         return fs.openAsync(file_path, 'r')
-            .then(fd => Promise.resolve()
+            .then(fd => P.resolve()
                 .then(() => fs.readAsync(fd, buffer, 0, buffer.length, 0))
                 .then(bytes_read => {
                     const text = buffer.slice(0, bytes_read).toString('utf8');

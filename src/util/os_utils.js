@@ -69,7 +69,7 @@ function os_info(count_mongo_reserved_as_free) {
             delete interfaces[name];
         }
     });
-    return Promise.resolve()
+    return P.resolve()
         .then(() => _calculate_free_mem(count_mongo_reserved_as_free))
         .then(free_mem => ({
             hostname: os.hostname(),
@@ -168,7 +168,7 @@ function get_main_drive_name() {
 
 function get_distro() {
     if (IS_MAC) {
-        return Promise.resolve('OSX - Darwin');
+        return P.resolve('OSX - Darwin');
     }
     return P.fromCallback(callback => os_detailed_info(callback))
         .then(distro => {
@@ -352,12 +352,12 @@ function slabtop(dst) {
     if (IS_LINUX) {
         return promise_utils.exec('slabtop -o' + file_redirect);
     } else {
-        return Promise.resolve();
+        return P.resolve();
     }
 }
 
 function _get_dns_servers_in_forwarders_file() {
-    return Promise.resolve()
+    return P.resolve()
         .then(() => {
             if (!IS_LINUX_VM) return [];
             return fs_utils.find_line_in_file(config.NAMED_DEFAULTS.FORWARDERS_OPTION_FILE, 'forwarders')
@@ -376,10 +376,10 @@ function get_dns_config() {
 }
 
 function set_dns_config(dns_servers) {
-    return Promise.resolve()
+    return P.resolve()
         .then(() => {
             if (!IS_LINUX) return;
-            return Promise.resolve(_set_dns_server(dns_servers));
+            return P.resolve(_set_dns_server(dns_servers));
         });
 }
 
@@ -555,7 +555,7 @@ function restart_noobaa_services() {
 
 function set_hostname(hostname) {
     if (!IS_LINUX) {
-        return Promise.resolve();
+        return P.resolve();
     }
 
     return promise_utils.exec(`hostname ${hostname}`)
@@ -569,7 +569,7 @@ function is_valid_hostname(hostname_string) {
 
 
 function is_port_range_open_in_firewall(dest_ips, start_port, end_port) {
-    return Promise.resolve()
+    return P.resolve()
         .then(() => {
             if (IS_LINUX) {
                 return _check_ports_on_linux(dest_ips, start_port, end_port);
@@ -641,7 +641,7 @@ function _check_ports_on_linux(dest_ips, start_port, end_port) {
 
 function get_iptables_rules() {
     if (!IS_LINUX) {
-        return Promise.resolve([]);
+        return P.resolve([]);
     }
     const iptables_command = 'iptables -L INPUT -nv';
     return promise_utils.exec(iptables_command, {
@@ -768,7 +768,8 @@ async function discover_k8s_services(app = config.KUBE_APP_LABEL) {
                 weight: 0
             };
 
-            return [{
+            return [
+                {
                     ...defaults,
                     kind: 'INTERNAL',
                     hostname: internal_hostname,

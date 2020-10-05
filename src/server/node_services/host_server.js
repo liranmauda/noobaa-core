@@ -2,6 +2,7 @@
 'use strict';
 
 const _ = require('lodash');
+const P = require('../../util/promise.js');
 const diag = require('../utils/server_diagnostics');
 // const util = require('util');
 
@@ -74,7 +75,7 @@ function diagnose_host(req) {
     var out_path = `/public/host_${name.replace('#', '_')}_diagnostics.tgz`;
     var inner_path = `${process.cwd()}/build${out_path}`;
 
-    return Promise.resolve()
+    return P.resolve()
         .then(() => diag.collect_server_diagnostics(req))
         .then(() => monitor.collect_host_diagnostics(name))
         .then(buffer => diag.write_agent_diag_file(buffer))

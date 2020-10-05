@@ -31,7 +31,7 @@ function get_nodes_ips() {
                 name: '--',
             }));
     }
-    return Promise.resolve()
+    return P.resolve()
         .then(() => mongo_client.instance().connect())
         .then(() => mongo_client.instance().collection('nodes').find({
                 deleted: null,

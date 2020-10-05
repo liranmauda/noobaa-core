@@ -30,7 +30,7 @@ mocha.describe('zip_utils', function() {
 
     mocha.it('should zip to buffer', function() {
         const files = generate_files();
-        return Promise.resolve()
+        return P.resolve()
             .then(() => zip_utils.zip_from_files(files))
             .then(zipfile => zip_utils.zip_to_buffer(zipfile))
             .then(buffer => assert(Buffer.isBuffer(buffer)) || buffer)
@@ -41,7 +41,7 @@ mocha.describe('zip_utils', function() {
     mocha.it('should zip to file', function() {
         const files = generate_files();
         const fname = path.join(temp_dir, 'zip-to-file');
-        return Promise.resolve()
+        return P.resolve()
             .then(() => zip_utils.zip_from_files(files))
             .then(zipfile => zip_utils.zip_to_file(zipfile, fname))
             .then(() => zip_utils.unzip_from_file(fname))
@@ -52,7 +52,7 @@ mocha.describe('zip_utils', function() {
     mocha.it('should zip from dir', function() {
         const files = generate_files();
         const dname = path.join(temp_dir, 'zip-from-dir');
-        return Promise.resolve()
+        return P.resolve()
             .then(() => fs_utils.create_path(dname))
             .then(() => P.map(files, file =>
                 fs_utils.create_path(path.dirname(path.join(dname, file.path)))
@@ -70,7 +70,7 @@ mocha.describe('zip_utils', function() {
         const files = generate_files();
         const files2 = [];
         const dname = path.join(temp_dir, 'unzip-to-dir');
-        return Promise.resolve()
+        return P.resolve()
             .then(() => zip_utils.zip_from_files(files))
             .then(zipfile => zip_utils.zip_to_buffer(zipfile))
             .then(buffer => assert(Buffer.isBuffer(buffer)) || buffer)

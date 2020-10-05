@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const _ = require('lodash');
+const P = require('../../util/promise');
 const argv = require('minimist')(process.argv);
 
 let res_files = [];
@@ -72,5 +73,5 @@ function object_to_csv(obj) {
     return lines.join('\n') + '\n';
 }
 
-Promise.resolve()
+P.resolve()
     .then(convert);

@@ -844,7 +844,7 @@ function check_external_connection(req) {
         throw new RpcError('CONNECTION_ALREADY_EXIST', 'Connection name already exists: ' + req.rpc_params.name);
     }
 
-    return Promise.resolve()
+    return P.resolve()
         .then(() => {
             switch (endpoint_type) {
                 case 'AZURE': {
@@ -914,7 +914,7 @@ function check_azure_connection(params) {
     }
 
     return P.resolve()
-        .then(() => Promise.resolve()
+        .then(() => P.resolve()
             .then(() => {
                 let blob = azure_storage.createBlobService(conn_str);
                 return blob;
@@ -1240,7 +1240,7 @@ function ensure_support_account() {
 }
 
 function bcrypt_password(password) {
-    return Promise.resolve()
+    return P.resolve()
         .then(() => password && bcrypt.hash(password, 10));
 }
 

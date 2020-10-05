@@ -187,7 +187,7 @@ function write_agent_diag_file(data) {
 
 //Collect supervisor logs, only do so on linux platforms and not on OSX (WA for local server run)
 function collect_supervisor_logs() {
-    return Promise.resolve()
+    return P.resolve()
         .then(() => {
             if (process.platform === 'linux') {
                 // compress supervisor logs to the destination directory with compression level 1 (fastest).
@@ -208,7 +208,7 @@ function collect_supervisor_logs() {
 }
 
 function collect_statistics(req) {
-    return Promise.resolve().then(function() {
+    return P.resolve().then(function() {
             if (stats_aggregator && cutil.check_if_master()) {
                 return stats_aggregator.get_all_stats(req);
             }

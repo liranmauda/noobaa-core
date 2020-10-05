@@ -2,6 +2,7 @@
 'use strict';
 
 const _ = require('lodash');
+const P = require('../../util/promise');
 const dbg = require('../../util/debug_module')(__filename);
 const system_store = require('../system_services/system_store').get_instance();
 const server_rpc = require('../server_rpc');
@@ -25,7 +26,7 @@ function collect_system_stats() {
         dbg.warn('collect_system_stats: no system yet');
         return;
     }
-    return Promise.resolve()
+    return P.resolve()
         .then(() => server_rpc.client.system.read_system({}, {
             auth_token: auth_server.make_auth_token({
                 system_id: system._id,

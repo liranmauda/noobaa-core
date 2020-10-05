@@ -53,7 +53,7 @@ class BlockStoreMongo extends BlockStoreBase {
     }
 
     _init_chunks_collection() {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => mongo_client.instance().db().createCollection(GRID_FS_BUCKET_NAME_CHUNKS, GRID_FS_CHUNK_COLLECTION_OPTIONS))
             .catch(err => {
                 if (!mongo_utils.is_err_namespace_exists(err)) throw err;
@@ -105,7 +105,7 @@ class BlockStoreMongo extends BlockStoreBase {
     }
 
     get_storage_info() {
-        return Promise.resolve(this._get_usage())
+        return P.resolve(this._get_usage())
             .then(usage => ({
                 total: Math.max(this.usage_limit, usage.size),
                 free: Math.max(this.usage_limit - usage.size, 0),
@@ -118,7 +118,7 @@ class BlockStoreMongo extends BlockStoreBase {
     }
 
     _count_usage() {
-        return Promise.resolve(this.read_usage_gridfs());
+        return P.resolve(this.read_usage_gridfs());
     }
 
     _read_block(block_md) {
@@ -183,7 +183,7 @@ class BlockStoreMongo extends BlockStoreBase {
     _write_usage_internal() {
         // We currently do not need to write the storage since the mongo handles it
         // Just a filler for the base class to call
-        return Promise.resolve();
+        return P.resolve();
     }
 
     _delete_blocks(block_ids) {
@@ -216,7 +216,7 @@ class BlockStoreMongo extends BlockStoreBase {
 
     head_block(block_name) {
         return sem_head.surround(() =>
-            Promise.resolve(this._blocks_fs.gridfs().find({
+            P.resolve(this._blocks_fs.gridfs().find({
                     filename: block_name
                 }, {
                     limit: 1

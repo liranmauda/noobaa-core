@@ -162,7 +162,7 @@ async function refresh_pool_alloc(pool, force) {
 
     if (group.promise) return group.promise;
 
-    group.promise = Promise.resolve()
+    group.promise = P.resolve()
         .then(() => nodes_client.instance().allocate_nodes(pool.system._id, pool._id))
         .then(res => {
             group.last_refresh = Date.now();
@@ -231,7 +231,7 @@ async function refresh_tiers_alloc(tiering_list, force) {
 
     if (update_list.length > 0) {
         const tiers_to_refresh = _.flatMap(update_list, item => item.tiers);
-        const promise = Promise.resolve()
+        const promise = P.resolve()
             .then(async () => {
                 const aggr_by_tier = await nodes_client.instance().aggregate_data_free_by_tier(tiers_to_refresh, system_id);
                 for (const { group, tiers } of update_list) {

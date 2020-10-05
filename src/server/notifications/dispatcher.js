@@ -60,7 +60,7 @@ class Dispatcher {
         return ActivityLogStore.instance().create(item)
             .then(() => {
                 if (!config.SEND_EVENTS_REMOTESYS) {
-                    return Promise.resolve();
+                    return P.resolve();
                 }
                 var l = {
                     id: String(item._id),
@@ -107,7 +107,7 @@ class Dispatcher {
 
     //Alerts
     alert(sev, sysid, alert, rule) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => {
                 if (rule) {
                     return rule(sev, sysid, alert);
@@ -159,7 +159,7 @@ class Dispatcher {
     }
 
     publish_fe_notifications(params, api) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => {
                 if (cutil.check_if_clusterized()) {
                     return server_rpc.client.cluster_internal.redirect_to_cluster_master();
@@ -174,7 +174,7 @@ class Dispatcher {
     }
 
     _resolve_activity_item(log_item, l) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => nodes_client.instance().populate_nodes(
                 log_item.system, log_item, 'node', 'node', NODE_POPULATE_FIELDS))
             .then(() => MDStore.instance().populate_objects(
@@ -215,7 +215,7 @@ class Dispatcher {
                     l.server = log_item.server;
                 }
 
-                return Promise.resolve(log_item.node && !l.node.linkable && nodes_store.get_hidden_by_id(log_item.node));
+                return P.resolve(log_item.node && !l.node.linkable && nodes_store.get_hidden_by_id(log_item.node));
             })
             .then(async node => {
                 if (node) {
@@ -231,21 +231,21 @@ class Dispatcher {
                         l.node.pool = record && record.name;
                     }
                 }
-                return Promise.resolve(log_item.tier && system_store.data.get_by_id_include_deleted(log_item.tier, 'tiers'));
+                return P.resolve(log_item.tier && system_store.data.get_by_id_include_deleted(log_item.tier, 'tiers'));
             })
             .then(tier => {
                 if (tier) {
                     l.tier = _.pick(tier.record, 'name');
                     l.tier.linkable = tier.linkable;
                 }
-                return Promise.resolve(log_item.bucket && system_store.data.get_by_id_include_deleted(log_item.bucket, 'buckets'));
+                return P.resolve(log_item.bucket && system_store.data.get_by_id_include_deleted(log_item.bucket, 'buckets'));
             })
             .then(bucket => {
                 if (bucket) {
                     l.bucket = _.pick(bucket.record, 'name');
                     l.bucket.linkable = bucket.linkable;
                 }
-                return Promise.resolve(log_item.pool && system_store.data.get_by_id_include_deleted(log_item.pool, 'pools'));
+                return P.resolve(log_item.pool && system_store.data.get_by_id_include_deleted(log_item.pool, 'pools'));
             })
             .then(pool => {
                 if (pool) {
@@ -253,21 +253,21 @@ class Dispatcher {
                     l.pool.name = l.pool.name.split('#')[0];
                     l.pool.linkable = pool.linkable;
                 }
-                return Promise.resolve(log_item.account && system_store.data.get_by_id_include_deleted(log_item.account, 'accounts'));
+                return P.resolve(log_item.account && system_store.data.get_by_id_include_deleted(log_item.account, 'accounts'));
             })
             .then(account => {
                 if (account) {
                     l.account = _.pick(account.record, 'email');
                     l.account.linkable = account.linkable;
                 }
-                return Promise.resolve(log_item.func && func_store.get_by_id_include_deleted(log_item.func, 'funcs'));
+                return P.resolve(log_item.func && func_store.get_by_id_include_deleted(log_item.func, 'funcs'));
             })
             .then(func => {
                 if (func) {
                     l.func = _.pick(func, 'name');
                     l.func.linkable = func.linkable;
                 }
-                return Promise.resolve(log_item.actor && system_store.data.get_by_id_include_deleted(log_item.actor, 'accounts'));
+                return P.resolve(log_item.actor && system_store.data.get_by_id_include_deleted(log_item.actor, 'accounts'));
             })
             .then(actor => {
                 if (actor) {

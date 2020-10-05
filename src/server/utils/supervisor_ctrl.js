@@ -101,7 +101,7 @@ class SupervisorCtrl {
     }
 
     remove_program(prog_name) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => this.init())
             .then(() => {
                 if (!this._supervised) {
@@ -143,7 +143,7 @@ class SupervisorCtrl {
 
     get_mongo_services() {
         let mongo_progs = [];
-        return Promise.resolve()
+        return P.resolve()
             .then(() => this.init())
             .then(() => {
                 if (!this._supervised) {
@@ -175,7 +175,7 @@ class SupervisorCtrl {
         prog.name = 'agent_' + agent_name;
         prog.autostart = 'true';
         prog.priority = '1100';
-        return Promise.resolve()
+        return P.resolve()
             .then(() => this.init())
             .then(() => {
                 if (!this._supervised) {

@@ -4,6 +4,7 @@
 const _ = require('lodash');
 const fs = require('fs');
 
+const P = require('./promise');
 const dbg = require('./debug_module')(__filename);
 const fs_utils = require('./fs_utils');
 const Semaphore = require('./semaphore');
@@ -25,7 +26,7 @@ class JsonFileWrapper {
     update(params) {
         // serialize json updates with Sempahore(1)
         return this.json_sem.surround(() =>
-            Promise.resolve()
+            P.resolve()
             .then(() => this._read_internal())
             .then(obj => JSON.stringify(_.assign(obj, params)))
             .then(data => fs_utils.replace_file(this.json_path, data))
@@ -33,7 +34,7 @@ class JsonFileWrapper {
     }
 
     _read_internal() {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => fs.readFileAsync(this.json_path))
             .then(data => JSON.parse(data))
             .catch(err => {
@@ -57,7 +58,7 @@ class JsonObjectWrapper {
     }
 
     read() {
-        return Promise.resolve(_.cloneDeep(this.obj));
+        return P.resolve(_.cloneDeep(this.obj));
     }
 
     update(params) {

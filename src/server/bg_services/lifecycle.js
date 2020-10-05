@@ -18,7 +18,7 @@ var LIFECYCLE = {
 
 function background_worker() {
     const system = system_store.data.systems[0];
-    if (!system) return Promise.resolve();
+    if (!system) return P.resolve();
     return P.fcall(function() {
             dbg.log0('LIFECYCLE READ BUCKETS configuration:', 'BEGIN');
             return system_store.refresh()

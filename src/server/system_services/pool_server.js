@@ -451,7 +451,7 @@ async function read_pool(req) {
 
 function read_namespace_resource(req) {
     const namespace_resource = find_namespace_resource_by_name(req);
-    return Promise.resolve()
+    return P.resolve()
         .then(() => get_namespace_resource_info(namespace_resource));
 }
 

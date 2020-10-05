@@ -137,7 +137,7 @@ function process_block_list({ block_list, bucket, key, committed_list, uncommitt
     });
 }
 
-async function remove_block_lists(object_sdk, { bucket, key, uncommitted_list, remove_uncommitted, remove_committed }) {
+async function remove_block_lists(object_sdk, { bucket, key, uncommitted_list, remove_uncommitted, remove_committed}) {
     const uncommitted_path = get_uncommitted_blocks_path(bucket, key);
     const objects = remove_uncommitted ? uncommitted_list.map(block => ({ key: `${uncommitted_path}/${block.block_id}` })) : [];
     if (remove_committed) {
@@ -213,9 +213,9 @@ async function commit_blob_block_list(params, object_sdk) {
 async function get_blob_block_lists(params, object_sdk) {
     const [committed_list, uncommitted_list] = await P.all([
         params.requested_lists.committed ?
-        get_committed_list({ bucket: params.bucket, key: params.key }, object_sdk) : Promise.resolve(),
+        get_committed_list({ bucket: params.bucket, key: params.key }, object_sdk) : P.resolve(),
         params.requested_lists.uncommitted ?
-        get_uncommitted_list({ bucket: params.bucket, key: params.key }, object_sdk) : Promise.resolve()
+        get_uncommitted_list({ bucket: params.bucket, key: params.key }, object_sdk) : P.resolve()
     ]);
 
 

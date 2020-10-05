@@ -12,6 +12,7 @@ const mocha = require('mocha');
 const assert = require('assert');
 // const mongodb = require('mongodb');
 
+const P = require('../../util/promise');
 const config = require('../../../config.js');
 const MDStore = require('../../server/object_services/md_store').MDStore;
 const md_aggregator = require('../../server/bg_services/md_aggregator.js');
@@ -97,7 +98,7 @@ function make_test_system_store(last_update, md_store) {
                     });
                 });
             }
-            return Promise.resolve();
+            return P.resolve();
         },
     };
 
@@ -305,7 +306,7 @@ mocha.describe('md_aggregator', function() {
             coretest.log('block 1 addtion date', block_id1.getTimestamp().getTime());
             const system_id = system_store.data.systems[0]._id;
 
-            return Promise.resolve()
+            return P.resolve()
                 .then(() => md_store.insert_blocks([{
                     _id: block_id1,
                     system: system_id,
@@ -359,7 +360,7 @@ mocha.describe('md_aggregator', function() {
             coretest.log('block 2 addtion date', block_id2.getTimestamp().getTime());
             const system_id = system_store.data.systems[0]._id;
 
-            return Promise.resolve()
+            return P.resolve()
                 .then(() => md_store.insert_blocks([
                     make_block(block_id1, 120, bucket, pool, system_id),
                     make_block(block_id2, 350, bucket, pool, system_id),
@@ -417,7 +418,7 @@ mocha.describe('md_aggregator', function() {
             const blocks_to_delete = [];
             const system_id = system_store.data.systems[0]._id;
 
-            return Promise.resolve()
+            return P.resolve()
                 .then(() => {
                     const blocks = [];
                     for (let i = 0; i < 1024; ++i) { // 1 PB
@@ -480,7 +481,7 @@ mocha.describe('md_aggregator', function() {
             const target_now = last_update + (num_ranges * range);
             const system_id = system_store.data.systems[0]._id;
 
-            return Promise.resolve()
+            return P.resolve()
                 .then(() => md_store.insert_blocks(_.times(num_ranges, i => {
                     const current_cycle = last_update + (i * range);
                     const bucket = system_store.data.buckets[i];
@@ -530,7 +531,7 @@ mocha.describe('md_aggregator', function() {
             const target_now = last_update - 1;
             const system_store = make_test_system_store(last_update, md_store);
 
-            return Promise.resolve()
+            return P.resolve()
                 .then(() => md_aggregator.run_md_aggregator(md_store, system_store, target_now, 0))
                 .then(() => {
                     assert.strictEqual(system_store.changes_list.length, 1);
@@ -560,7 +561,7 @@ mocha.describe('md_aggregator', function() {
             const system_store = make_test_system_store(last_update, md_store);
             system_store.debug = false;
 
-            return Promise.resolve()
+            return P.resolve()
                 .then(() => md_aggregator.run_md_aggregator(md_store, system_store, target_now, 0))
                 .then(() => {
                     assert.strictEqual(system_store.changes_list.length, num_splits * 2);

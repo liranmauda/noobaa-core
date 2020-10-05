@@ -29,7 +29,7 @@ class BlockStoreAzure extends BlockStoreBase {
 
     get_storage_info() {
         const PETABYTE = 1024 * 1024 * 1024 * 1024 * 1024;
-        return Promise.resolve(this._get_usage())
+        return P.resolve(this._get_usage())
             .then(usage => ({
                 total: PETABYTE + usage.size,
                 free: PETABYTE,

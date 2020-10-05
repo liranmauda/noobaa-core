@@ -81,7 +81,7 @@ class FuncNode {
         const func_json_path = path.join(version_dir, 'func.json');
         // replacing the base64 encoded sha256 from using / to - in order to use as folder name
         const code_dir = path.join(version_dir, code_sha256.replace(/\//g, '-'));
-        return this.loading_serial.surround(() => Promise.resolve()
+        return this.loading_serial.surround(() => P.resolve()
             .then(() => fs.statAsync(code_dir))
             .then(() => fs.readFileAsync(func_json_path))
             .then(func_json_buf => JSON.parse(func_json_buf))
@@ -90,7 +90,7 @@ class FuncNode {
                 const loading_dir = path.join(this.functions_loading_path, Date.now().toString(36));
                 let func;
                 dbg.log0('_load_func_code: loading', loading_dir, code_dir);
-                return Promise.resolve()
+                return P.resolve()
                     .then(() => this.rpc_client.func.read_func({
                         name: name,
                         version: version,

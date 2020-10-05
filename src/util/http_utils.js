@@ -214,7 +214,7 @@ function throw_ranges_error(code) {
 function read_and_parse_body(req, options) {
     if (options.body.type === 'empty' ||
         options.body.type === 'raw') {
-        return Promise.resolve();
+        return P.resolve();
     }
     return read_request_body(req, options)
         .then(() => parse_request_body(req, options));

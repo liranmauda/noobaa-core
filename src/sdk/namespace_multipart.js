@@ -48,7 +48,7 @@ class NamespaceMultipart {
     /////////////////
 
     read_object_md(params, object_sdk) {
-        return this._ns_map(ns => Promise.resolve(ns.read_object_md(params, object_sdk))
+        return this._ns_map(ns => P.resolve(ns.read_object_md(params, object_sdk))
                 .then(res => {
                     // save the ns in the response for optimizing read_object_stream
                     res.ns = ns;

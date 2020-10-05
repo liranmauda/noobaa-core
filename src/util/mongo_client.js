@@ -172,7 +172,7 @@ class MongoClient extends EventEmitter {
     }
 
     _init_collection(db, col) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => db.createCollection(col.name))
             .catch(err => {
                 if (!mongo_utils.is_err_namespace_exists(err)) throw err;
@@ -293,7 +293,7 @@ class MongoClient extends EventEmitter {
         };
         dbg.log0('Calling initiate_replica_set', util.inspect(command, false, null));
         if (!is_config_set) { //connect the mongod server
-            return Promise.resolve(this.mongo_client.db().admin().command(command))
+            return P.resolve(this.mongo_client.db().admin().command(command))
                 .catch(err => {
                     dbg.error('Failed initiate_replica_set', set, members, 'with', err.message);
                     throw err;
@@ -308,17 +308,17 @@ class MongoClient extends EventEmitter {
         var command = {
             replSetReconfig: rep_config
         };
-        return Promise.resolve(this.get_rs_version(is_config_set))
+        return P.resolve(this.get_rs_version(is_config_set))
             .then(ver => {
                 ver += 1;
                 rep_config.version = ver;
                 dbg.log0('Calling replica_update_members', util.inspect(command, false, null));
                 if (is_config_set) {
                     //connect the server running the config replica set
-                    return Promise.resolve(this._send_command_config_rs(command));
+                    return P.resolve(this._send_command_config_rs(command));
                 } else {
                     //connect the mongod server
-                    return Promise.resolve(this.mongo_client.db().admin().command(command))
+                    return P.resolve(this.mongo_client.db().admin().command(command))
                         .catch(err => {
                             dbg.error('Failed replica_update_members', set, members, 'with', err.message);
                             throw err;
@@ -331,10 +331,10 @@ class MongoClient extends EventEmitter {
         dbg.log0('Calling add_shard', shardname, host + ':' + port);
 
         this.disconnect();
-        return Promise.resolve(this.connect())
+        return P.resolve(this.connect())
             .then(() => {
                 dbg.log0('add_shard connected, calling db.admin addShard{}');
-                return Promise.resolve(this.mongo_client.db().admin().command({
+                return P.resolve(this.mongo_client.db().admin().command({
                     addShard: host + ':' + port,
                     name: shardname
                 }));
@@ -394,9 +394,9 @@ class MongoClient extends EventEmitter {
 
         return P.fcall(() => {
                 if (is_config_set) { //connect the server running the config replica set
-                    return Promise.resolve(this._send_command_config_rs(command));
+                    return P.resolve(this._send_command_config_rs(command));
                 } else { //connect the mongod server
-                    return Promise.resolve(this.mongo_client.db().admin().command(command))
+                    return P.resolve(this.mongo_client.db().admin().command(command))
                         .catch(err => {
                             dbg.error('Failed get_rs_version with', err.message);
                             throw err;
@@ -562,7 +562,7 @@ class MongoClient extends EventEmitter {
 
     _send_command_config_rs(command) {
         let cfg_client;
-        return Promise.resolve()
+        return P.resolve()
             .then(() => mongodb.MongoClient.connect(this.cfg_url, this.config))
             .catch(err => {
                 dbg.error('connecting to config rs failed', err.message);

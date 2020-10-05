@@ -22,7 +22,7 @@ function publish_to_cluster(req) {
         api_name, method, req.rpc_params.request_params,
         _.map(connections, 'connid'));
     return P.map(connections,
-            conn => Promise.resolve(server_rpc.client[api_name][method](req.rpc_params.request_params, {
+            conn => P.resolve(server_rpc.client[api_name][method](req.rpc_params.request_params, {
                 connection: conn,
                 auth_token: req.auth_token,
             }))

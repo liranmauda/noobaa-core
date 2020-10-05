@@ -49,7 +49,7 @@ class LRUCache {
                 if ('d' in item &&
                     (cache_miss !== 'cache_miss') &&
                     (this.use_negative_cache || item.d)) {
-                    return Promise.resolve(this.validate(item.d, params))
+                    return P.resolve(this.validate(item.d, params))
                         .then(validated => {
                             if (validated) return item;
                             return this._load_item(item, params);
@@ -116,7 +116,7 @@ class LRUCache {
         // keep the promise in the item to synchronize when getting
         // concurrent get requests that miss the cache
         if (!item.p) {
-            item.p = Promise.resolve(this.load(params))
+            item.p = P.resolve(this.load(params))
                 .then(data => {
                     item.p = null;
                     item.d = data;

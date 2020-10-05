@@ -212,7 +212,7 @@ class HostedAgents {
             write: token => fs_utils.replace_file(path.join(storage_path, 'token'), token),
         };
         const create_node_token_wrapper = {
-            read: () => Promise.resolve(local_create_node_token),
+            read: () => P.resolve(local_create_node_token),
             write: new_token => {
                 local_create_node_token = new_token;
             }
@@ -339,7 +339,7 @@ function _get_pool_token_wrapper(token_pool) {
         const pool_and_path = _get_pool_and_path_for_token(token_pool);
         const pool_agent_info = _.get(pool_and_path.pool, pool_and_path.pool_property_path);
         if (!pool_agent_info) throw new Error(`Pool ${token_pool.name} was not initialised`);
-        return Promise.resolve(pool_agent_info[token_key]);
+        return P.resolve(pool_agent_info[token_key]);
     };
     const write_token = (new_token, token_key) => {
         dbg.log1(`write_token with params: ${new_token}, ${token_key}`);

@@ -80,7 +80,7 @@ class FuncStore {
     }
 
     read_func(system, name, version) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => this._funcs.col().findOne({
                 system: system,
                 name: name,
@@ -91,14 +91,14 @@ class FuncStore {
     }
 
     get_by_id_include_deleted(func_id) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => this._funcs.col().findOne({
                 _id: func_id,
             }));
     }
 
     list_funcs(system) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => this._funcs.col().find({
                     system: system,
                     version: '$LATEST',
@@ -108,7 +108,7 @@ class FuncStore {
     }
 
     list_funcs_by_pool(system, pool) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => this._funcs.col().find({
                     system: system,
                     pools: pool,
@@ -118,7 +118,7 @@ class FuncStore {
     }
 
     list_func_versions(system, name) {
-        return Promise.resolve()
+        return P.resolve()
             .then(() => this._funcs.col().find({
                     system: system,
                     name: name,
