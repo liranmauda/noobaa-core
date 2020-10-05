@@ -30,7 +30,6 @@ const RpcNudpConnection = require('./rpc_nudp');
 const RpcNtcpConnection = require('./rpc_ntcp');
 const RpcFcallConnection = require('./rpc_fcall');
 const RPC_BUFFERS = RpcRequest.RPC_BUFFERS;
-const promise_utils = require('../util/promise_utils');
 
 // dbg.set_level(5, __dirname);
 
@@ -177,7 +176,7 @@ class RPC extends EventEmitter {
         // initialize the request
         const req = new RpcRequest();
         req._new_request(api, method_api, params, options.auth_token);
-        req._response_defer = new promise_utils.Defer();
+        req._response_defer = P.defer();
         req._response_defer.promise.catch(_.noop); // to prevent error log of unhandled rejection
         if (options.tracker) {
             options.tracker(req);

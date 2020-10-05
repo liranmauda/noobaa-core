@@ -3,7 +3,6 @@
 
 var _ = require('lodash');
 var P = require('../util/promise');
-const promise_utils = require('../util/promise_utils');
 
 module.exports = Barrier;
 
@@ -50,7 +49,7 @@ Barrier.prototype.call = function(item) {
 
         // add the item to the pending barrier and assign a defer
         // that will be resolved/rejected per this item.
-        var defer = new promise_utils.Defer();
+        var defer = P.defer();
         self.barrier.items.push(item);
         self.barrier.defers.push(defer);
 

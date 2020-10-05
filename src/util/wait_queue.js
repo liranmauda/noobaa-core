@@ -2,7 +2,7 @@
 'use strict';
 
 // const _ = require('lodash');
-const promise_utils = require('../util/promise_utils');
+const P = require('../util/promise');
 const LinkedList = require('./linked_list');
 
 class WaitQueue {
@@ -20,7 +20,7 @@ class WaitQueue {
      */
     wait(item) {
         item = item || {};
-        const defer = new promise_utils.Defer();
+        const defer = P.defer();
         item[this._name] = defer;
         this._q.push_back(item);
         return defer.promise;

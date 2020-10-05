@@ -83,6 +83,10 @@ mocha.describe.skip('v8 optimizations', function() {
         );
     });
 
+    mocha.it('should optimize P.defer', function() {
+        assert_optimized(P.defer);
+    });
+
     mocha.it('should optimize P.resolve', function() {
         assert_optimized(P.resolve);
     });

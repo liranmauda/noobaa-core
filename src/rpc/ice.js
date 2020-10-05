@@ -383,11 +383,9 @@ Ice.prototype._add_tcp_permanent_passive_candidates = function() {
                 };
             }
 
-            if (!conf.listen_promise) {
-                conf.listen_promise = listen_on_port_range(conf).catch(err => {
-                    console.error(err);
-                    conf.listen_promise = null;
-                });
+            if (!conf.listen_promise ||
+                conf.listen_promise.isRejected()) {
+                conf.listen_promise = listen_on_port_range(conf);
             }
             return conf.listen_promise;
         })
@@ -1320,7 +1318,7 @@ function IceSession(local, remote, packet, udp) {
     self.state = 'init';
     js_utils.self_bind(self, 'run_udp_request_loop');
     js_utils.self_bind(self, 'run_udp_indication_loop');
-    self.defer = new promise_utils.Defer();
+    self.defer = P.defer();
     self.defer.promise.catch(_.noop); // to ignore 'Unhandled rejection' printouts
     // set session timeout
     self.ready_timeout = setTimeout(function() {

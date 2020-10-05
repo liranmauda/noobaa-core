@@ -10,27 +10,6 @@ const dbg = require('../util/debug_module')(__filename);
 require('setimmediate');
 
 
-class Defer {
-    constructor() {
-        this.isPending = true;
-        this.isResolved = false;
-        this.isRejected = false;
-        this.promise =
-            new Promise((resolve, reject) => {
-                this.resolve = resolve;
-                this.reject = reject;
-            })
-            .then(() => {
-                this.isPending = false;
-                this.isResolved = true;
-            })
-            .catch(() => {
-                this.isPending = false;
-                this.isRejected = true;
-            });
-    }
-}
-
 /**
  *
  */
@@ -363,7 +342,7 @@ function auto(tasks) {
         return {
             func: func,
             deps: deps,
-            defer: new Defer()
+            defer: P.defer()
         };
     });
     map_values(_.mapValues(tasks_info, function(task, name) {
@@ -435,7 +414,6 @@ async function wait_until(async_cond, timeout_ms, delay_ms = 2500) {
 }
 
 // EXPORTS
-exports.Defer = Defer;
 exports.join = join;
 exports.iterate = iterate;
 exports.loop = loop;
