@@ -1,9 +1,9 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
-var _ = require('lodash');
 const P = require('../../util/promise');
 const promise_utils = require('../../util/promise_utils');
+var _ = require('lodash');
 
 function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) {
     console.log('blocks_exist_on_cloud::', need_to_exist, pool_id, bucket_name);
@@ -18,19 +18,19 @@ function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) 
                 return isDone;
             },
             function() {
-                return Promise.allSettled(_.map(blocks, function(block) {
+                return P.all(_.map(blocks, function(block) {
                         console.log(`noobaa_blocks/${pool_id}/blocks_tree/${block.slice(block.length - 3)}.blocks/${block}`);
-                        return s3.headObject({
+                        return P.ninvoke(s3, 'headObject', {
                             Bucket: bucket_name,
                             Key: `noobaa_blocks/${pool_id}/blocks_tree/${block.slice(block.length - 3)}.blocks/${block}`
-                        }).promise();
+                        }).reflect();
                     }))
                     .then(function(response) {
                         let condition_correct;
                         if (need_to_exist) {
                             condition_correct = true;
                             _.forEach(response, promise_result => {
-                                if (promise_result.status === 'rejected') {
+                                if (promise_result.isRejected()) {
                                     condition_correct = false;
                                 }
                             });
@@ -47,7 +47,7 @@ function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) 
                         } else {
                             condition_correct = true;
                             _.forEach(response, promise_result => {
-                                if (promise_result.status === 'fulfilled') {
+                                if (promise_result.isFulfilled()) {
                                     condition_correct = false;
                                 }
                             });
