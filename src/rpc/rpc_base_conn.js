@@ -12,6 +12,7 @@ const config = require('../../config');
 const time_utils = require('../util/time_utils');
 const RpcError = require('./rpc_error');
 const RpcMessage = require('./rpc_message');
+const promise_utils = require('../util/promise_utils');
 
 
 const STATE_INIT = 'init';
@@ -38,7 +39,7 @@ class RpcBaseConnection extends EventEmitter {
         this._state = STATE_INIT;
 
         // the connecting_defer is used by connect() to wait for the connected event
-        this.connecting_defer = P.defer();
+        this.connecting_defer = new promise_utils.Defer();
         this.connecting_defer.promise.catch(_.noop); // to prevent error log of unhandled rejection
 
         this._connect_timeout_ms = config.RPC_CONNECT_TIMEOUT;
@@ -159,7 +160,7 @@ class RpcBaseConnection extends EventEmitter {
         return msg.encode();
     }
 
-     /**
+    /**
      * @param {object} encoded_message
      * @returns {RpcMessage}
      */

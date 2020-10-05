@@ -2,7 +2,7 @@
 'use strict';
 
 const _ = require('lodash');
-const P = require('../util/promise');
+const promise_utils = require('../util/promise_utils');
 const LinkedList = require('./linked_list');
 
 class KeysLock {
@@ -43,7 +43,7 @@ class KeysLock {
             return Promise.resolve();
         }
 
-        const defer = P.defer();
+        const defer = new promise_utils.Defer();
         lock_item.defer = defer;
         this._wait_list.push_back(lock_item);
         return defer.promise;

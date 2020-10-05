@@ -1,9 +1,8 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
-var P = require('../../util/promise');
-var promise_utils = require('../../util/promise_utils');
 var _ = require('lodash');
+const promise_utils = require('../../util/promise_utils');
 
 function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) {
     console.log('blocks_exist_on_cloud::', need_to_exist, pool_id, bucket_name);
@@ -18,19 +17,19 @@ function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) 
                 return isDone;
             },
             function() {
-                return P.all(_.map(blocks, function(block) {
+                return Promise.allSettled(_.map(blocks, function(block) {
                         console.log(`noobaa_blocks/${pool_id}/blocks_tree/${block.slice(block.length - 3)}.blocks/${block}`);
-                        return P.ninvoke(s3, 'headObject', {
+                        return s3.headObject({
                             Bucket: bucket_name,
                             Key: `noobaa_blocks/${pool_id}/blocks_tree/${block.slice(block.length - 3)}.blocks/${block}`
-                        }).reflect();
+                        }).promise();
                     }))
                     .then(function(response) {
                         let condition_correct;
                         if (need_to_exist) {
                             condition_correct = true;
                             _.forEach(response, promise_result => {
-                                if (promise_result.isRejected()) {
+                                if (promise_result.status === 'rejected') {
                                     condition_correct = false;
                                 }
                             });
@@ -47,7 +46,7 @@ function blocks_exist_on_cloud(need_to_exist, pool_id, bucket_name, blocks, s3) 
                         } else {
                             condition_correct = true;
                             _.forEach(response, promise_result => {
-                                if (promise_result.isFulfilled()) {
+                                if (promise_result.status === 'fulfilled') {
                                     condition_correct = false;
                                 }
                             });
@@ -89,20 +88,20 @@ async function create_hosts_pool(
     console.log(`test_utils::create_hosts_pool: waiting for ${pool_name} hosts (${host_count}) to be in optimal state`);
     await promise_utils.timeout(
         async () => {
-            let all_hosts_ready = false;
-            while (!all_hosts_ready) {
-                const res = await rpc_client.host.list_hosts({
-                    query: {
-                        pools: [pool_name],
-                        mode: ['OPTIMAL'],
-                    }
-                });
+                let all_hosts_ready = false;
+                while (!all_hosts_ready) {
+                    const res = await rpc_client.host.list_hosts({
+                        query: {
+                            pools: [pool_name],
+                            mode: ['OPTIMAL'],
+                        }
+                    });
 
-                await promise_utils.delay(2500);
-                all_hosts_ready = res.hosts.length === host_count;
-            }
-        },
-        timeout_ms
+                    await promise_utils.delay(2500);
+                    all_hosts_ready = res.hosts.length === host_count;
+                }
+            },
+            timeout_ms
     );
     console.log(`test_utils::create_hosts_pool: all ${pool_name} hosts (${host_count}) are in optimal state`);
 }
@@ -118,14 +117,14 @@ async function delete_hosts_pool(
     console.log(`test_utils::delete_hosts_pool: Waiting for ${pool_name} to be evacuated and delete`);
     await promise_utils.timeout(
         async () => {
-            let pool_exists = true;
-            while (pool_exists) {
-                await promise_utils.delay(30 * 1000); // 30sec
-                const system = await rpc_client.system.read_system({});
-                pool_exists = system.pools.find(pool => pool.name === pool_name);
-            }
-        },
-        timeout_ms
+                let pool_exists = true;
+                while (pool_exists) {
+                    await promise_utils.delay(30 * 1000); // 30sec
+                    const system = await rpc_client.system.read_system({});
+                    pool_exists = system.pools.find(pool => pool.name === pool_name);
+                }
+            },
+            timeout_ms
     );
     console.log(`test_utils::delete_hosts_pool: ${pool_name} was evacuated and deleted`);
 }

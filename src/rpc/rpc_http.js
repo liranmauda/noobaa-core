@@ -5,12 +5,12 @@ const _ = require('lodash');
 const http = require('http');
 const https = require('https');
 
-const P = require('../util/promise');
 const dbg = require('../util/debug_module')(__filename);
 const buffer_utils = require('../util/buffer_utils');
 const http_utils = require('../util/http_utils');
 const RpcBaseConnection = require('./rpc_base_conn');
 const { RPC_VERSION_NUMBER } = require('./rpc_message');
+const promise_utils = require('../util/promise_utils');
 
 // dbg.set_level(5);
 
@@ -148,7 +148,7 @@ class RpcHttpConnection extends RpcBaseConnection {
 
         dbg.log3('HTTP request', http_req.method, http_req.path, http_req._headers);
 
-        let send_defer = P.defer();
+        let send_defer = new promise_utils.Defer();
 
         // reject on send errors
         http_req.on('error', send_defer.reject);
