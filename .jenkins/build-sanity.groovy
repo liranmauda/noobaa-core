@@ -46,7 +46,29 @@ node('cico-workspace') {
 	try {
 		stage('prepare bare-metal machine') {
 			sh 'scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ./.jenkins/prepare.sh root@${CICO_NODE}:'
-			sh "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@${CICO_NODE} ./prepare.sh --workdir=/opt/build/noobaa-core --gitrepo=${ci_git_repo} --ref=${ci_git_ref}"
+			sh "${CICO_NODE_SSH} ./prepare.sh --workdir=/opt/build/noobaa-core --gitrepo=${ci_git_repo} --ref=${ci_git_ref}"
+		}
+
+		stage('stop jobs from the same PR') {
+			jobs = sh (
+				script: "${CICO_NODE_SSH} 'cd /opt/build/noobaa-core/.jenkins/ && ./get_job_numbers.sh --jobName ${JOB_NAME} \
+							--currentBuild ${currentBuild.number} --JENKINS_URL ${JENKINS_URL}'",
+				returnStdout: true
+			).trim().tokenize(' ')
+			if ( jobs.isEmpty() ) {
+				println "There are no other builds for this PR, Skipping abort."
+			} else { 
+				for (JobNumber in jobs) {
+					int JobNumberint = JobNumber as int
+					println "Aborting ${JOB_NAME} ${JobNumber}"
+					Jenkins.instance.getItemByFullName("${JOB_NAME}")
+									.getBuildByNumber(JobNumberint)
+									.finish(
+									hudson.model.Result.ABORTED,
+									new java.io.IOException("Aborting build")
+								);	
+				}
+			}
 		}
 
 		// real test start here
