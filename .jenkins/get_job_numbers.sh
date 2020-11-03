@@ -52,7 +52,7 @@ done
 function get_pr_number() {
     local url=${1}
     curl -L ${url}/api/xml > /tmp/job.xml
-    pr_number=$(cat /tmp/job.xml | awk -F "<value>" '{print $2}' | awk -F "</value>" '{print $1}' | awk -F "/" '{print $3}')
+    pr_number=$(cat /tmp/job.xml | awk -F "<value>/origin" '{print $2}' | awk -F "</value>" '{print $1}' | awk -F "/" '{print $3}')
     echo ${pr_number}
 }
 

@@ -1,0 +1,61 @@
+---
+- job:
+    name: stop-jobs
+    project-type: pipeline
+    concurrent: false
+    parameters:
+      - hidden:
+          name: GIT_REPO
+          default: https://github.com/noobaa/noobaa-core
+          description: The git repo url
+      - hidden:
+          name: GIT_BRANCH
+          default: master
+          description: The git branch
+      - string:
+          name: JOB_NAME
+          default: ""
+          description: The job name to stop
+      - string:
+          name: BUILD_NUMBER
+          default: ""
+          description: The build number of the job that triggered stop jobs
+    properties:
+      - github:
+          url: $GIT_REPO
+      - build-discarder:
+          days-to-keep: 7
+          artifact-days-to-keep: 7
+    dsl: |
+      node {
+        stage('checkout ci repository') {
+          git url: "${GIT_REPO}", branch: "${GIT_BRANCH}", changelog: false
+        }
+        stage('stop jobs from the same PR') {
+          jobs = sh(
+            script: "'./.jenkins/get_job_numbers.sh --jobName ${JOB_NAME} \
+                  --currentBuild ${currentBuild.number} --JENKINS_URL ${JENKINS_URL}'",
+            returnStdout: true
+          ).trim().tokenize(' ')
+          if ( jobs.isEmpty() ) {
+            println "There are no other builds for this PR, Skipping abort."
+          } else {  
+            for (JobNumber in jobs) {
+              int JobNumberint = JobNumber as int
+              println "Aborting ${JOB_NAME} ${JobNumber}"
+              Jenkins.instance.getItemByFullName("${JOB_NAME}")
+                      .getBuildByNumber(JobNumberint)
+                      .finish(
+                      hudson.model.Result.ABORTED,
+                      new java.io.IOException("Aborting build")
+                    );	
+            }
+          }
+        }
+      }
+    scm:
+      - git:
+          name: origin
+          url: $GIT_REPO
+          branches:
+            - $GIT_BRANCH
