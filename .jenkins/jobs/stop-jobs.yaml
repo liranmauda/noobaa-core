@@ -6,11 +6,13 @@
     parameters:
       - hidden:
           name: GIT_REPO
-          default: https://github.com/noobaa/noobaa-core
+          # default: https://github.com/noobaa/noobaa-core
+          default: https://github.com/liranmauda/noobaa-core
           description: The git repo url
       - hidden:
           name: GIT_BRANCH
-          default: master
+          # default: master
+          default: liran-jenkins-triggers
           description: The git branch
       - string:
           name: JOB_NAME
