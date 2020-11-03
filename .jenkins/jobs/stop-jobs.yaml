@@ -48,8 +48,8 @@
               Jenkins.instance.getItemByFullName("${JOB_NAME}")
                       .getBuildByNumber(JobNumberint)
                       .finish(
-                      hudson.model.Result.ABORTED,
-                      new java.io.IOException("Aborting build")
+                      hudson.model.Result.NOT_BUILT,
+                      new java.io.IOException("NOT_BUILT build")
                     );	
             }
           }
