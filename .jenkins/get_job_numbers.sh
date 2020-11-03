@@ -91,4 +91,4 @@ jobs_to_terminate=($(printf "%s\n" ${jobs_to_terminate[@]} | sort | uniq))
 
 rm -rf ${running_jobs_xml} /tmp/job.xml
 
-echo ${jobs_to_terminate}
+echo ${jobs_to_terminate[@]}
