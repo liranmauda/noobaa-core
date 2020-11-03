@@ -32,9 +32,11 @@
           git url: "${GIT_REPO}", branch: "${GIT_BRANCH}", changelog: false
         }
         stage('stop jobs from the same PR') {
+          sh "pwd"
+          sh "find / -n get_job_numbers.sh"
           jobs = sh(
             script: "'./.jenkins/get_job_numbers.sh --jobName ${JOB_NAME} \
-                  --currentBuild ${currentBuild.number} --JENKINS_URL ${JENKINS_URL}'",
+                  --currentBuild ${BUILD_NUMBER} --JENKINS_URL ${JENKINS_URL}'",
             returnStdout: true
           ).trim().tokenize(' ')
           if ( jobs.isEmpty() ) {
