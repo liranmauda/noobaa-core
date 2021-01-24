@@ -50,23 +50,58 @@ class NamespaceBlob {
 
     async list_objects(param, object_sdk) {
         const params = { ...param };
-        const regex = '^\\d{1,9}!\\d{1,9}!';
-        if (!(_.isUndefined(params.key_marker)) && params.key_marker.match(regex) === null) {
-            dbg.log0(`Got an invalid marker: ${params.key_marker}, changing the marker into null`);
-            params.key_marker = null;
-        }
-
         dbg.log0('NamespaceBlob.list_objects:',
             this.container,
             inspect(params)
         );
 
+        let first_blob = [];
+        let first_dir = [];
         const sasToken = await this._get_sas_token(this.container, undefined, azure_storage.BlobUtilities.SharedAccessPermissions.LIST);
+
+        const blob_params = { ...param };
+        console.log(`LMLM:: checking blob`);
+        const regex = '^\\d{1,9}!\\d{1,9}!';
+        if (!(_.isUndefined(params.key_marker)) && params.key_marker.match(regex) === null) {
+            dbg.log0(`Got an invalid marker: ${params.key_marker}, changing the marker into null`);
+            const new_params = params;
+            new_params.prefix = params.key_marker;
+            new_params.limit = 1;
+            new_params.key_marker = null;
+            dbg.log0('NamespaceBlob.list_objects: After change:',
+                this.container,
+                inspect(new_params)
+            );
+            const rep = await blob_utils.list_objects(new_params, this.account_name, this.container, sasToken);
+            console.log(`LMLM:: ${JSON.stringify(rep)}`);
+            first_blob = rep.blobs;
+            first_dir = rep.dirs;
+            blob_params.key_marker = rep.next_marker;
+            dbg.log0('NamespaceBlob.list_objects: blob params:',
+                this.container,
+                inspect(blob_params)
+            );
+        }
+
         // Azure blob SDK does not allow list blobs and dirs in one request but it is possible when calling directly to the API.
         // https://github.com/Azure/azure-storage-node/blob/8afb26eda981581381e3358cbb3a5c0ddb51465d/lib/services/blob/blobservice.core.js#L5757
         // calling list blobs and list directories seperatley may cause 0-2 unsynced continuation tokens.
         // because of the descripted problem we call directly to the blob API.
-        const { blobs, dirs, next_marker } = await blob_utils.list_objects(params, this.account_name, this.container, sasToken);
+        const rep = await blob_utils.list_objects(blob_params, this.account_name, this.container, sasToken);
+
+        console.log(`LMLM:: typeof blobs:: ${typeof rep.blobs}`);
+        console.log(`LMLM:: typeof first_blob:: ${typeof first_blob}`);
+        console.log(`LMLM:: typeof dirs:: ${typeof rep.dirs}`);
+        console.log(`LMLM:: typeof first_dir:: ${typeof first_dir}`);
+
+        let blobs;
+        if (!(_.isUndefined(params.first_blob))) {
+            blobs = first_blob.concat(rep.blobs);
+        }
+        let dirs;
+        if (!(_.isUndefined(params.first_dir))) {
+            dirs = first_dir.concat(rep.dirs);
+        }
 
         dbg.log2('NamespaceBlob.list_objects:',
             this.container,
@@ -78,8 +113,8 @@ class NamespaceBlob {
         return {
             objects: _.map(blobs, obj => this._get_blob_object_info(obj, params.bucket)),
             common_prefixes: _.map(dirs, dir => dir.Name[0]),
-            is_truncated: Boolean(next_marker),
-            next_marker
+            is_truncated: Boolean(rep.next_marker),
+            next_marker: rep.next_marker
         };
     }
 

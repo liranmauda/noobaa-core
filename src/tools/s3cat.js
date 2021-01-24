@@ -115,6 +115,8 @@ async function list_objects() {
             Marker: argv.marker,
         };
         const req = s3.listObjects(params);
+        // const a = await s3.getObjectAcl({ Bucket: argv.bucket, Key: argv.key }).promise();
+        // console.log(JSON.stringify(a));
         if (argv.presign) return console.log(req.presign(argv.presign));
         const res = await req.promise();
         if (argv.ll) {

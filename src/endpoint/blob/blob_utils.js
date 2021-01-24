@@ -86,6 +86,7 @@ async function list_objects(params, account_name, container, sasToken) {
     let next_marker;
     try {
         const parsed = await parse_xml_to_js(body);
+        console.log(`LMLM: parsed blob list_objects: ${JSON.stringify(parsed)}`);
         if (status_code !== 200) {
             if (parsed.Error) {
                 const code = parsed.Error.Code && parsed.Error.Code[0];
@@ -93,8 +94,8 @@ async function list_objects(params, account_name, container, sasToken) {
                     parsed.Error.QueryParameterName[0];
                 if (code === 'OutOfRangeQueryParameterValue' &&
                     faulty_query_param === 'maxresults' && params.limit === 0) {
-                        return { blobs: [], dirs: [], next_marker: '' };
-                    }
+                    return { blobs: [], dirs: [], next_marker: '' };
+                }
             }
             throw new Error(`Could not get blobs and diresctories list, (status code: ${status_code}) got ${body}`);
         }
