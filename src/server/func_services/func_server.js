@@ -2,7 +2,6 @@
 'use strict';
 
 const _ = require('lodash');
-const stream = require('stream');
 const request = require('request');
 
 const P = require('../../util/promise');
@@ -63,14 +62,15 @@ async function create_func(req) {
         }
     }
     const resource_name = `arn:noobaa:lambda:region:${system}:function:${name}:${version}`;
-    const code_stream = await _get_func_code_stream(req, func_code);
+    const code = await _get_func_code_stream(req, func_code);
+    const type = typeof code;
+    console.log('LMLM: typeof code', type);
 
     const {
-        id: code_gridfs_id,
         sha256: code_sha256,
         size: code_size
     } = await func_store.instance()
-        .create_code_gridfs({ system, name, version, code_stream });
+        .create_code_db({ system, name, version, code_stream: code }); //LMLM: change code_stream to code and reflect it on func_store
 
     const func_id = func_store.instance().make_func_id();
     await func_store.instance().create_func({
@@ -85,7 +85,7 @@ async function create_func(req) {
         last_modifier: exec_account,
         resource_name,
         pools: pools.map(pool => pool._id),
-        code_gridfs_id,
+        code,
         code_sha256,
         code_size
     });
@@ -316,25 +316,15 @@ function check_event_permission(req) {
     }
 }
 
-function _get_func_code_stream(req, func_code) {
+function _get_func_code_stream(req, func_code) { //TODO: LMLM: rename to _get_func_code_string
     if (func_code.zipfile_b64) {
-        // zipfile is given as base64 string
-        return new stream.Readable({
-            read(size) {
-                this.push(Buffer.from(func_code.zipfile_b64, 'base64'));
-                this.push(null);
-            }
-        });
+        console.log('LMLM: zipfile is given as base64 string');
+        return func_code.zipfile_b64;
     } else if (req.rpc_params[RPC_BUFFERS] && req.rpc_params[RPC_BUFFERS].zipfile) {
-        // zipfile is given as buffer
-        return new stream.Readable({
-            read(size) {
-                this.push(req.rpc_params[RPC_BUFFERS].zipfile);
-                this.push(null);
-            }
-        });
+        console.log('LMLM: zipfile is given as buffer');
+        return req.rpc_params[RPC_BUFFERS].zipfile.toString('base64');
     } else if (func_code.s3_bucket && func_code.s3_key) {
-        console.log(`reading function code from bucket ${func_code.s3_bucket} and key ${func_code.s3_key}`);
+        console.log(`LMLM: reading function code from bucket ${func_code.s3_bucket} and key ${func_code.s3_key}`);
         const account_keys = req.account.access_keys[0];
         const s3_endpoint = new AWS.S3({
             endpoint: 'http://127.0.0.1',
@@ -346,10 +336,10 @@ function _get_func_code_stream(req, func_code) {
             Bucket: func_code.s3_bucket,
             Key: func_code.s3_key,
         });
-        return get_object_req.createReadStream();
+        return get_object_req.createReadStream(); //TODO: LMLM: change to string base64
     } else if (func_code.url) {
         return new Promise((resolve, reject) => {
-            console.log(`reading function code from ${func_code.url}`);
+            console.log(`LMLM: reading function code from ${func_code.url}`);
             request({
                     url: func_code.url,
                     method: 'GET',
@@ -360,6 +350,7 @@ function _get_func_code_stream(req, func_code) {
                     if (res.statusCode !== 200) {
                         return reject(new Error(`failed GET request from ${func_code.url}`));
                     }
+                    //TODO LMLM: return a base64 string
                     return resolve(res);
                 })
                 .once('error', err => reject(err));

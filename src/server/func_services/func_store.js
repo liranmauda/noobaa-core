@@ -22,9 +22,9 @@ class FuncStore {
             schema: func_schema,
             db_indexes: func_indexes,
         });
-        this._func_code = db_client.instance().define_gridfs({
-            name: 'func_code_gridfs'
-        });
+        // this._func_code = db_client.instance().define_gridfs({
+        //     name: 'func_code_gridfs'
+        // });
     }
 
     static instance() {
@@ -36,27 +36,23 @@ class FuncStore {
         return new mongodb.ObjectId(id_str);
     }
 
-    create_func(func) {
-        return P.resolve().then(async () => {
-            try {
-                this._funcs.validate(func);
-                await this._funcs.insertOne(func);
-            } catch (err) {
-                db_client.instance().check_duplicate_key_conflict(err, 'func');
-            }
-            return func;
-        });
+    async create_func(func) {
+        try {
+            this._funcs.validate(func);
+            await this._funcs.insertOne(func);
+        } catch (err) {
+            db_client.instance().check_duplicate_key_conflict(err, 'func');
+        }
+        return func;
     }
 
-    delete_func(func_id) {
-        return P.resolve().then(async () => {
-            await this._funcs.updateOne({
-                _id: func_id,
-            }, {
-                $set: {
-                    deleted: new Date()
-                }
-            });
+    async delete_func(func_id) {
+        await this._funcs.updateOne({
+            _id: func_id,
+        }, {
+            $set: {
+                deleted: new Date()
+            }
         });
     }
 
@@ -112,34 +108,48 @@ class FuncStore {
         }));
     }
 
-    create_code_gridfs(params) {
-        const system = params.system;
-        const name = params.name;
-        const version = params.version;
+    //TODO: LMLM: we would like to remove this...
+    // create_code_gridfs(params) {
+    //     const system = params.system;
+    //     const name = params.name;
+    //     const version = params.version;
+    //     const code_stream = params.code_stream;
+    //     const sha256 = crypto.createHash('sha256');
+    //     var size = 0;
+    //     return new Promise((resolve, reject) => {
+    //         const upload_stream = this._func_code.gridfs().openUploadStream(
+    //             this.code_filename(system, name, version));
+    //         code_stream
+    //             .once('error', reject)
+    //             .pipe(new stream.Transform({
+    //                 transform(buf, encoding, callback) {
+    //                     size += buf.length;
+    //                     sha256.update(buf);
+    //                     callback(null, buf);
+    //                 }
+    //             }))
+    //             .once('error', reject)
+    //             .pipe(upload_stream)
+    //             .once('error', reject)
+    //             .once('finish', () => resolve({
+    //                 id: upload_stream.id,
+    //                 sha256: sha256.digest('base64'),
+    //                 size: size,
+    //             }));
+    //     });
+    // }
+
+    create_code_db(params) {
         const code_stream = params.code_stream;
         const sha256 = crypto.createHash('sha256');
-        var size = 0;
-        return new Promise((resolve, reject) => {
-            const upload_stream = this._func_code.gridfs().openUploadStream(
-                this.code_filename(system, name, version));
-            code_stream
-                .once('error', reject)
-                .pipe(new stream.Transform({
-                    transform(buf, encoding, callback) {
-                        size += buf.length;
-                        sha256.update(buf);
-                        callback(null, buf);
-                    }
-                }))
-                .once('error', reject)
-                .pipe(upload_stream)
-                .once('error', reject)
-                .once('finish', () => resolve({
-                    id: upload_stream.id,
-                    sha256: sha256.digest('base64'),
-                    size: size,
-                }));
-        });
+        //this is the base64 size. if we want the code size 
+        //if we want the code size it should be between 1 to ~3/4 of that size
+        var size = code_stream.length;
+        return {
+            code: code_stream,
+            sha256: sha256.digest('base64'),
+            size: size,
+        };
     }
 
     async delete_code_gridfs(id) {
