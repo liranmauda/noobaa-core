@@ -152,7 +152,7 @@ class FuncStore {
         };
     }
 
-    async delete_code_gridfs(id) {
+    async delete_code_gridfs(id) { //TODO LMLM: remove...
         return this._func_code.gridfs().delete(id);
     }
 

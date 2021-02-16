@@ -119,6 +119,7 @@ async function update_func(req) {
     }
 
     const func_code = params.code;
+    //TODO: LMLM: We dont really need this as the code is in the same collection
     if (func_code) {
         await func_store.instance().delete_code_gridfs(func.code_gridfs_id);
         const code_stream = await _get_func_code_stream(req, func_code);
@@ -162,7 +163,8 @@ async function update_func(req) {
 async function delete_func(req) {
     dbg.log0('delete_func::', req.params.name);
     await _load_func(req);
-    await func_store.instance().delete_code_gridfs(req.func.code_gridfs_id);
+    //TODO: LMLM: we might not deleting the record, need to check if we have bg for that.
+    // If not we might want to change the code to an empty one. (or maybe not).
     await func_store.instance().delete_func(req.func._id);
 }
 
