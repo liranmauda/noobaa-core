@@ -1,8 +1,6 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
-// const _ = require('lodash');
-const stream = require('stream');
 const crypto = require('crypto');
 const mongodb = require('mongodb');
 
@@ -66,16 +64,14 @@ class FuncStore {
         });
     }
 
-    read_func(system, name, version) {
-        return P.resolve().then(async () => {
-            const res = await this._funcs.findOne({
-                system: system,
-                name: name,
-                version: version,
-                deleted: null,
-            });
-            return db_client.instance().check_entity_not_deleted(res, 'func');
+    async read_func(system, name, version) {
+        const res = await this._funcs.findOne({
+            system: system,
+            name: name,
+            version: version,
+            deleted: null,
         });
+        return db_client.instance().check_entity_not_deleted(res, 'func');
     }
 
     get_by_id_include_deleted(func_id) {
@@ -84,77 +80,54 @@ class FuncStore {
         }));
     }
 
-    list_funcs(system) {
-        return P.resolve().then(async () => this._funcs.find({
+    async list_funcs(system) {
+        const list = await this._funcs.find({
             system: system,
             version: '$LATEST',
             deleted: null,
-        }));
+        });
+        return list;
     }
 
-    list_funcs_by_pool(system, pool) {
-        return P.resolve().then(async () => this._funcs.find({
+    async list_funcs_by_pool(system, pool) {
+        const list = await this._funcs.find({
             system: system,
             pools: pool,
             deleted: null,
-        }));
+        });
+        return list;
     }
 
-    list_func_versions(system, name) {
-        return P.resolve().then(async () => this._funcs.find({
+    async list_func_versions(system, name) {
+        const list = await this._funcs.find({
             system: system,
             name: name,
             deleted: null,
-        }));
+        });
+        return list;
     }
 
-    //TODO: LMLM: we would like to remove this...
-    // create_code_gridfs(params) {
-    //     const system = params.system;
-    //     const name = params.name;
-    //     const version = params.version;
-    //     const code_stream = params.code_stream;
-    //     const sha256 = crypto.createHash('sha256');
-    //     var size = 0;
-    //     return new Promise((resolve, reject) => {
-    //         const upload_stream = this._func_code.gridfs().openUploadStream(
-    //             this.code_filename(system, name, version));
-    //         code_stream
-    //             .once('error', reject)
-    //             .pipe(new stream.Transform({
-    //                 transform(buf, encoding, callback) {
-    //                     size += buf.length;
-    //                     sha256.update(buf);
-    //                     callback(null, buf);
-    //                 }
-    //             }))
-    //             .once('error', reject)
-    //             .pipe(upload_stream)
-    //             .once('error', reject)
-    //             .once('finish', () => resolve({
-    //                 id: upload_stream.id,
-    //                 sha256: sha256.digest('base64'),
-    //                 size: size,
-    //             }));
-    //     });
-    // }
-
-    create_code_db(params) {
-        const code_stream = params.code_stream;
+    create_code(params) {
+        const code = params.code;
         const sha256 = crypto.createHash('sha256');
         //this is the base64 size. if we want the code size 
         //if we want the code size it should be between 1 to ~3/4 of that size
-        var size = code_stream.length;
+        var size = code.length;
         return {
-            code: code_stream,
+            code,
             sha256: sha256.digest('base64'),
             size: size,
         };
     }
 
-    async delete_code_gridfs(id) { //TODO LMLM: remove...
+    //TODO LMLM: remove...
+    async delete_code_gridfs(id) {
         return this._func_code.gridfs().delete(id);
     }
+
+    // stream_code_gridfs(id) {
+    //     return this._func_code.gridfs().openDownloadStream(id);
+    // }
 
     stream_code_gridfs(id) {
         return this._func_code.gridfs().openDownloadStream(id);

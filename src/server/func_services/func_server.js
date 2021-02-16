@@ -5,6 +5,8 @@ const _ = require('lodash');
 const request = require('request');
 
 const P = require('../../util/promise');
+const stream = require('stream');
+const buffer_utils = require('../../util/buffer_utils');
 const { RpcError, RPC_BUFFERS } = require('../../rpc');
 const dbg = require('../../util/debug_module')(__filename);
 const FuncNode = require('../../agent/func_services/func_node');
@@ -63,14 +65,12 @@ async function create_func(req) {
     }
     const resource_name = `arn:noobaa:lambda:region:${system}:function:${name}:${version}`;
     const code = await _get_func_code_stream(req, func_code);
-    const type = typeof code;
-    console.log('LMLM: typeof code', type);
 
     const {
         sha256: code_sha256,
         size: code_size
     } = await func_store.instance()
-        .create_code_db({ system, name, version, code_stream: code }); //LMLM: change code_stream to code and reflect it on func_store
+        .create_code({ system, name, version, code });
 
     const func_id = func_store.instance().make_func_id();
     await func_store.instance().create_func({
@@ -164,17 +164,44 @@ async function delete_func(req) {
     dbg.log0('delete_func::', req.params.name);
     await _load_func(req);
     //TODO: LMLM: we might not deleting the record, need to check if we have bg for that.
-    // If not we might want to change the code to an empty one. (or maybe not).
+    // If not we might want to change the code field to an empty one. (or maybe not).
     await func_store.instance().delete_func(req.func._id);
 }
 
 async function read_func(req) {
     await _load_func(req);
-    const reply = await _get_func_info(req.func);
+    const reply = _get_func_info(req.func);
+    console.log('LMLM: read_func::', reply);
     if (req.params.read_code) {
-        const zipfile = await func_store.instance().read_code_gridfs(req.func.code_gridfs_id);
+        const system = req.system._id;
+        const name = req.params.name || _.get(req, 'params.config.name');
+        const version = req.params.version || _.get(req, 'params.config.version');
+        const func = await func_store.instance().read_func(system, name, version);
+        console.log('LMLM: func:', func);
+        const zipfile_b64 = func.code;
+        console.log('LMLM: zipfile_b64:', zipfile_b64);
+
+        // console.log('LMLM: req.params.read_code::', req.params.read_code);
+        // const zipfile = await func_store.instance().read_code_gridfs(req.func.code_gridfs_id);
+        // console.log('LMLM: zipfile:', zipfile);
+        const type = typeof zipfile_b64;
+        console.log('LMLM: typeof zipfile_b64:', type);
+        //LMLM: converting the base64 string into a zipfile again.
+        const zipfile_stream = new stream.Readable({
+            read(size) {
+                this.push(Buffer.from(zipfile_b64, 'base64'));
+                this.push(null);
+            }
+        });
+        const type_zipfile = typeof zipfile_stream;
+        console.log('LMLM: typeof type_zipfile:', type_zipfile);
+        const zipfile = await buffer_utils.read_stream_join(zipfile_stream);
         reply[RPC_BUFFERS] = { zipfile };
+        console.log('LMLM: reply[RPC_BUFFERS]', reply[RPC_BUFFERS]);
+        const typerep = typeof reply[RPC_BUFFERS];
+        console.log('LMLM: typeof reply[RPC_BUFFERS]', typerep);
     }
+    console.log('LMLM: about to return reply');
     return reply;
 }
 
@@ -367,8 +394,10 @@ async function _load_func(req) {
     const name = req.params.name || _.get(req, 'params.config.name');
     const version = req.params.version || _.get(req, 'params.config.version');
     const func = await func_store.instance().read_func(system, name, version);
+    console.log('LMLM: func from _load_func:', func);
     req.func = func;
     func.pools = _.map(func.pools, pool_id => system_store.data.get_by_id(pool_id));
+    console.log('LMLM: returning from _load_func');
     return func;
 }
 
