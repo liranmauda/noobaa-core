@@ -1,11 +1,9 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
-// const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
 const child_process = require('child_process');
-// const crypto = require('crypto');
 
 const P = require('../../util/promise');
 const dbg = require('../../util/debug_module')(__filename);
@@ -29,48 +27,56 @@ class FuncNode {
 
     async invoke_func(req) {
         const func = await this._load_func_code(req);
-        const res = await new Promise((resolve, reject) => {
-            const proc = child_process.fork(FUNC_PROC_PATH, [], {
-                    cwd: func.code_dir,
-                    stdio: 'inherit',
-                    // main node root modules library for the forked lambda function, so function can use modules (like aws-s3)
-                    // from wherever located (func.code_dir)
-                    env: {
-                        NODE_PATH: FUNC_NODE_PATH
-                    }
-                })
-                .once('error', reject)
-                .once('exit', code => resolve({
-                    error: {
-                        message: `Func process exit unexpectedly (should use callback function) with code ${code}`,
-                        code: String(code),
-                    }
-                }))
-                .once('message', msg => {
-                    dbg.log1('invoke_func: received message', msg);
-                    if (msg.error) {
+        let res;
+        try {
+            // const res = await new Promise((resolve, reject) => {
+            res = await new Promise((resolve, reject) => {
+                const proc = child_process.fork(FUNC_PROC_PATH, [], {
+                        cwd: func.code_dir,
+                        stdio: 'inherit',
+                        // main node root modules library for the forked lambda function, so function can use modules (like aws-s3)
+                        // from wherever located (func.code_dir)
+                        env: {
+                            NODE_PATH: FUNC_NODE_PATH,
+                            container: process.env.container
+                        }
+                    })
+                    .once('error', reject)
+                    .once('exit', code => resolve({
+                        error: {
+                            message: `Func process exit unexpectedly (should use callback function) with code ${code}`,
+                            code: String(code),
+                        }
+                    }))
+                    .once('message', msg => {
+                        dbg.log1('invoke_func: received message', msg);
+                        if (msg.error) {
+                            return resolve({
+                                error: {
+                                    message: msg.error.message || 'Unknown error from func process',
+                                    stack: msg.error.stack,
+                                    code: String(msg.error.code),
+                                }
+                            });
+                        }
                         return resolve({
-                            error: {
-                                message: msg.error.message || 'Unknown error from func process',
-                                stack: msg.error.stack,
-                                code: String(msg.error.code),
-                            }
+                            result: msg.result
                         });
-                    }
-                    return resolve({
-                        result: msg.result
                     });
-                });
-            const msg_1 = {
-                config: req.params.config,
-                event: req.params.event,
-                aws_config: req.params.aws_config,
-                rpc_options: req.params.rpc_options,
-                AWS_EXECUTION_ENV: 'NOOBAA_FUNCTION'
-            };
-            dbg.log1('invoke_func: send message', msg_1);
-            proc.send(msg_1);
-        });
+                const msg = {
+                    config: req.params.config,
+                    event: req.params.event,
+                    aws_config: req.params.aws_config,
+                    rpc_options: req.params.rpc_options,
+                    AWS_EXECUTION_ENV: 'NOOBAA_FUNCTION'
+                };
+                dbg.log1('invoke_func: send message', msg);
+                proc.send(msg);
+            });
+        } catch (e) {
+            dbg.error('Got error!!!', e);
+            throw e;
+        }
         return res;
     }
 
@@ -80,6 +86,10 @@ class FuncNode {
         const version = req.params.config.version;
         const code_sha256 = req.params.config.code_sha256;
         const version_dir = path.join(this.functions_path, name, version);
+        dbg.log0('LMLM version_dir:', version_dir);
+        dbg.log0('LMLM version_dir replaced:', version_dir.replace(/\$/g, ''));
+        const version_dir_replaced = path.join(this.functions_path, name, version.replace(/\$/g, ''));
+        dbg.log0('LMLM version_dir_replaced:', version_dir_replaced);
         const func_json_path = path.join(version_dir, 'func.json');
         // replacing the base64 encoded sha256 from using / to - in order to use as folder name
         const code_dir = path.join(version_dir, code_sha256.replace(/\//g, '-'));
@@ -87,11 +97,18 @@ class FuncNode {
             let func;
             try {
                 try {
-                    await fs.promises.stat(code_dir);
+                    try {
+                        await fs.promises.stat(code_dir);
+                    } catch (e) {
+                        dbg.error('stat failed:', e);
+                        const new_code_dir = path.join(version_dir_replaced, code_sha256.replace(/\//g, '-'));
+                        await fs.promises.stat(new_code_dir);
+                    }
                     const func_json_buf = await fs.promises.readFile(func_json_path, 'utf8');
                     func = JSON.parse(func_json_buf);
                     //if we can't load the function from the code dir we will create the dir and put the code there
                 } catch (err) {
+                    dbg.error('LMLM inside the catch but why? err:', err);
                     if (err.code !== 'ENOENT') throw err;
                     func = await this._write_func_into_dir(code_dir, name, version, code_sha256, version_dir, func_json_path, req);
                 }
@@ -113,8 +130,10 @@ class FuncNode {
             version,
             read_code: true
         }, req.params.rpc_options);
+        dbg.log0('LMLM: code_sha256', code_sha256, 'func.config.code_sha256', func.config.code_sha256);
         if (code_sha256 !== func.config.code_sha256 ||
             req.params.config.code_size !== func.config.code_size) {
+            dbg.log0('LMLM: before  throw new RpcError FUNC_CODE_MISMATCH');
             throw new RpcError('FUNC_CODE_MISMATCH',
                 `Function code does not match for ${func.name} version ${func.version} code_size ${func.config.code_size} code_sha256 ${func.config.code_sha256} 
                     requested code_size ${req.params.config.code_size} code_sha256 ${req.params.config.code_sha256}`);
