@@ -86,10 +86,6 @@ class FuncNode {
         const version = req.params.config.version;
         const code_sha256 = req.params.config.code_sha256;
         const version_dir = path.join(this.functions_path, name, version);
-        dbg.log0('LMLM version_dir:', version_dir);
-        dbg.log0('LMLM version_dir replaced:', version_dir.replace(/\$/g, ''));
-        const version_dir_replaced = path.join(this.functions_path, name, version.replace(/\$/g, ''));
-        dbg.log0('LMLM version_dir_replaced:', version_dir_replaced);
         const func_json_path = path.join(version_dir, 'func.json');
         // replacing the base64 encoded sha256 from using / to - in order to use as folder name
         const code_dir = path.join(version_dir, code_sha256.replace(/\//g, '-'));
@@ -97,18 +93,11 @@ class FuncNode {
             let func;
             try {
                 try {
-                    try {
-                        await fs.promises.stat(code_dir);
-                    } catch (e) {
-                        dbg.error('stat failed:', e);
-                        const new_code_dir = path.join(version_dir_replaced, code_sha256.replace(/\//g, '-'));
-                        await fs.promises.stat(new_code_dir);
-                    }
+                    await fs.promises.stat(code_dir);
                     const func_json_buf = await fs.promises.readFile(func_json_path, 'utf8');
                     func = JSON.parse(func_json_buf);
                     //if we can't load the function from the code dir we will create the dir and put the code there
                 } catch (err) {
-                    dbg.error('LMLM inside the catch but why? err:', err);
                     if (err.code !== 'ENOENT') throw err;
                     func = await this._write_func_into_dir(code_dir, name, version, code_sha256, version_dir, func_json_path, req);
                 }
