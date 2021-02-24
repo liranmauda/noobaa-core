@@ -100,38 +100,6 @@ class FuncStore {
         return list;
     }
 
-    // create_code(params) {
-    //     const code = params.code;
-    //     const sha256 = crypto.createHash('sha256');
-    //     //this is the base64 size.
-    //     //if we want the code size it should be between 1 to ~3/4 of that size
-    //     const size = code.length;
-    //     return {
-    //         code,
-    //         sha256: sha256.digest('base64'),
-    //         size: size,
-    //     };
-    // }
-
-    //LMLM: we might need the code below if we need to support upgrade.
-
-    //TODO LMLM: remove...
-    // async delete_code_gridfs(id) {
-    //     return this._func_code.gridfs().delete(id);
-    // }
-
-    // stream_code_gridfs(id) {
-    //     return this._func_code.gridfs().openDownloadStream(id);
-    // }
-
-    // stream_code_gridfs(id) {
-    //     return this._func_code.gridfs().openDownloadStream(id);
-    // }
-
-    // async read_code_gridfs(id) {
-    //     return buffer_utils.read_stream_join(this.stream_code_gridfs(id));
-    // }
-
     code_filename(system, name, version) {
         return system + '/' + name + '/' + version;
     }

@@ -57,7 +57,7 @@ function get_code_params(code) {
     //if we want the code size it should be between 1 to ~3/4 of that size
     const size = code.length;
     return {
-        code_sha256: sha256.update(code).digest('base64'), //LMLM: is this sha spouse to be the the code sha???
+        code_sha256: sha256.update(code).digest('base64'),
         code_size: size,
     };
 }
@@ -282,7 +282,6 @@ async function invoke_func(req) {
     await P.map(req.func.pools, pool => node_allocator.refresh_pool_alloc(pool));
 
     const func = req.func;
-    dbg.log0('LMLM: func_server@invoke_func:: func', func);
     const node = node_allocator.allocate_node({ pools: func.pools });
     const params = {
         config: _get_func_info(func).config,
@@ -338,13 +337,13 @@ function check_event_permission(req) {
 
 function _get_func_code_b64(req, func_code) {
     if (func_code.zipfile_b64) {
-        console.log('LMLM: zipfile is given as base64 string');
+        // zipfile is given as base64 string
         return func_code.zipfile_b64;
     } else if (req.rpc_params[RPC_BUFFERS] && req.rpc_params[RPC_BUFFERS].zipfile) {
-        console.log('LMLM: zipfile is given as buffer');
+        // zipfile is given as buffer
         return req.rpc_params[RPC_BUFFERS].zipfile.toString('base64');
     } else if (func_code.s3_bucket && func_code.s3_key) {
-        console.log(`LMLM: reading function code from bucket ${func_code.s3_bucket} and key ${func_code.s3_key}`);
+        console.log(`reading function code from bucket ${func_code.s3_bucket} and key ${func_code.s3_key}`);
         const account_keys = req.account.access_keys[0];
         const s3_endpoint = new AWS.S3({
             endpoint: 'http://127.0.0.1',
@@ -359,7 +358,7 @@ function _get_func_code_b64(req, func_code) {
         return get_object_req.createReadStream(); //TODO: LMLM: change to string base64
     } else if (func_code.url) {
         return new Promise((resolve, reject) => {
-            console.log(`LMLM: reading function code from ${func_code.url}`);
+            console.log(`reading function code from ${func_code.url}`);
             request({
                     url: func_code.url,
                     method: 'GET',

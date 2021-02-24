@@ -81,7 +81,6 @@ class FuncNode {
     }
 
     async _load_func_code(req) {
-        dbg.log0('LMLM: in _load_func_code');
         const name = req.params.config.name;
         const version = req.params.config.version;
         const code_sha256 = req.params.config.code_sha256;
@@ -96,7 +95,7 @@ class FuncNode {
                     await fs.promises.stat(code_dir);
                     const func_json_buf = await fs.promises.readFile(func_json_path, 'utf8');
                     func = JSON.parse(func_json_buf);
-                    //if we can't load the function from the code dir we will create the dir and put the code there
+                    //if we can't load the function from the code dir (or it is not exist) we will create the dir and put the code there
                 } catch (err) {
                     if (err.code !== 'ENOENT') throw err;
                     func = await this._write_func_into_dir(code_dir, name, version, code_sha256, version_dir, func_json_path, req);
@@ -111,7 +110,7 @@ class FuncNode {
         });
     }
 
-    async _write_func_into_dir(code_dir, name, version, code_sha256, version_dir, func_json_path, req) { //TODO: LMLM: We probably don't need that mach of variables... 
+    async _write_func_into_dir(code_dir, name, version, code_sha256, version_dir, func_json_path, req) {
         const loading_dir = path.join(this.functions_loading_path, Date.now().toString(36));
         dbg.log0('_load_func_code: loading', loading_dir, code_dir);
         const func = await this.rpc_client.func.read_func({
@@ -119,10 +118,8 @@ class FuncNode {
             version,
             read_code: true
         }, req.params.rpc_options);
-        dbg.log0('LMLM: code_sha256', code_sha256, 'func.config.code_sha256', func.config.code_sha256);
         if (code_sha256 !== func.config.code_sha256 ||
             req.params.config.code_size !== func.config.code_size) {
-            dbg.log0('LMLM: before  throw new RpcError FUNC_CODE_MISMATCH');
             throw new RpcError('FUNC_CODE_MISMATCH',
                 `Function code does not match for ${func.name} version ${func.version} code_size ${func.config.code_size} code_sha256 ${func.config.code_sha256} 
                     requested code_size ${req.params.config.code_size} code_sha256 ${req.params.config.code_sha256}`);
