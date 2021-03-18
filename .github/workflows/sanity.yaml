@@ -21,6 +21,9 @@ jobs:
           chmod +x ./kind
           sudo mv ./kind /usr/bin/kind
           kind create cluster
+          kubectl config get-contexts
+          kubectl cluster-info --context kind-kind
+          kubectl config get-contexts
 
       - name: Run make tester
         id: run-make-tester
