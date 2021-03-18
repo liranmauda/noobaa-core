@@ -25,7 +25,7 @@ jobs:
           kubectl get pods -n kube-system
           echo "current-context:" $(kubectl config current-context)
           echo "environment-kubeconfig:" ${KUBECONFIG}
-          sudo chown (id -u):$(id -g) $(pwd)/kubeconfig
+          sudo chown $(id -u):$(id -g) $(pwd)/kubeconfig
         # mkdir -p $HOME/.kube
         # sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 
