@@ -25,7 +25,6 @@ jobs:
           kubectl get pods -n kube-system
           echo "current-context:" $(kubectl config current-context)
           echo "environment-kubeconfig:" ${KUBECONFIG}
-          kubectl port-forward 8080:8080
 
       - name: Run make tester
         id: run-make-tester
