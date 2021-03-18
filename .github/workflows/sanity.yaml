@@ -25,9 +25,9 @@ jobs:
           kubectl get pods -n kube-system
           echo "current-context:" $(kubectl config current-context)
           echo "environment-kubeconfig:" ${KUBECONFIG}
-          mkdir -p $HOME/.kube
-          sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config 
-          sudo chown (id -u):$(id -g) $HOME/.kube/config
+          # mkdir -p $HOME/.kube
+          # sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config 
+          sudo chown (id -u):$(id -g) $(pwd)/kubeconfig
 
         # sudo kubeadm init --pod-network-cidr=10.244.0.0/16
       # - name: Run make tester
