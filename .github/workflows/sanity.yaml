@@ -17,7 +17,9 @@ jobs:
 
       - name: Check Kind cluster
         run: |
-          export KUBECONFIG="$(kind get kubeconfig-path)"
+          pwd
+          kind get kubeconfig > $(pwd)/kubeconfig
+          export KUBECONFIG="$(pwd)/kubeconfig"
           kind version
           kubectl cluster-info
           kubectl get pods -n kube-system
