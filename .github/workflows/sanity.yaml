@@ -10,9 +10,16 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
 
-      - name: Deploy minikube
+      # - name: Deploy minikube
+      #   id: deploy
+      #   run: sudo bash ./.travis/deploy_minikube.sh
+
+      - name: Deploy kind
         id: deploy
-        run: sudo bash ./.travis/deploy_minikube.sh
+        run: |
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.10.0/kind-linux-amd64
+          chmod +x ./kind
+          mv ./kind /usr/bin/kind
 
       - name: Run make tester
         id: run-make-tester
