@@ -25,13 +25,16 @@ jobs:
           kubectl get pods -n kube-system
           echo "current-context:" $(kubectl config current-context)
           echo "environment-kubeconfig:" ${KUBECONFIG}
+          sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 
-      - name: Run make tester
-        id: run-make-tester
-        run: make tester || exit 1
+      # - name: Run make tester
+      #   id: run-make-tester
+      #   run: make tester || exit 1
 
       - name: Run Build & Sanity Tests
         id: run-sanity
         run: |
+          docker pull liranmauda/noobaa-tester:1
+          docker tag liranmauda/noobaa-tester:1 noobaa-tester
           cd ./src/test/framework/
           sudo ./run_test_job.sh --name sanity --image noobaa --tester_image noobaa-tester --job_yaml ../../../.travis/travis_test_job.yaml --tests_list ./pipeline_tests_list.js --wait || exit 1
