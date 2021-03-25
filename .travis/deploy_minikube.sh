@@ -14,8 +14,8 @@ set -x
 # NOTE: This script was originally copied from the Cojaeger-operator build
 # https://github.com/jaegertracing/jaeger-operator/blob/master/.travis/setupMinikube.sh
 
-export MINIKUBE_VERSION=v1.8.2
-export KUBERNETES_VERSION=v1.17.3
+export MINIKUBE_VERSION=v1.18.1
+export KUBERNETES_VERSION=v1.20.2
 
 source /etc/os-release
 
