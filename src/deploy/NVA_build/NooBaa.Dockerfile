@@ -9,33 +9,40 @@ RUN if [ "${GIT_COMMIT}" != "" ]; then sed -i 's/^  "version": "\(.*\)",$/  "ver
 
 ##############################################################
 # Layers:
-#   Title: Creating the noobaa tar
-#   Size: ~ 153 MB
+#   Title: chmoding and removing files
 #   Cache: Rebuild when one of the files are changing
 #
 # In order to build this we should run 
 # docker build from the local repo 
 ##############################################################
-RUN tar \
-    --transform='s:^:noobaa-core/:' \
-    --exclude='src/native/aws-cpp-sdk' \
-    --exclude='src/native/third_party' \
-    -czf noobaa-NVA.tar.gz \
-    LICENSE \
-    package.json \
-    platform_restrictions.json \
-    config.js \
-    .nvmrc \
-    src/ \
-    frontend/dist/ \
-    build/Release/ \
-    node_modules/ 
+
+RUN rm -rf src/native/aws-cpp-sdk
+RUN rm -rf src/native/third_party
+
+RUN chgrp -R 0 LICENSE && \
+    chmod -R 775 LICENSE 
+RUN chgrp -R 0 ./package.json && \
+    chmod -R 775 ./package.json
+RUN chgrp -R 0 ./platform_restrictions.json && \
+    chmod -R 775 ./platform_restrictions.json
+RUN chgrp -R 0 ./config.js && \
+    chmod -R 775 ./config.js
+RUN chgrp -R 0 ./.nvmrc && \
+    chmod -R 775 ./.nvmrc
+RUN chgrp -R 0 ./src/ && \
+    chmod -R 775 ./src/
+RUN chgrp -R 0 ./frontend/dist/ && \
+    chmod -R 775 ./frontend/dist/
+RUN chgrp -R 0 ./build/Release/ && \
+    chmod -R 775 ./build/Release/
+RUN chgrp -R 0 ./node_modules/  && \
+    chmod -R 775 ./node_modules/
 
 #####################################################################################################################################
 
 ##############################################################
 #   Title: Start of the Server Image
-#   Size: ~ 841 MB
+#   Size: ~ 712 MB
 #   Cache: Rebuild when any layer is changing
 ##############################################################
 
@@ -80,10 +87,10 @@ RUN mkdir -p /usr/local/lib/python3.6/site-packages
 #   Size: ~ 110 MB
 #   Cache: Rebuild the .nvmrc is changing
 ##############################################################
-COPY ./.nvmrc ./.nvmrc
+COPY --from=server_builder /noobaa/.nvmrc /root/node_modules/noobaa-core/
 COPY ./src/deploy/NVA_build/install_nodejs.sh ./
 RUN chmod +x ./install_nodejs.sh && \
-    ./install_nodejs.sh $(cat .nvmrc)
+    ./install_nodejs.sh $(cat /root/node_modules/noobaa-core/.nvmrc)
 
 ##############################################################
 # Layers:
@@ -114,22 +121,27 @@ RUN chmod 775 /noobaa_init_files && \
 
 COPY --from=server_builder /kubectl /usr/local/bin/kubectl
 COPY --from=server_builder ./noobaa_init_files/kube_pv_chown /noobaa_init_files
-RUN mkdir -m 777 /root/node_modules && \
+RUN chgrp -R 0 /root/node_modules/noobaa-core/ && \
+    chmod -R 775 /root/node_modules/noobaa-core/ && \
     chown root:root /noobaa_init_files/kube_pv_chown && \
     chmod 750 /noobaa_init_files/kube_pv_chown && \
     chmod u+s /noobaa_init_files/kube_pv_chown
 
 ##############################################################
 # Layers:
-#   Title: Copying the tar file from the server_builder
-#   Size: ~ 153 MB
-#   Cache: Rebuild when there is a new tar file.
+#   Title: Copying the files from the server_builder
+#   Size: ~ 50 MB
+#   Cache: Rebuild when there is a new file to copy.
 ##############################################################
-COPY --from=server_builder /noobaa/noobaa-NVA.tar.gz /tmp/
-RUN cd /root/node_modules && \
-    tar -xzf /tmp/noobaa-NVA.tar.gz && \
-    chgrp -R 0 /root/node_modules && \
-    chmod -R 775 /root/node_modules 
+
+COPY --from=server_builder /noobaa/LICENSE /root/node_modules/noobaa-core/
+COPY --from=server_builder /noobaa/package.json /root/node_modules/noobaa-core/
+COPY --from=server_builder /noobaa/platform_restrictions.json /root/node_modules/noobaa-core/
+COPY --from=server_builder /noobaa/config.js /root/node_modules/noobaa-core/
+COPY --from=server_builder /noobaa/src/ /root/node_modules/noobaa-core/
+COPY --from=server_builder /noobaa/frontend/dist/ /root/node_modules/noobaa-core/
+COPY --from=server_builder /noobaa/build/Release/ /root/node_modules/noobaa-core/
+COPY --from=server_builder /noobaa/node_modules/ /root/node_modules/noobaa-core/
 
 ###############
 # PORTS SETUP #
