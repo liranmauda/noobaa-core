@@ -555,6 +555,11 @@ config.BASE_MODE_DIR = 0o777;
 // umask that will be used for creation of directories and files with no permissions for 'others'
 config.NSFS_UMASK = 0o007;
 
+////////////////////////////////
+//   NAMESPACE FS MONITOR     //
+////////////////////////////////
+config.NAMESPACE_FS_MONITOR_DELAY = 3 * 60 * 1000;
+
 /////////////////////
 //                 //
 //    OVERRIDES    //

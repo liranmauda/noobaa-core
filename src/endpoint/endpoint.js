@@ -34,6 +34,8 @@ const server_rpc = require('../server/server_rpc');
 const auth_server = require('../server/common_services/auth_server');
 const system_store = require('../server/system_services/system_store');
 const prom_reporting = require('../server/analytic_services/prometheus_reporting');
+const background_scheduler = require('../util/background_scheduler').get_instance();
+const { NamespaceFSMonitor } = require('../server/bg_services/namespace_fs_monitor');
 
 /**
  * @typedef {http.IncomingMessage & {
@@ -129,6 +131,12 @@ async function start_endpoint(options = {}) {
         dbg.log0('S3 server started successfully');
 
         await prom_reporting.start_server(config.EP_METRICS_SERVER_PORT);
+
+        // Register a bg monitor on the endpoint
+        register_bg_endpoint_worker(new NamespaceFSMonitor({
+            name: 'namespace_fs_monitor',
+            client: server_rpc.client
+        }));
 
         // Start a monitor to send periodic endpoint reports about endpoint usage.
         start_monitor(internal_rpc_client, endpoint_group_id);
@@ -352,6 +360,19 @@ function setup_http_server(server) {
     // socket._readableState.highWaterMark = 1024 * 1024;
     // socket.setNoDelay(true);
     // });
+}
+
+function register_bg_endpoint_worker(worker, run_batch_function) {
+    dbg.log0('Registering', worker.name, 'bg endpoint worker');
+    if (run_batch_function) {
+        worker.run_batch = run_batch_function;
+    }
+    const isFunction = typeof worker.run_batch;
+    if (!worker.name || isFunction !== 'function') {
+        console.error('Name and run function must be supplied for registering bg worker', worker.name);
+        throw new Error('Name and run function must be supplied for registering bg worker ' + worker.name);
+    }
+    background_scheduler.run_background_worker(worker);
 }
 
 exports.start_endpoint = start_endpoint;
