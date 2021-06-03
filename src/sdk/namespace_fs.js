@@ -121,13 +121,15 @@ class NamespaceFS {
      *  bucket_path: string;
      *  fs_backend?: string;
      *  bucket_id: string;
+     *  namespace_resource_id: string;
      * }} params
      */
-    constructor({ bucket_path, fs_backend, bucket_id }) {
+    constructor({ bucket_path, fs_backend, bucket_id, namespace_resource_id }) {
         console.log('NamespaceFS: buffers_pool', buffers_pool);
         this.bucket_path = path.resolve(bucket_path);
         this.fs_backend = fs_backend;
         this.bucket_id = bucket_id;
+        this.namespace_resource_id = namespace_resource_id;
     }
 
     set_cur_fs_account_config(object_sdk) {
@@ -380,6 +382,7 @@ class NamespaceFS {
 
     async read_object_md(params, object_sdk) {
         try {
+            console.log('LMLM read_object_md');
             const fs_account_config = this.set_cur_fs_account_config(object_sdk);
             await this._load_bucket(params, fs_account_config);
             const file_path = this._get_file_path(params);
@@ -388,6 +391,17 @@ class NamespaceFS {
             if (isDirectory(stat)) throw Object.assign(new Error('NoSuchKey'), { code: 'ENOENT' });
             return this._get_object_info(params.bucket, params.key, stat);
         } catch (err) {
+            try {
+                console.log('LMLM before read_object_md report');
+                object_sdk.rpc_client.pool.update_issues_report({
+                    namespace_resource_id: this.namespace_resource_id,
+                    error_code: err.code,
+                    time: Date.now(),
+                });
+                console.log('LMLM after read_object_md report');
+            } catch (e) {
+                console.log('update_issues_report on error:', e, 'ignoring.');
+            }
             throw this._translate_object_error_codes(err);
         }
     }
@@ -508,6 +522,7 @@ class NamespaceFS {
     ///////////////////
 
     async upload_object(params, object_sdk) {
+        console.log('LMLM upload_object');
         const fs_account_config = this.set_cur_fs_account_config(object_sdk);
         await this._load_bucket(params, fs_account_config);
 
@@ -516,8 +531,8 @@ class NamespaceFS {
         const upload_id = uuidv4();
         const upload_path = path.join(this.bucket_path, this.get_bucket_tmpdir(), 'uploads', upload_id);
         // console.log('NamespaceFS.upload_object:', upload_path, '->', file_path);
-        await Promise.all([this._make_path_dirs(file_path, fs_account_config), this._make_path_dirs(upload_path, fs_account_config)]);
         try {
+            await Promise.all([this._make_path_dirs(file_path, fs_account_config), this._make_path_dirs(upload_path, fs_account_config)]);
             if (params.copy_source) {
                 const source_file_path = path.join(this.bucket_path, params.copy_source.key);
                 try {
@@ -533,6 +548,17 @@ class NamespaceFS {
                 await this._upload_stream(params.source_stream, upload_path, fs_account_config);
             }
         } catch (err) {
+            try {
+                console.log('LMLM before upload_object report');
+                object_sdk.rpc_client.pool.update_issues_report({
+                    namespace_resource_id: this.namespace_resource_id,
+                    error_code: err.code,
+                    time: Date.now(),
+                });
+                console.log('LMLM after upload_object report');
+            } catch (e) {
+                console.log('update_issues_report on error:', e, 'ignoring.');
+            }
             throw this._translate_object_error_codes(err);
         }
         // TODO use file xattr to store md5_b64 xattr, etc.
@@ -674,6 +700,7 @@ class NamespaceFS {
 
     async upload_multipart(params, object_sdk) {
         try {
+            console.log('LMLM upload_multipart');
             const fs_account_config = this.set_cur_fs_account_config(object_sdk);
             await this._load_multipart(params, fs_account_config);
             const upload_path = path.join(params.mpu_path, `part-${params.num}`);
@@ -681,6 +708,17 @@ class NamespaceFS {
             const stat = await nb_native().fs.stat(fs_account_config, upload_path);
             return { etag: this._get_etag(stat) };
         } catch (err) {
+            try {
+                console.log('LMLM before upload_multipart report');
+                object_sdk.rpc_client.pool.update_issues_report({
+                    namespace_resource_id: this.namespace_resource_id,
+                    error_code: err.code,
+                    time: Date.now(),
+                });
+                console.log('LMLM after upload_multipart report');
+            } catch (e) {
+                console.log('update_issues_report on error:', e, 'ignoring.');
+            }
             throw this._translate_object_error_codes(err);
         }
     }
@@ -1046,7 +1084,7 @@ class NamespaceFS {
             fs_account_config.new_buckets_path, params.name);
 
         try {
-            const list = await this.list_objects({...params, limit: 1 }, object_sdk);
+            const list = await this.list_objects({ ...params, limit: 1 }, object_sdk);
 
             if (list && list.objects && list.objects.length > 0) {
                 const err = new Error('underlying directory has files in it');
