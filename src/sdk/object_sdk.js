@@ -180,7 +180,7 @@ class ObjectSDK {
         try {
             // NAMESPACE_FS HACK
             if (process.env.NAMESPACE_FS) {
-                const namespace_resource_id = _.extend({}, bucket.namespace.write_resource).resource.id;
+                const namespace_resource_id = bucket.namespace.write_resource?.resource.id;
                 return {
                     ns: new NamespaceFS({
                         bucket_path: process.env.NAMESPACE_FS + '/' + bucket.name,

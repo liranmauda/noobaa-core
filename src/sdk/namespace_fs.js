@@ -164,6 +164,22 @@ class NamespaceFS {
             params.xattr_copy; // TODO, DO we need to hard link at TaggingDirective 'REPLACE'?
     }
 
+    run_update_issues_report(object_sdk, err) {
+        if (!err.code) return;
+        if (!this.namespace_resource_id) return;
+        try {
+            console.log('LMLM before report');
+            object_sdk.rpc_client.pool.update_issues_report({
+                namespace_resource_id: this.namespace_resource_id,
+                error_code: err.code,
+                time: Date.now(),
+            });
+            console.log('LMLM after report');
+        } catch (e) {
+            console.log('update_issues_report on error:', e, 'ignoring.');
+        }
+    }
+
     /////////////////
     // OBJECT LIST //
     /////////////////
@@ -391,17 +407,7 @@ class NamespaceFS {
             if (isDirectory(stat)) throw Object.assign(new Error('NoSuchKey'), { code: 'ENOENT' });
             return this._get_object_info(params.bucket, params.key, stat);
         } catch (err) {
-            try {
-                console.log('LMLM before read_object_md report');
-                object_sdk.rpc_client.pool.update_issues_report({
-                    namespace_resource_id: this.namespace_resource_id,
-                    error_code: err.code,
-                    time: Date.now(),
-                });
-                console.log('LMLM after read_object_md report');
-            } catch (e) {
-                console.log('update_issues_report on error:', e, 'ignoring.');
-            }
+            this.run_update_issues_report(object_sdk, err);
             throw this._translate_object_error_codes(err);
         }
     }
@@ -548,17 +554,7 @@ class NamespaceFS {
                 await this._upload_stream(params.source_stream, upload_path, fs_account_config);
             }
         } catch (err) {
-            try {
-                console.log('LMLM before upload_object report');
-                object_sdk.rpc_client.pool.update_issues_report({
-                    namespace_resource_id: this.namespace_resource_id,
-                    error_code: err.code,
-                    time: Date.now(),
-                });
-                console.log('LMLM after upload_object report');
-            } catch (e) {
-                console.log('update_issues_report on error:', e, 'ignoring.');
-            }
+            this.run_update_issues_report(object_sdk, err);
             throw this._translate_object_error_codes(err);
         }
         // TODO use file xattr to store md5_b64 xattr, etc.
@@ -708,17 +704,7 @@ class NamespaceFS {
             const stat = await nb_native().fs.stat(fs_account_config, upload_path);
             return { etag: this._get_etag(stat) };
         } catch (err) {
-            try {
-                console.log('LMLM before upload_multipart report');
-                object_sdk.rpc_client.pool.update_issues_report({
-                    namespace_resource_id: this.namespace_resource_id,
-                    error_code: err.code,
-                    time: Date.now(),
-                });
-                console.log('LMLM after upload_multipart report');
-            } catch (e) {
-                console.log('update_issues_report on error:', e, 'ignoring.');
-            }
+            this.run_update_issues_report(object_sdk, err);
             throw this._translate_object_error_codes(err);
         }
     }

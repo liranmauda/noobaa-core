@@ -107,7 +107,7 @@ async function main(argv = minimist(process.argv.slice(2))) {
             const ns_fs = new NamespaceFS({
                 bucket_path: fs_root + '/' + bucket_name,
                 bucket_id: '000000000000000000000000',
-                namespace_resource_id: '9999'
+                namespace_resource_id: undefined
             });
             namespaces[bucket_name] = ns_fs;
             return ns_fs;
