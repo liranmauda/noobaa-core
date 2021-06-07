@@ -168,13 +168,11 @@ class NamespaceFS {
         if (!err.code) return;
         if (!this.namespace_resource_id) return;
         try {
-            console.log('LMLM before report');
             object_sdk.rpc_client.pool.update_issues_report({
                 namespace_resource_id: this.namespace_resource_id,
                 error_code: err.code,
                 time: Date.now(),
             });
-            console.log('LMLM after report');
         } catch (e) {
             console.log('update_issues_report on error:', e, 'ignoring.');
         }
@@ -398,7 +396,6 @@ class NamespaceFS {
 
     async read_object_md(params, object_sdk) {
         try {
-            console.log('LMLM read_object_md');
             const fs_account_config = this.set_cur_fs_account_config(object_sdk);
             await this._load_bucket(params, fs_account_config);
             const file_path = this._get_file_path(params);
@@ -528,7 +525,6 @@ class NamespaceFS {
     ///////////////////
 
     async upload_object(params, object_sdk) {
-        console.log('LMLM upload_object');
         const fs_account_config = this.set_cur_fs_account_config(object_sdk);
         await this._load_bucket(params, fs_account_config);
 
@@ -696,7 +692,6 @@ class NamespaceFS {
 
     async upload_multipart(params, object_sdk) {
         try {
-            console.log('LMLM upload_multipart');
             const fs_account_config = this.set_cur_fs_account_config(object_sdk);
             await this._load_multipart(params, fs_account_config);
             const upload_path = path.join(params.mpu_path, `part-${params.num}`);
