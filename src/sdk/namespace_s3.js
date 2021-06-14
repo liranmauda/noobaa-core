@@ -12,19 +12,24 @@ const blob_translator = require('./blob_translator');
 const stats_collector = require('./endpoint_stats_collector');
 const config = require('../../config');
 
+const EXCEPT_REASONS = [
+    'NO_SUCH_OBJECT'
+];
+
 /**
  * @implements {nb.Namespace}
  */
 class NamespaceS3 {
 
 
-    constructor({ namespace_resource_id, rpc_client, s3_params }) {
+    constructor({ namespace_resource_id, rpc_client, s3_params, active_triggers }) {
         this.namespace_resource_id = namespace_resource_id;
         this.access_key = s3_params.accessKeyId;
         this.endpoint = s3_params.endpoint;
         this.s3 = new AWS.S3(s3_params);
         this.bucket = String(this.s3.config.params.Bucket);
         this.rpc_client = rpc_client;
+        this.active_triggers = active_triggers;
     }
 
     get_write_resource() {
@@ -188,7 +193,15 @@ class NamespaceS3 {
 
     async read_object_stream(params, object_sdk) {
         dbg.log0('NamespaceS3.read_object_stream:', this.bucket, inspect(_.omit(params, 'object_md.ns')));
-        return new Promise((resolve, reject) => {
+        const operation = 'ObjectRead';
+        const load_for_trigger = !params.noobaa_trigger_agent &&
+            object_sdk.should_run_triggers({
+                active_triggers: this.active_triggers,
+                operation
+            });
+        params = _.omit(params, 'noobaa_trigger_agent');
+        const obj = load_for_trigger && _.defaults({ key: params.key }, await this.read_object_md(params, object_sdk));
+        const replay = new Promise((resolve, reject) => {
             const request = {
                 Bucket: this.bucket,
                 Key: params.key,
@@ -230,6 +243,15 @@ class NamespaceS3 {
                 });
             req.send();
         });
+        if (load_for_trigger) {
+            object_sdk.dispatch_triggers({
+                active_triggers: this.active_triggers,
+                operation,
+                obj,
+                bucket: params.bucket
+            });
+        }
+        return replay;
     }
 
 
@@ -239,6 +261,11 @@ class NamespaceS3 {
 
     async upload_object(params, object_sdk) {
         dbg.log0('NamespaceS3.upload_object:', this.bucket, inspect(params));
+        const operation = 'ObjectCreated';
+        const load_for_trigger = object_sdk.should_run_triggers({
+            active_triggers: this.active_triggers,
+            operation
+        });
         let res;
         const Tagging = params.tagging && params.tagging.map(tag => tag.key + '=' + tag.value).join('&');
         if (params.copy_source) {
@@ -301,6 +328,16 @@ class NamespaceS3 {
         dbg.log0('NamespaceS3.upload_object:', this.bucket, inspect(params), 'res', inspect(res));
         const etag = s3_utils.parse_etag(res.ETag);
         const last_modified_time = s3_utils.get_http_response_date(res);
+        if (load_for_trigger) {
+            const obj = {
+                bucket: params.bucket,
+                key: params.key,
+                size: params.size,
+                content_type: params.content_type,
+                etag: etag,
+            };
+            object_sdk.dispatch_triggers({ active_triggers: this.active_triggers, operation, obj, bucket: params.bucket });
+        }
         return { etag, version_id: res.VersionId, last_modified_time };
     }
 
@@ -552,7 +589,17 @@ class NamespaceS3 {
 
     async delete_object(params, object_sdk) {
         dbg.log0('NamespaceS3.delete_object:', this.bucket, inspect(params));
-
+        const operation = 'ObjectRemoved';
+        const load_for_trigger = object_sdk.should_run_triggers({
+            active_triggers: this.active_triggers,
+            operation
+        });
+        let obj;
+        try {
+            obj = load_for_trigger && _.defaults({ key: params.key }, await this.read_object_md(params, object_sdk));
+        } catch (error) {
+            if (!_.includes(EXCEPT_REASONS, error.rpc_code || 'UNKNOWN_ERR')) throw error;
+        }
         const res = await this.s3.deleteObject({
             Bucket: this.bucket,
             Key: params.key,
@@ -564,6 +611,15 @@ class NamespaceS3 {
             inspect(params),
             'res', inspect(res)
         );
+
+        if (load_for_trigger && obj) {
+            object_sdk.dispatch_triggers({
+                active_triggers: this.active_triggers,
+                operation,
+                obj,
+                bucket: params.bucket
+            });
+        }
 
         if (params.version_id) {
             return {
