@@ -215,6 +215,7 @@ class NodesMonitor extends EventEmitter {
         this.n2n_rpc.set_disconnected_state(false);
         await this._load_from_store();
 
+        if (_.isUndefined(system_store.data.systems[0])) this._started = false;
         // initialize nodes stats in prometheus
         if (config.PROMETHEUS_ENABLED && system_store.data.systems[0]) {
             let nodes_stats = await this._get_nodes_stats_by_service(
