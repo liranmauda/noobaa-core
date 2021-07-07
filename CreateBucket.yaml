@@ -1,0 +1,118 @@
+apiVersion: noobaa.io/v1alpha1
+kind: NooBaa
+metadata:
+  creationTimestamp: "2021-07-06T06:35:42Z"
+  finalizers:
+  - noobaa.io/graceful_finalizer
+  generation: 1
+  labels:
+    app: noobaa
+  name: noobaa
+  namespace: default
+  resourceVersion: "136748"
+  uid: 57552fb0-2ed0-4e35-ba27-be2df042837d
+spec:
+  cleanupPolicy: {}
+  coreResources:
+    limits:
+      cpu: 100m
+      memory: 1G
+    requests:
+      cpu: 100m
+      memory: 1G
+  dbImage: centos/postgresql-12-centos7
+  dbResources:
+    limits:
+      cpu: 100m
+      memory: 500M
+    requests:
+      cpu: 100m
+      memory: 500M
+  dbType: postgres
+  debugLevel: 5
+  endpoints:
+    maxCount: 1
+    minCount: 1
+    resources:
+      limits:
+        cpu: 100m
+        memory: 500M
+      requests:
+        cpu: 100m
+        memory: 500M
+  image: liranmauda/noobaa-core:CreateBucket1
+  security:
+    kms: {}
+status:
+  accounts:
+    admin:
+      secretRef:
+        name: noobaa-admin
+        namespace: default
+  actualImage: liranmauda/noobaa-core:master-20210706
+  conditions:
+  - lastHeartbeatTime: "2021-07-06T06:36:04Z"
+    lastTransitionTime: "2021-07-06T09:05:01Z"
+    message: 'RPC: connection (0xc00102f400) already closed &{RPC:0xc00008af50 Address:wss://noobaa-mgmt.default.svc.cluster.local:443/rpc/
+      State:closed WS:<nil> PendingRequests:map[] NextRequestID:0 Lock:{state:9 sema:0}
+      ReconnectDelay:3s}'
+    reason: TemporaryError
+    status: "False"
+    type: Available
+  - lastHeartbeatTime: "2021-07-06T06:36:04Z"
+    lastTransitionTime: "2021-07-06T09:05:01Z"
+    message: 'RPC: connection (0xc00102f400) already closed &{RPC:0xc00008af50 Address:wss://noobaa-mgmt.default.svc.cluster.local:443/rpc/
+      State:closed WS:<nil> PendingRequests:map[] NextRequestID:0 Lock:{state:9 sema:0}
+      ReconnectDelay:3s}'
+    reason: TemporaryError
+    status: "True"
+    type: Progressing
+  - lastHeartbeatTime: "2021-07-06T06:36:04Z"
+    lastTransitionTime: "2021-07-06T06:36:04Z"
+    message: 'RPC: connection (0xc00102f400) already closed &{RPC:0xc00008af50 Address:wss://noobaa-mgmt.default.svc.cluster.local:443/rpc/
+      State:closed WS:<nil> PendingRequests:map[] NextRequestID:0 Lock:{state:9 sema:0}
+      ReconnectDelay:3s}'
+    reason: TemporaryError
+    status: "False"
+    type: Degraded
+  - lastHeartbeatTime: "2021-07-06T06:36:04Z"
+    lastTransitionTime: "2021-07-06T09:05:01Z"
+    message: 'RPC: connection (0xc00102f400) already closed &{RPC:0xc00008af50 Address:wss://noobaa-mgmt.default.svc.cluster.local:443/rpc/
+      State:closed WS:<nil> PendingRequests:map[] NextRequestID:0 Lock:{state:9 sema:0}
+      ReconnectDelay:3s}'
+    reason: TemporaryError
+    status: "False"
+    type: Upgradeable
+  endpoints:
+    readyCount: 1
+    virtualHosts:
+    - s3.default.svc
+  observedGeneration: 1
+  phase: Connecting
+  readme: "\n\n\tNooBaa operator is still working to reconcile this system.\n\tCheck
+    out the system status.phase, status.conditions, and events with:\n\n\t\tkubectl
+    -n default describe noobaa\n\t\tkubectl -n default get noobaa -o yaml\n\t\tkubectl
+    -n default get events --sort-by=metadata.creationTimestamp\n\n\tYou can wait for
+    a specific condition with:\n\n\t\tkubectl -n default wait noobaa/noobaa --for
+    condition=available --timeout -1s\n\n\tNooBaa Core Version:     master-20210705\n\tNooBaa
+    Operator Version: 5.9.0\n"
+  services:
+    serviceMgmt:
+      internalDNS:
+      - https://noobaa-mgmt.default.svc:443
+      internalIP:
+      - https://10.108.195.185:443
+      nodePorts:
+      - https://192.168.64.106:30075
+      podPorts:
+      - https://172.17.0.5:8443
+    serviceS3:
+      internalDNS:
+      - https://s3.default.svc:443
+      internalIP:
+      - https://10.98.141.17:443
+      nodePorts:
+      - https://192.168.64.106:32366
+      podPorts:
+      - https://172.17.0.9:6443
+  upgradePhase: NoUpgrade

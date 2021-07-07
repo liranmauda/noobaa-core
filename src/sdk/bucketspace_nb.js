@@ -40,7 +40,14 @@ class BucketSpaceNB {
     }
 
     async create_bucket(params, object_sdk) {
-        const resp = await this.rpc_client.bucket.create_bucket(params);
+        let resp;
+        try {
+            resp = await this.rpc_client.bucket.create_bucket(params);
+        } catch (e) {
+            dbg.log2('create_bucket failed with', e);
+            throw e;
+        }
+        dbg.log2('LMLM create_bucket response:', resp);
         try {
             if (resp.namespace && resp.namespace.should_create_underlying_storage) {
                 const ns = await object_sdk._get_bucket_namespace(params.name.unwrap());

@@ -19,6 +19,7 @@ class Semaphore {
         this._value = this._initial;
         this._waiting_value = 0;
         this._wq = new WaitQueue();
+        this._verbose = true; // LMLM remove
         if (params) {
             this._verbose = Boolean(params && params.verbose);
             if (params.timeout) {
