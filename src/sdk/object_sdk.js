@@ -17,6 +17,7 @@ const NamespaceNB = require('./namespace_nb');
 const NamespaceFS = require('./namespace_fs');
 const NamespaceS3 = require('./namespace_s3');
 const NamespaceBlob = require('./namespace_blob');
+const NamespaceGCP = require('./namespace_gcp');
 const NamespaceMerge = require('./namespace_merge');
 const NamespaceCache = require('./namespace_cache');
 const NamespaceMultipart = require('./namespace_multipart');
@@ -377,6 +378,17 @@ class ObjectSDK {
                 // Azure storage account name is stored as the access key.
                 account_name: ns_info.access_key.unwrap(),
                 account_key: ns_info.secret_key.unwrap(),
+                access_mode: ns_info.access_mode
+            });
+        }
+        if (ns_info.endpoint_type === 'GOOGLE') {
+            return new NamespaceGCP({
+                namespace_resource_id: ns_info.id,
+                rpc_client: this.rpc_client,
+                target_bucket: ns_info.target_bucket,
+                project_id: ns_info.project_id,
+                client_email: ns_info.client_email,
+                private_key: ns_info.private_key,
                 access_mode: ns_info.access_mode
             });
         }
