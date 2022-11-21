@@ -11,7 +11,7 @@ const dbg = require('../util/debug_module')(__filename);
 // const blob_translator = require('./blob_translator');
 // const stats_collector = require('./endpoint_stats_collector');
 // const config = require('../../config');
-const GoogleCloudStorage = require('../util/google_storage_wrap');
+const GoogleCloudStorage = require('../util/google_storage_wrap'); //LMLM why do we what to use the wrap and not directly @google-cloud/storage ? 
 
 /**
  * @implements {nb.Namespace}
