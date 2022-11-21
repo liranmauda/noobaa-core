@@ -5,13 +5,13 @@ const _ = require('lodash');
 const util = require('util');
 
 const dbg = require('../util/debug_module')(__filename);
-const stream_utils = require('../util/stream_utils');
-const s3_utils = require('../endpoint/s3/s3_utils');
-const cloud_utils = require('../util/cloud_utils');
-const blob_translator = require('./blob_translator');
-const stats_collector = require('./endpoint_stats_collector');
-const config = require('../../config');
-const Storage = require('../util/google_storage_wrap');
+// const stream_utils = require('../util/stream_utils');
+// const s3_utils = require('../endpoint/s3/s3_utils');
+// const cloud_utils = require('../util/cloud_utils');
+// const blob_translator = require('./blob_translator');
+// const stats_collector = require('./endpoint_stats_collector');
+// const config = require('../../config');
+const GoogleCloudStorage = require('../util/google_storage_wrap');
 
 /**
  * @implements {nb.Namespace}
@@ -21,11 +21,15 @@ class NamespaceGCP {
 
     constructor({ namespace_resource_id, rpc_client, project_id, target_bucket, client_email, private_key, access_mode }) {
         this.namespace_resource_id = namespace_resource_id;
-        this.cloud = new Storage({
-            projectId: project_id,
+        this.project_id = project_id;
+        this.client_email = client_email;
+        this.private_key = private_key;
+        //gcs means google cloud storage
+        this.gcs = new GoogleCloudStorage({
+            projectId: this.project_id,
             credentials: {
-                client_email,
-                private_key,
+                client_email: this.client_email,
+                private_key: this.private_key,
             }
         });
         this.bucket = target_bucket;
@@ -38,7 +42,10 @@ class NamespaceGCP {
     }
 
     is_server_side_copy(other, params) {
-        return other instanceof NamespaceGCP //&& this.endpoint === other.endpoint && this.access_key === other.access_key; //LMLM what is the case here? 
+        //LMLM what is the case here, what determine server side copy? 
+        return other instanceof NamespaceGCP &&
+            this.private_key === other.private_key &&
+            this.client_email === other.client_email;
     }
 
     get_bucket() {
@@ -149,9 +156,9 @@ class NamespaceGCP {
     //         }
     //     }
 
-    //     async read_object_md(params, object_sdk) {
+        async read_object_md(params, object_sdk) {
     //         try {
-    //             dbg.log0('NamespaceGCP.read_object_md:', this.bucket, inspect(params));
+                dbg.log0('NamespaceGCP.read_object_md:', this.bucket, inspect(params));
     //             const request = {
     //                 Bucket: this.bucket,
     //                 Key: params.key,
@@ -191,7 +198,7 @@ class NamespaceGCP {
     //             });
     //             throw err;
     //         }
-    //     }
+        }
 
         async read_object_stream(params, object_sdk) {
             dbg.log0('NamespaceGCP.read_object_stream:', this.bucket, inspect(_.omit(params, 'object_md.ns')));
