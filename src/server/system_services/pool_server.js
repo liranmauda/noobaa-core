@@ -251,7 +251,7 @@ async function create_namespace_resource(req) {
     req.rpc_params.access_mode = req.rpc_params.access_mode || 'READ_WRITE';
     const name = req.rpc_params.name;
     let namespace_resource;
-    if (req.rpc_params.nsfs_config) {
+    if (req.rpc_params.nsfs_config) { //LMLM: why are we looking at nsfs_config and not looking if the endpoint is NSFS? will it be possible to mistakenly add nsfs config on non NSFS Endpoint? 
         namespace_resource = new_namespace_resource_defaults(name, req.system._id, req.account._id, undefined, req.rpc_params.nsfs_config,
             req.rpc_params.access_mode);
         const already_used_by = system_store.data.namespace_resources.find(cur_nsr => cur_nsr.nsfs_config &&
