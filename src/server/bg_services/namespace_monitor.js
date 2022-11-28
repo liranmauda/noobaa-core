@@ -65,8 +65,12 @@ class NamespaceMonitor {
                     await this.test_s3_resource(nsr);
                 } else if (endpoint_type === 'AZURE') {
                     await this.test_blob_resource(nsr);
+                } else if (endpoint_type === 'GOOGLE') {
+                    await this.test_gcs_resource(nsr);
                 } else {
-                    dbg.error('namespace_monitor: invalid endpoint type', endpoint_type);
+                    const err = `invalid endpoint type ${endpoint_type}`;
+                    dbg.error('namespace_monitor: ', err); //LMLM do we want to throw error here? 
+                    //LMLM maybe throw new Error(err);
                 }
                 await this.update_last_monitoring(nsr._id, nsr.name);
             } catch (err) {
@@ -166,6 +170,14 @@ class NamespaceMonitor {
             dbg.log1('test_blob_resource: got error:', err);
             if (err.code !== 'BlobNotFound') throw err;
         }
+    }
+
+    async test_gcs_resource(nsr) {
+        //LMLM TODO...
+        // Create a connection
+        // Try to delete none existing file
+        // Catch the error and see if the code is expected and return or throw the error
+        throw new Error('LMLM: need to implement test_gcs_resource');
     }
 
     async test_nsfs_resource(nsr) {
