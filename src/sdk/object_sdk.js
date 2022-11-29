@@ -30,6 +30,10 @@ const config = require('../../config');
 const path = require('path');
 const { AbortController } = require('node-abort-controller');
 
+function inspect(x) {
+    return util.inspect(_.omit(x, 'source_stream'), true, 5, true);
+}
+
 const bucket_namespace_cache = new LRUCache({
     name: 'ObjectSDK-Bucket-Namespace-Cache',
     // This is intentional. Cache entry expiration is handled by _validate_bucket_namespace().
@@ -382,14 +386,14 @@ class ObjectSDK {
             });
         }
         if (ns_info.endpoint_type === 'GOOGLE') {
-            dbg.log0(`LMLM ns_info.endpoint_type: ${ns_info.endpoint_type}`);
+            const { project_id, private_key, client_email } = JSON.parse(ns_info.secret_key.unwrap());
             return new NamespaceGCP({
                 namespace_resource_id: ns_info.id,
                 rpc_client: this.rpc_client,
                 target_bucket: ns_info.target_bucket,
-                project_id: ns_info.project_id,
-                client_email: ns_info.client_email,
-                private_key: ns_info.private_key,
+                project_id,
+                client_email,
+                private_key,
                 access_mode: ns_info.access_mode
             });
         }
