@@ -382,6 +382,7 @@ class ObjectSDK {
             });
         }
         if (ns_info.endpoint_type === 'GOOGLE') {
+            dbg.log0(`LMLM ns_info.endpoint_type: ${ns_info.endpoint_type}`);
             return new NamespaceGCP({
                 namespace_resource_id: ns_info.id,
                 rpc_client: this.rpc_client,

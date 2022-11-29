@@ -56,7 +56,7 @@ class NamespaceMonitor {
         await P.map_with_concurrency(10, system_store.data.namespace_resources, async nsr => {
             if (!this.should_monitor(nsr)) return;
 
-            const endpoint_type = nsr.nsfs_config ? 'NSFS' : nsr.connection.endpoint_type;
+            const endpoint_type = nsr.nsfs_config ? 'NSFS' : nsr.connection.endpoint_type; //LMLM in case of NSFS don't we have endpoint_type?? 
 
             try {
                 if (endpoint_type === 'NSFS') {
