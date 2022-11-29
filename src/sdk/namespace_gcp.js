@@ -1,6 +1,7 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
+// const { TOTAL_TIMEOUT_DEFAULT } = require('@google-cloud/storage/build/src/storage');
 const _ = require('lodash');
 const util = require('util');
 
@@ -65,7 +66,22 @@ class NamespaceGCP {
     //     /////////////////
 
     async list_objects(params, object_sdk) {
-        dbg.log0('NamespaceGCP.list_objects:', this.bucket, inspect(params));
+        // https://cloud.google.com/storage/docs/samples/storage-list-files-with-prefix
+        // https://googleapis.dev/nodejs/storage/latest/Bucket.html#getFiles
+        dbg.log0('LMLM: NamespaceGCP.list_objects:', this.bucket, inspect(params)); //remove the LMLM
+
+        const options = {
+            prefix: params.prefix,
+            autoPaginate: false, //LMLM do we want to disable auto pagination and use maxResults as max keys? 
+            maxResults: params.limit || 1000,
+            pageToken: params.key_marker, //LMLM is this the correct way? 
+        };
+
+        if (params.delimiter) {
+            options.delimiter = params.delimiter;
+        }
+        dbg.log0(`LMLM: NamespaceGCP.list_objects: options: ${inspect(options)}`); //LMLM remove this log
+        const res = await this.gcs.bucket(this.bucket).getFiles(options);
 
         //         const res = await this.s3.listObjects({
         //             Bucket: this.bucket,
@@ -75,8 +91,7 @@ class NamespaceGCP {
         //             MaxKeys: params.limit,
         //         }).promise();
 
-        //         dbg.log0('NamespaceGCP.list_objects:', this.bucket, inspect(params),
-        //             'list', inspect(res));
+        dbg.log0('LMLM: NamespaceGCP.list_objects: bucket:', this.bucket, 'params:', inspect(params), 'list:', inspect(res)); //LMLM remove the LMLM
 
         //         return {
         //             objects: _.map(res.Contents, obj => this._get_s3_object_info(obj, params.bucket)),
@@ -87,55 +102,29 @@ class NamespaceGCP {
     }
 
     async list_uploads(params, object_sdk) {
-        dbg.log0('NamespaceGCP.list_uploads:', this.bucket, inspect(params));
-
-        //         const res = await this.s3.listMultipartUploads({
-        //             Bucket: this.bucket,
-        //             Prefix: params.prefix,
-        //             Delimiter: params.delimiter,
-        //             KeyMarker: params.key_marker,
-        //             UploadIdMarker: params.upload_id_marker,
-        //             MaxUploads: params.limit,
-        //         }).promise();
-
-        //         dbg.log0('NamespaceGCP.list_uploads:', this.bucket, inspect(params),
-        //             'list', inspect(res));
-
-        //         return {
-        //             objects: _.map(res.Uploads, obj => this._get_s3_object_info(obj, params.bucket)),
-        //             common_prefixes: _.map(res.CommonPrefixes, 'Prefix'),
-        //             is_truncated: res.IsTruncated,
-        //             next_marker: res.NextKeyMarker,
-        //             next_upload_id_marker: res.UploadIdMarker,
-        //         };
+        dbg.log0('NamespaceGCP.list_uploads:',
+            this.bucket,
+            inspect(params)
+        );
+        // TODO list uploads
+        return {
+            objects: [],
+            common_prefixes: [],
+            is_truncated: false,
+        };
     }
 
     async list_object_versions(params, object_sdk) {
-        dbg.log0('NamespaceGCP.list_object_versions:', this.bucket, inspect(params));
-
-        //         const res = await this.s3.listObjectVersions({
-        //             Bucket: this.bucket,
-        //             Prefix: params.prefix,
-        //             Delimiter: params.delimiter,
-        //             KeyMarker: params.key_marker,
-        //             VersionIdMarker: params.version_id_marker,
-        //             MaxKeys: params.limit,
-        //         }).promise();
-
-        //         dbg.log0('NamespaceGCP.list_object_versions:', this.bucket, inspect(params),
-        //             'list', inspect(res));
-
-        //         return {
-        //             objects: _.concat(
-        //                 _.map(res.Versions, obj => this._get_s3_object_info(obj, params.bucket)),
-        //                 _.map(res.DeleteMarkers, obj => this._get_s3_object_info(
-        //                     _.assign(obj, { DeleteMarker: true }), params.bucket))
-        //             ),
-        //             common_prefixes: _.map(res.CommonPrefixes, 'Prefix'),
-        //             is_truncated: res.IsTruncated,
-        //             next_marker: res.NextKeyMarker,
-        //             next_version_id_marker: res.NextVersionIdMarker,
-        //         };
+        dbg.log0('NamespaceGCP.list_object_versions:',
+            this.bucket,
+            inspect(params)
+        );
+        // TODO list object versions
+        return {
+            objects: [],
+            common_prefixes: [],
+            is_truncated: false,
+        };
     }
 
 
@@ -464,68 +453,6 @@ class NamespaceGCP {
         dbg.log0('NamespaceGCP.abort_object_upload:', this.bucket, inspect(params), 'res', inspect(res));
     }
 
-    //     ////////////////////
-    //     // OBJECT TAGGING //
-    //     ////////////////////
-
-    async put_object_tagging(params, object_sdk) {
-        dbg.log0('NamespaceGCP.put_object_tagging:', this.bucket, inspect(params));
-
-        //         const TagSet = params.tagging.map(tag => ({
-        //             Key: tag.key,
-        //             Value: tag.value
-        //         }));
-
-        //         const res = await this.s3.putObjectTagging({
-        //             Bucket: this.bucket,
-        //             Key: params.key,
-        //             VersionId: params.version_id,
-        //             Tagging: { TagSet }
-        //         }).promise();
-
-        dbg.log0('NamespaceGCP.put_object_tagging:', this.bucket, inspect(params), 'res', inspect(res));
-
-        //         return {
-        //             version_id: res.VersionId
-        //         };
-    }
-
-    async delete_object_tagging(params, object_sdk) {
-        dbg.log0('NamespaceGCP.delete_object_tagging:', this.bucket, inspect(params));
-        //         const res = await this.s3.deleteObjectTagging({
-        //             Bucket: this.bucket,
-        //             Key: params.key,
-        //             VersionId: params.version_id
-        //         }).promise();
-
-        //         dbg.log0('NamespaceGCP.delete_object_tagging:', this.bucket, inspect(params), 'res', inspect(res));
-
-        //         return {
-        //             version_id: res.VersionId
-        //         };
-    }
-
-    async get_object_tagging(params, object_sdk) {
-        dbg.log0('NamespaceGCP.get_object_tagging:', this.bucket, inspect(params));
-        //         const res = await this.s3.getObjectTagging({
-        //             Bucket: this.bucket,
-        //             Key: params.key,
-        //             VersionId: params.version_id
-        //         }).promise();
-
-        //         dbg.log0('NamespaceGCP.get_object_tagging:', this.bucket, inspect(params), 'res', inspect(res));
-
-        //         const TagSet = res.TagSet.map(tag => ({
-        //             key: tag.Key,
-        //             value: tag.Value
-        //         }));
-
-        //         return {
-        //             version_id: res.VersionId,
-        //             tagging: TagSet
-        //         };
-    }
-
     //     //////////
     //     // ACLs //
     //     //////////
@@ -639,80 +566,93 @@ class NamespaceGCP {
     }
 
 
-    //     ///////////////////
-    //     //  OBJECT LOCK  //
-    //     ///////////////////
+    ////////////////////
+    // OBJECT TAGGING //
+    ////////////////////
 
-    //     async get_object_legal_hold() {
-    //         throw new Error('TODO');
-    //     }
-    //     async put_object_legal_hold() {
-    //         throw new Error('TODO');
-    //     }
-    //     async get_object_retention() {
-    //         throw new Error('TODO');
-    //     }
-    //     async put_object_retention() {
-    //         throw new Error('TODO');
-    //     }
+    async get_object_tagging(params, object_sdk) {
+        throw new Error('TODO');
+    }
+    async delete_object_tagging(params, object_sdk) {
+        throw new Error('TODO');
+    }
+    async put_object_tagging(params, object_sdk) {
+        throw new Error('TODO');
+    }
 
-    //     ///////////////////
-    //     //      ULS      //
-    //     ///////////////////
+    ///////////////////
+    //  OBJECT LOCK  //
+    ///////////////////
 
-    //     async create_uls() {
-    //         throw new Error('TODO');
-    //     }
-    //     async delete_uls() {
-    //         throw new Error('TODO');
-    //     }
+    async get_object_legal_hold() {
+        throw new Error('TODO');
+    }
+    async put_object_legal_hold() {
+        throw new Error('TODO');
+    }
+    async get_object_retention() {
+        throw new Error('TODO');
+    }
+    async put_object_retention() {
+        throw new Error('TODO');
+    }
 
-    //     ///////////////
-    //     // INTERNALS //
-    //     ///////////////
+    ///////////////////
+    //      ULS      //
+    ///////////////////
 
-    //     /**
-    //      * 
-    //      * @param {AWS.S3.HeadObjectOutput | AWS.S3.GetObjectOutput} res 
-    //      * @param {string} bucket 
-    //      * @param {number} [part_number]
-    //      * @returns {nb.ObjectInfo}
-    //      */
-    //     _get_s3_object_info(res, bucket, part_number) {
-    //         const etag = s3_utils.parse_etag(res.ETag);
-    //         const xattr = _.extend(res.Metadata, {
-    //             'noobaa-namespace-s3-bucket': this.bucket,
-    //         });
-    //         const ranges = res.ContentRange ? Number(res.ContentRange.split('/')[1]) : 0;
-    //         const size = ranges || res.ContentLength || res.Size || 0;
-    //         const last_modified_time = res.LastModified ? res.LastModified.getTime() : Date.now();
-    //         return {
-    //             obj_id: res.UploadId || etag,
-    //             bucket: bucket,
-    //             key: res.Key,
-    //             size,
-    //             etag,
-    //             create_time: last_modified_time,
-    //             last_modified_time,
-    //             version_id: res.VersionId,
-    //             is_latest: res.IsLatest,
-    //             delete_marker: res.DeleteMarker,
-    //             content_type: res.ContentType,
-    //             xattr,
-    //             tag_count: res.TagCount,
-    //             first_range_data: res.Body,
-    //             num_multiparts: res.PartsCount,
-    //             content_range: res.ContentRange,
-    //             content_length: part_number ? res.ContentLength : size,
-    //             encryption: undefined,
-    //             lock_settings: undefined,
-    //             md5_b64: undefined,
-    //             num_parts: undefined,
-    //             sha256_b64: undefined,
-    //             stats: undefined,
-    //             tagging: undefined,
-    //         };
-    //     }
+    async create_uls() {
+        throw new Error('TODO');
+    }
+    async delete_uls() {
+        throw new Error('TODO');
+    }
+
+    ///////////////
+    // INTERNALS //
+    ///////////////
+
+    /**
+     * 
+     * @param {string} bucket 
+     * @returns {nb.ObjectInfo}
+     */
+    _get_gcs_object_info(res, bucket) {
+        // LMLM TODO...
+        // const etag = s3_utils.parse_etag(res.ETag);
+        // const xattr = _.extend(res.Metadata, {
+        //     'noobaa-namespace-s3-bucket': this.bucket,
+        // });
+        // const ranges = res.ContentRange ? Number(res.ContentRange.split('/')[1]) : 0;
+        // const size = ranges || res.ContentLength || res.Size || 0;
+        // const last_modified_time = res.LastModified ? res.LastModified.getTime() : Date.now();
+        // return {
+        //     obj_id: res.UploadId || etag,
+        //     bucket: bucket,
+        //     key: res.Key,
+        //     size,
+        //     etag,
+        //     create_time: last_modified_time,
+        //     last_modified_time,
+        //     version_id: res.VersionId,
+        //     is_latest: res.IsLatest,
+        //     delete_marker: res.DeleteMarker,
+        //     content_type: res.ContentType,
+        //     xattr,
+        //     tag_count: res.TagCount,
+        //     first_range_data: res.Body,
+        //     num_multiparts: res.PartsCount,
+        //     content_range: res.ContentRange,
+        //     content_length: part_number ? res.ContentLength : size,
+        //     encryption: undefined,
+        //     lock_settings: undefined,
+        //     md5_b64: undefined,
+        //     num_parts: undefined,
+        //     sha256_b64: undefined,
+        //     stats: undefined,
+        //     tagging: undefined,
+        // };
+    }
 
     //     _translate_error_code(params, err) {
     //         if (err.code === 'NoSuchKey') err.rpc_code = 'NO_SUCH_OBJECT';
