@@ -5,6 +5,7 @@
 const _ = require('lodash');
 const util = require('util');
 
+const P = require('../util/promise');
 const dbg = require('../util/debug_module')(__filename);
 // const stream_utils = require('../util/stream_utils');
 // const s3_utils = require('../endpoint/s3/s3_utils');
@@ -307,22 +308,6 @@ class NamespaceGCP {
         //         return { etag, version_id: res.VersionId, last_modified_time };
     }
 
-    //     ////////////////////////
-    //     // BLOCK BLOB UPLOADS //
-    //     ////////////////////////
-
-    //     upload_blob_block(params, object_sdk) {
-    //         return blob_translator.upload_blob_block(params, object_sdk);
-    //     }
-
-    //     commit_blob_block_list(params, object_sdk) {
-    //         return blob_translator.commit_blob_block_list(params, object_sdk);
-    //     }
-
-    //     get_blob_block_lists(params, object_sdk) {
-    //         return blob_translator.get_blob_block_lists(params, object_sdk);
-    //     }
-
     //     /////////////////////////////
     //     // OBJECT MULTIPART UPLOAD //
     //     /////////////////////////////
@@ -487,82 +472,42 @@ class NamespaceGCP {
         //         dbg.log0('NamespaceGCP.put_object_acl:', this.bucket, inspect(params), 'res', inspect(res));
     }
 
-    //     ///////////////////
-    //     // OBJECT DELETE //
-    //     ///////////////////
+    ///////////////////
+    // OBJECT DELETE //
+    ///////////////////
 
     async delete_object(params, object_sdk) {
+        // https://googleapis.dev/nodejs/storage/latest/File.html#delete
         dbg.log0('NamespaceGCP.delete_object:', this.bucket, inspect(params));
 
-        //         const res = await this.s3.deleteObject({
-        //             Bucket: this.bucket,
-        //             Key: params.key,
-        //             VersionId: params.version_id,
-        //         }).promise();
+        const res = await this.gcs.bucket(this.bucket).file(params.key).delete();
 
-        //         dbg.log0('NamespaceGCP.delete_object:',
-        //             this.bucket,
-        //             inspect(params),
-        //             'res', inspect(res)
-        //         );
+        dbg.log0('NamespaceGCP.delete_object:',
+            this.bucket,
+            inspect(params),
+            'res', inspect(res)
+        );
 
-        //         if (params.version_id) {
-        //             return {
-        //                 deleted_delete_marker: res.DeleteMarker
-        //             };
-        //         } else {
-        //             return {
-        //                 created_version_id: res.VersionId,
-        //                 created_delete_marker: res.DeleteMarker
-        //             };
-        //         }
+        return {};
     }
 
     async delete_multiple_objects(params, object_sdk) {
+        // https://googleapis.dev/nodejs/storage/latest/File.html#delete
         dbg.log0('NamespaceGCP.delete_multiple_objects:', this.bucket, inspect(params));
 
-        //         const res = await this.s3.deleteObjects({
-        //             Bucket: this.bucket,
-        //             Delete: {
-        //                 Objects: _.map(params.objects, obj => ({
-        //                     Key: obj.key,
-        //                     VersionId: obj.version_id,
-        //                 }))
-        //             }
-        //         }).promise();
+        const res = await P.map_with_concurrency(10, params.objects, obj =>
+            this.gcs.bucket(this.bucket).file(obj.key).delete()
+            .then(() => ({}))
+            .catch(err => ({ err_code: 'InternalError', err_message: err.message || 'InternalError' })));
 
-        //         dbg.log0('NamespaceGCP.delete_multiple_objects:',
-        //             this.bucket,
-        //             inspect(params),
-        //             'res', inspect(res)
-        //         );
+        dbg.log0('NamespaceBlob.delete_multiple_objects:',
+            this.bucket,
+            inspect(params),
+            'res', inspect(res)
+        );
 
-        //         return _.map(params.objects, obj => {
-        //             const deleted = _.find(res.Deleted, del_rec =>
-        //                 (del_rec.VersionId === obj.version_id && del_rec.Key === obj.key)
-        //             );
-        //             if (deleted) {
-        //                 if (deleted.VersionId) {
-        //                     return {
-        //                         deleted_version_id: deleted.DeleteMarkerVersionId,
-        //                         deleted_delete_marker: deleted.DeleteMarker,
-        //                     };
-        //                 } else {
-        //                     return {
-        //                         created_version_id: deleted.DeleteMarkerVersionId,
-        //                         created_delete_marker: deleted.DeleteMarker,
-        //                     };
-        //                 }
-        //             } else {
-        //                 const error = _.find(res.Errors, err_rec =>
-        //                     (err_rec.VersionId === obj.version_id && err_rec.Key === obj.key)
-        //                 );
-        //                 return {
-        //                     err_code: error.Code,
-        //                     err_message: error.Message,
-        //                 };
-        //             }
-        //         });
+        return res;
+
     }
 
 
