@@ -69,6 +69,8 @@ class NamespaceGCP {
     async list_objects(params, object_sdk) {
         // https://cloud.google.com/storage/docs/samples/storage-list-files-with-prefix
         // https://googleapis.dev/nodejs/storage/latest/Bucket.html#getFiles
+        // https://cloud.google.com/storage/docs/json_api/v1/objects#resource
+        // https://cloud.google.com/storage/docs/json_api/v1/objects/list           <---------------- LMLM !!!!!
         dbg.log0('LMLM: NamespaceGCP.list_objects:', this.bucket, inspect(params)); //remove the LMLM
 
         const options = {
@@ -82,24 +84,16 @@ class NamespaceGCP {
             options.delimiter = params.delimiter;
         }
         dbg.log0(`LMLM: NamespaceGCP.list_objects: options: ${inspect(options)}`); //LMLM remove this log
-        const res = await this.gcs.bucket(this.bucket).getFiles(options);
+        const [response] = await this.gcs.bucket(this.bucket).getFiles(options);
 
-        //         const res = await this.s3.listObjects({
-        //             Bucket: this.bucket,
-        //             Prefix: params.prefix,
-        //             Delimiter: params.delimiter,
-        //             Marker: params.key_marker,
-        //             MaxKeys: params.limit,
-        //         }).promise();
+        dbg.log0('LMLM: NamespaceGCP.list_objects: bucket:', this.bucket, 'params:', inspect(params), 'list:', inspect(response)); //LMLM remove the LMLM
 
-        dbg.log0('LMLM: NamespaceGCP.list_objects: bucket:', this.bucket, 'params:', inspect(params), 'list:', inspect(res)); //LMLM remove the LMLM
-
-        //         return {
-        //             objects: _.map(res.Contents, obj => this._get_s3_object_info(obj, params.bucket)),
-        //             common_prefixes: _.map(res.CommonPrefixes, 'Prefix'),
-        //             is_truncated: res.IsTruncated,
-        //             next_marker: res.NextMarker,
-        //         };
+        return {
+            objects: _.map(response, obj => this._get_gcs_object_info(obj.metadata, params.bucket)),
+            common_prefixes: _.map(response.CommonPrefixes, 'Prefix'), //LMLM should we get the Prefix from the request?? 
+            is_truncated: Boolean(response.pageToken), //LMLM: Not sure, is that correct? 
+            next_marker: response.pageToken,
+        };
     }
 
     async list_uploads(params, object_sdk) {
@@ -596,6 +590,29 @@ class NamespaceGCP {
         //     sha256_b64: undefined,
         //     stats: undefined,
         //     tagging: undefined,
+        // };
+
+        // AZURE _get_blob_object_info(obj, bucket) {
+        // list objects returns properties
+        // head object returns flat
+        // const flat_obj = obj.properties || obj;
+        // const blob_etag = blob_utils.parse_etag(flat_obj.etag);
+        // const md5_b64 = flat_obj.contentMD5 || '';
+        // const md5_hex = Buffer.from(md5_b64, 'base64').toString('hex');
+        // const etag = md5_hex || blob_etag;
+        // const size = parseInt(flat_obj.contentLength, 10);
+        // const xattr = _.extend(obj.metadata, {
+        //     'noobaa-namespace-blob-container': this.container,
+        // });
+        // return {
+        //     obj_id: blob_etag,
+        //     bucket,
+        //     key: obj.name,
+        //     size,
+        //     etag,
+        //     create_time: flat_obj.lastModified,
+        //     content_type: flat_obj.contentType,
+        //     xattr
         // };
     }
 
