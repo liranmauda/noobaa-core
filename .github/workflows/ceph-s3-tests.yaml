@@ -16,9 +16,16 @@ jobs:
           path: 'noobaa-core'
 
       - name: Deploy minikube
-        run: |
-         cd ./noobaa-core
-         sudo bash ./.travis/deploy_minikube.sh
+        uses: medyagh/setup-minikube@latest
+        id: minikube
+        with:
+          cache: false
+          minikube-version: 1.29.0
+          driver: docker
+          container-runtime: containerd
+          kubernetes-version: v1.26.1
+          cpus: 4
+          memory: 4000m
 
       - name: Build noobaa tester
         run: |
