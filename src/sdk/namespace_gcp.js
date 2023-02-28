@@ -4,7 +4,7 @@
 const _ = require('lodash');
 const util = require('util');
 
-const P = require('../util/promise');
+// const P = require('../util/promise');
 const stream_utils = require('../util/stream_utils');
 const dbg = require('../util/debug_module')(__filename);
 const S3Error = require('../endpoint/s3/s3_errors').S3Error;
@@ -235,14 +235,33 @@ class NamespaceGCP {
         // https://googleapis.dev/nodejs/storage/latest/File.html#delete
         dbg.log0('NamespaceGCP.delete_multiple_objects:', this.bucket, inspect(params));
 
-        const res = await P.map_with_concurrency(10, params.objects, obj =>
-            this.gcs.bucket(this.bucket).file(obj.key).delete()
-            .then(() => ({}))
-            .catch(err => ({ err_code: err.code, err_message: err.errors[0].reason || 'InternalError' })));
+        // const res = await P.map_with_concurrency(10, params.objects, obj =>
+        //     this.gcs.bucket(this.bucket).file(obj.key).delete()
+        //     .then(() => ({}))
+        //     .catch(err => ({ err_code: err.code, err_message: err.errors[0].reason || 'InternalError' })));
 
-        dbg.log1('NamespaceGCP.delete_multiple_objects:', this.bucket, inspect(params), 'res', inspect(res));
+        const batchSize = 100; // delete 100 objects per batch
+        const objects = params.objects;
+        const bucket = this.gcs.bucket(this.bucket);
 
-        return res;
+        const batches = [];
+        for (let i = 0; i < objects.length; i += batchSize) {
+            const batch = objects.slice(i, i + batchSize);
+            const deleteOps = batch.map(obj => bucket.file(obj.key).delete());
+            batches.push(deleteOps);
+        }
+
+        const res = [];
+        dbg.log0(`LMLM batches ${inspect(batches)}`);
+        for (const batch of batches) {
+            const resBatch = await Promise.all(batch.map(op => op.catch(err => err)));
+            res.push(resBatch);
+        }
+
+        dbg.log0(`LMLM res: ${inspect(res)}`);
+        // dbg.log1('NamespaceGCP.delete_multiple_objects:', this.bucket, inspect(params), 'res', inspect(res));
+
+        // return res;
 
     }
 
