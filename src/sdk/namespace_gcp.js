@@ -235,33 +235,38 @@ class NamespaceGCP {
         // https://googleapis.dev/nodejs/storage/latest/File.html#delete
         dbg.log0('NamespaceGCP.delete_multiple_objects:', this.bucket, inspect(params));
 
-        // const res = await P.map_with_concurrency(10, params.objects, obj =>
-        //     this.gcs.bucket(this.bucket).file(obj.key).delete()
-        //     .then(() => ({}))
-        //     .catch(err => ({ err_code: err.code, err_message: err.errors[0].reason || 'InternalError' })));
-
-        const batchSize = 100; // delete 100 objects per batch
+        const batchSize = 100;
         const objects = params.objects;
         const bucket = this.gcs.bucket(this.bucket);
 
         const batches = [];
         for (let i = 0; i < objects.length; i += batchSize) {
             const batch = objects.slice(i, i + batchSize);
-            const deleteOps = batch.map(obj => bucket.file(obj.key).delete());
-            batches.push(deleteOps);
+            const files = batch.map(obj => bucket.file(obj.key));
+            batches.push(files);
         }
 
-        const res = [];
-        dbg.log0(`LMLM batches ${inspect(batches)}`);
+        const res = {};
+        let resSize = 0;
         for (const batch of batches) {
-            const resBatch = await Promise.all(batch.map(op => op.catch(err => err)));
-            res.push(resBatch);
+            const resBatch = await Promise.all(batch.map(op =>
+                op.delete()
+                .then(() => ({}))
+                .catch(err => ({ err_code: err.code, err_message: err.errors[0].reason || 'InternalError' }))
+            ));
+            for (const [key, val] of Object.entries(resBatch)) {
+                const newKey = parseInt(key, 10) + resSize;
+                Object.assign(res, {
+                    [newKey]: val
+                });
+            }
+            dbg.log0(`LMLM resBatch ${inspect(resBatch)}`);
+            resSize = Object.keys(res).length;
         }
 
-        dbg.log0(`LMLM res: ${inspect(res)}`);
-        // dbg.log1('NamespaceGCP.delete_multiple_objects:', this.bucket, inspect(params), 'res', inspect(res));
+        dbg.log1('NamespaceGCP.delete_multiple_objects:', this.bucket, inspect(params), 'res', inspect(res));
 
-        // return res;
+        return res;
 
     }
 
