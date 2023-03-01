@@ -235,17 +235,10 @@ class NamespaceGCP {
         // https://googleapis.dev/nodejs/storage/latest/File.html#delete
         dbg.log0('NamespaceGCP.delete_multiple_objects:', this.bucket, inspect(params));
 
-        const batchSize = 100;
-        const objects = params.objects;
         const bucket = this.gcs.bucket(this.bucket);
+        const batches = this._create_batches_of_files(params.objects, bucket, 100);
 
-        const batches = [];
-        for (let i = 0; i < objects.length; i += batchSize) {
-            const batch = objects.slice(i, i + batchSize);
-            const files = batch.map(obj => bucket.file(obj.key));
-            batches.push(files);
-        }
-
+        //LMLM I wonder if I can write some kind of a write stream for a delete batch and trigger it once...
         const res = {};
         let resSize = 0;
         for (const batch of batches) {
@@ -343,6 +336,17 @@ class NamespaceGCP {
         if (err.code === 404) err.rpc_code = 'NO_SUCH_OBJECT';
         if (err.code === 403) err.rpc_code = 'FORBIDDEN';
     }
+
+    _create_batches_of_files(objects, bucket, batchSize) {
+        const batches = [];
+        for (let i = 0; i < objects.length; i += batchSize) {
+            const batch = objects.slice(i, i + batchSize);
+            const files = batch.map(obj => bucket.file(obj.key));
+            batches.push(files);
+        }
+        return batches;
+    }
+
 }
 
 function inspect(x) {
