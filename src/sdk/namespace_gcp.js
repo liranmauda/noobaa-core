@@ -245,6 +245,10 @@ class NamespaceGCP {
 
     async create_object_upload(params, object_sdk) {
         dbg.log0('NamespaceGCP.create_object_upload:', this.bucket, inspect(params));
+        const file = this.gcs.bucket(this.bucket).file(params.key);
+        const resumable_upload_URI = await file.createResumableUpload();
+        dbg.log0(`LMLM create_object_upload resumable_upload_URI ${inspect(resumable_upload_URI)}`);
+
         throw new S3Error(S3Error.NotImplemented);
     }
 
