@@ -280,7 +280,7 @@ class NamespaceGCP {
                     // clear count for next updates
                     count = 0;
                 });
-                const file = this.gcs.bucket(this.bucket).file(params.key)
+                const file = this.gcs.bucket(this.bucket).file(params.key);
                 throw new S3Error(S3Error.NotImplemented); //LMLM
                 // https://googleapis.dev/nodejs/storage/latest/File.html#createWriteStream
                 // for the options of createWriteStream: 
