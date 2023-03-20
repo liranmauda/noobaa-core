@@ -243,17 +243,80 @@ class NamespaceGCP {
     // OBJECT MULTIPART UPLOAD //
     /////////////////////////////
 
+    //https://cloud.google.com/storage/docs/performing-resumable-uploads
+
     async create_object_upload(params, object_sdk) {
         dbg.log0('NamespaceGCP.create_object_upload:', this.bucket, inspect(params));
         const file = this.gcs.bucket(this.bucket).file(params.key);
         const resumable_upload_URI = await file.createResumableUpload();
         dbg.log0(`LMLM create_object_upload resumable_upload_URI ${inspect(resumable_upload_URI)}`);
 
-        throw new S3Error(S3Error.NotImplemented);
+        return { obj_id: resumable_upload_URI }
+        // throw new S3Error(S3Error.NotImplemented);
     }
 
     async upload_multipart(params, object_sdk) {
         dbg.log0('NamespaceGCP.upload_multipart:', this.bucket, inspect(params));
+        let metadata;
+        if (params.copy_source) {
+            throw new S3Error(S3Error.NotImplemented);
+            // const start = params.copy_source.ranges ? params.copy_source.ranges[0].start : 0;
+            // const end = params.copy_source.ranges ? params.copy_source.ranges[0].end : params.size;
+        } else {
+            try {
+
+                //{ obj_id: 'https://storage.googleapis.com/upload/storage/v1/b/liran-test/o?name=bigone.tar.gz&uploadType=resumable&upload_id=A
+                // DPycduuFnMSPIl1oMlp-tqNZLTHnGDNy5Cl8cDWeCmuSBtqgwIiEvcWdG4ZDnM67GaDv6QcZtv4h89ny6ASjHNQSj6q6g', 
+                //    bucket: 'obcgcp', key: 'bigone.tar.gz', num: 9, copy_source: undefined, size: 8388608, md5_b64: '1QbtJoyupv9tJdfST/uvZg==', sha256_b64: undefined, 
+                // source_md_conditions: undefined, encryption: undefined }
+                let count = 1;
+                const count_stream = stream_utils.get_tap_stream(data => {
+                    this.stats_collector.update_namespace_write_stats({
+                        namespace_resource_id: this.namespace_resource_id,
+                        bucket_name: params.bucket,
+                        size: data.length,
+                        count
+                    });
+                    // clear count for next updates
+                    count = 0;
+                });
+                const file = this.gcs.bucket(this.bucket).file(params.key)
+                throw new S3Error(S3Error.NotImplemented); //LMLM
+                // https://googleapis.dev/nodejs/storage/latest/File.html#createWriteStream
+                // for the options of createWriteStream: 
+                // https://googleapis.dev/nodejs/storage/latest/global.html#CreateWriteStreamOptions
+                const options = {
+                    resumable: true,
+                    uri: resumableSessionUri,
+                    headers: {
+                        'content-range': `bytes ${start}-${end}/${params.size}`
+                    }
+                };
+                const writeStream = file.createWriteStream(options);
+                stream_utils.pipeline([params.source_stream, count_stream, writeStream], true);
+
+                await new Promise((resolve, reject) => {
+                    // upon error reject the promise
+                    writeStream.on('error', reject);
+                    // upon finish resolve the promise
+                    writeStream.on('finish', resolve);
+                    // upon response get the metadata
+                    writeStream.on('response', resp => {
+                        dbg.log1(`NamespaceGCP..upload_multipart: response event ${inspect(resp)}.`);
+                        metadata = resp.data;
+                    });
+                });
+            } catch (err) {
+                this._translate_error_code(err);
+                dbg.warn('NamespaceGCP.upload_multipart:', inspect(err));
+                object_sdk.rpc_client.pool.update_issues_report({
+                    namespace_resource_id: this.namespace_resource_id,
+                    error_code: err.code || (err.errors[0] && err.errors[0].reason) || 'InternalError',
+                    time: Date.now(),
+                });
+                throw err;
+            }
+        }
         throw new S3Error(S3Error.NotImplemented);
     }
 
