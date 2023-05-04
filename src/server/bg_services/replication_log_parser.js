@@ -15,7 +15,7 @@ const moment = require('moment');
  * get_log_candidates will return an object which contains the log candidates
  * @param {*} source_bucket_id ID of the source bucket
  * @param {string} rule_id ID of the replication rule
- * @param {Record<any, any>} replicationconfig Replication configuration
+ * @param {Record<any, any>} replication_config Replication configuration
  * @param {Number} candidates_limit Candidates limit
  * @param {(log_entry: Record<string, any>) => boolean} ignore_fn - function that returns true if the log entry should be ignored
  * @returns {Promise<{
@@ -23,21 +23,28 @@ const moment = require('moment');
  *  done: () => Promise<void>
  * }>} Candidates
  */
-async function get_log_candidates(source_bucket_id, rule_id, replicationconfig, candidates_limit, ignore_fn = () => false) {
-    return get_aws_log_candidates(source_bucket_id, rule_id, replicationconfig, candidates_limit, ignore_fn);
+async function get_log_candidates(source_bucket_id, rule_id, replication_config, candidates_limit, ignore_fn = () => false) {
+    return get_aws_log_candidates(source_bucket_id, rule_id, replication_config, candidates_limit, ignore_fn);
 }
 
 async function get_aws_log_candidates(source_bucket_id, rule_id, replication_config, candidates_limit, ignore_fn) {
     const aws_log_replication_info = replication_config.log_replication_info.aws_log_replication_info;
     const { logs_bucket, prefix } = aws_log_replication_info.logs_location;
     const s3 = get_source_bucket_aws_connection(source_bucket_id, aws_log_replication_info);
-    let continuation_token = get_continuation_token_for_rule(rule_id, replication_config);
+    let continuation_token = _get_continuation_token_for_rule(rule_id, replication_config);
 
     const logs = [];
+    //LMLM why not use candidates_limit?
+    // It seems like logs_retrieved_count is the max logs objects that we would like to retrieve,
+    // while candidates_limit is the max logs objects?
+
     let logs_retrieved_count = config.AWS_LOG_CANDIDATES_LIMIT;
 
     do {
-        const next_log_entry = await aws_get_next_log_entry(s3, logs_bucket, prefix, continuation_token);
+        //this is the log object as we get in list with MaxKeys 1. 
+        //LMLM why do we get only one key and not using MaxKeys === candidates_limit (or config.AWS_LOG_CANDIDATES_LIMIT)?
+        //If we will pass the MaxKeys as parameters we should change the name of the variable and function to reflect the real situation.
+        const next_log_entry = await _aws_get_next_log_entry(s3, logs_bucket, prefix, continuation_token);
 
         // save the continuation token for the next iteration
         continuation_token = next_log_entry.NextContinuationToken;
@@ -45,15 +52,23 @@ async function get_aws_log_candidates(source_bucket_id, rule_id, replication_con
         // Check if there is any log entry - if there are no more log entries
         // then no need to process anything
         if (!next_log_entry.Contents || next_log_entry.Contents.length === 0) {
-            dbg.log0('log_parser: no more log entries');
+            dbg.log0('no more log entries');
             break;
         }
-
-        const next_log_data = await aws_get_next_log(s3, logs_bucket, next_log_entry.Contents[0].Key);
-        aws_parse_log_object(logs, next_log_data, ignore_fn);
+        //////////////////////// LMLM - continue to evaluate from here /////////////////////////// 
+        const next_log_data = await _aws_get_next_log(s3, logs_bucket, next_log_entry.Contents[0].Key); //reading the log object and getting it as json
+        aws_parse_log_object(logs, next_log_data, ignore_fn); //Using global array, should we? 
 
         logs_retrieved_count -= 1;
+        //////////////////////// LMLM - finish here to evaluate in this function /////////////////////////// 
     }
+    /////LMLM why do we actually need logs.length to be caped at candidates_limit? 
+    // this is buggy behavior as if we have an object with more then 1 log (is it possible??)
+    // and logs.length === candidates_limit then all the logs in that object will be lost,
+    // for example we have 20 logs and candidates_limit is 10, the next time we enter here we will fetch the next object using the continuation_token
+    // and will lose the other 10 logs in the previous object.
+    // If it is mapped 1 to 1, log in a single object then why we need those 2 checks: (logs.length < candidates_limit) && logs_retrieved_count !== 0
+    // lokking at the code of function aws_parse_log_object, we parse the log and split by \n which means we have more then one log per object
     while ((logs.length < candidates_limit) && logs_retrieved_count !== 0 && continuation_token);
 
     return {
@@ -115,45 +130,51 @@ function create_candidates(logs) {
     return candidates;
 }
 
-async function aws_get_next_log_entry(s3, logs_bucket, logs_prefix, continuation_token) {
-    let start_after = logs_prefix;
-    if (start_after && !start_after.endsWith('/')) {
-        start_after += '/';
-    }
+async function _aws_get_next_log_entry(s3, logs_bucket, logs_prefix, continuation_token) {
+    // let start_after = logs_prefix;
+    // if (start_after && !start_after.endsWith('/')) { 
+    //     start_after += '/';
+    // }
+
+    //LMLM why do we actually need to check if there is start after? if there is none, will the listObjectsV2 work?
+    // replace with: logs_prefix.endsWith('/') ? logs_prefix : logs_prefix + '/',
 
     try {
-        dbg.log1('log_parser aws_get_next_log_entry: params:', logs_bucket, logs_prefix, continuation_token);
+        dbg.log1('_aws_get_next_log_entry:: params:', logs_bucket, logs_prefix, continuation_token);
         const res = await s3.listObjectsV2({
             Bucket: logs_bucket,
             Prefix: logs_prefix,
             ContinuationToken: continuation_token,
             MaxKeys: 1,
-            StartAfter: start_after,
+            //LMLM: Why do we actually need this?
+            //start-after
+            //StartAfter is where you want Amazon S3 to start listing from. Amazon S3 starts listing after this specified key. StartAfter can be any key in the bucket.
+            // StartAfter: logs_prefix.endsWith('/') ? logs_prefix : logs_prefix + '/',
         }).promise();
 
-        dbg.log1('log_parser aws_get_next_log_entry: finished successfully ', res);
+        dbg.log1('_aws_get_next_log_entry:: finished successfully ', res);
         return res;
 
     } catch (err) {
-        dbg.error('log_parser aws_get_next_log_entry: error:', err);
+        dbg.error('_aws_get_next_log_entry:: error:', err);
         throw err;
     }
 }
 
-async function aws_get_next_log(s3, bucket, key) {
+async function _aws_get_next_log(s3, bucket, key) {
     try {
-        dbg.log1('log_parser aws_get_next_log: params:', bucket, key);
+        dbg.log1('_aws_get_next_log:: params:', bucket, key);
         const res = await s3.getObject({
             Bucket: bucket,
             Key: key,
             ResponseContentType: 'json'
         }).promise();
 
-        dbg.log1('log_parser aws_get_next_log: finished successfully ', res);
+        dbg.log1('_aws_get_next_log:: finished successfully ', res);
         return res;
 
     } catch (err) {
-        dbg.error('log_parser aws_get_next_log: error:', err);
+        dbg.error('_aws_get_next_log:: error:', err);
         throw err;
     }
 }
@@ -369,9 +390,9 @@ function parse_potentially_empty_log_value(log_value, custom_parser) {
     return log_value;
 }
 
-function get_continuation_token_for_rule(rule_id, replication_config) {
+function _get_continuation_token_for_rule(rule_id, replication_config) {
     const replication_rule = replication_config.rules.find(rule => rule.rule_id === rule_id);
-    return replication_rule?.rule_log_status?.log_marker?.continuation_token;
+    return replication_rule ? .rule_log_status ? .log_marker ? .continuation_token; //LMLM FIX...
 }
 
 // EXPORTS
