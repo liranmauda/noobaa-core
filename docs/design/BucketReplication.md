@@ -1,5 +1,6 @@
 # Bucket Replication
 
+# LMLM ADD DELETION AND VERSIONING TO THIS DOC!!!
 
 ## GOALS
  * Data replication of objects which are stored in any NooBaa bucket (data bucket, namespace bucket) -

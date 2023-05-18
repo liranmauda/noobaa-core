@@ -1839,6 +1839,7 @@ async function delete_bucket_replication(req) {
     await replication_store.instance().delete_replication_by_id(replication_id);
 }
 
+//LMLM maybe add more validations such as, syc_delete can be set only if log based is set or versioning is set.
 function validate_replication(req) {
     const replication_rules = req.rpc_params.replication_policy.rules;
     // num of rules in configuration must be in defined limits

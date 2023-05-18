@@ -128,6 +128,7 @@ class ReplicationStore {
 
         const reduced_replications = _.map(replications, repl => ({
             replication_id: repl._id,
+            //LMLM isn't the fact that this is ...rule.rule_status.last_cycle_end) || 0... means that only rules that never updated with last_cycle_end will be here?
             rule: _.minBy(repl.rules, rule => (rule.rule_status && rule.rule_status.last_cycle_end) || 0) //least_recently_replicated_rule
         }));
         dbg.log1('find_rules_updated_longest_time_ago: ', reduced_replications);

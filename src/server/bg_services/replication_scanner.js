@@ -2,6 +2,7 @@
 'use strict';
 
 const _ = require('lodash');
+const util = require('util'); //LMLM to clean
 const system_store = require('../system_services/system_store').get_instance();
 const dbg = require('../../util/debug_module')(__filename);
 const system_utils = require('../utils/system_utils');
@@ -79,6 +80,8 @@ class ReplicationScanner {
             const { replication_id, rule } = replication_id_and_rule;
             const status = { last_cycle_start: Date.now() };
 
+            dbg.log0(`LMLM:: replication_id: ${replication_id}, rule: ${inspect(rule)}, status: ${inspect(status)}`);
+
             const { src_bucket, dst_bucket } = replication_utils.find_src_and_dst_buckets(rule.destination_bucket, replication_id);
             if (!src_bucket || !dst_bucket) {
                 dbg.error('replication_scanner: can not find src_bucket or dst_bucket object', src_bucket, dst_bucket);
@@ -92,20 +95,22 @@ class ReplicationScanner {
             let dst_cont_token;
             let keys_sizes_map_to_copy;
 
-            // eslint-disable-next-line no-constant-condition
-            if (false) { //rule.sync_versions) {
-                dbg.log0(`We have sync_versions :)`);
-                // TODO:
-                // ({ keys_sizes_map_to_copy, src_cont_token, dst_cont_token } = await this.list_versioned_buckets_and_compare(
-                //     src_bucket.name, dst_bucket.name, prefix, cur_src_cont_token, cur_dst_cont_token));
+            if (rule.sync_versions) {
+                dbg.log0(`LMLM:: We have sync_versions :)`);
+                ({ keys_sizes_map_to_copy, src_cont_token, dst_cont_token } = await this.list_versioned_buckets_and_compare(
+                    src_bucket.name, dst_bucket.name, prefix, cur_src_cont_token, cur_dst_cont_token));
             } else {
                 ({ keys_sizes_map_to_copy, src_cont_token, dst_cont_token } = await this.list_buckets_and_compare(
                     src_bucket.name, dst_bucket.name, prefix, cur_src_cont_token, cur_dst_cont_token));
             }
 
+
+            //LMLM from here the flow should probably very between sync_versions and not. 
+
             dbg.log1('replication_scanner: keys_sizes_map_to_copy: ', keys_sizes_map_to_copy);
             let move_res;
-            const keys_to_copy = Object.keys(keys_sizes_map_to_copy);
+            //const keys_to_copy = Object.keys(keys_sizes_map_to_copy); LMLM
+            const keys_to_copy = []; //LMLM 
             if (keys_to_copy.length) {
                 const copy_type = replication_utils.get_copy_type();
                 move_res = await replication_utils.move_objects(
@@ -137,10 +142,9 @@ class ReplicationScanner {
 
     async list_buckets_and_compare(src_bucket, dst_bucket, prefix, cur_src_cont_token, cur_dst_cont_token) {
 
-        // list src_bucket
         const src_list = await this.list_objects(src_bucket, prefix, cur_src_cont_token);
         const ans = {
-            keys_sizes_map_to_copy: {},
+            keys_sizes_map_to_copy: {}, //a map between the key and it size, we need it to later report the size in_get_rule_status
             src_cont_token: src_list.NextContinuationToken || '',
             dst_cont_token: ''
         };
@@ -192,8 +196,12 @@ class ReplicationScanner {
 
         // list source bucket
         const src_version_response = await this.list_objects_versions(src_bucket, prefix, cur_src_cont_token);
+        dbg.log0(`LMLM src_version_response: ${inspect(src_version_response)}`);
 
-        const src_contents_left = this._object_grouped_by_key_and_omitted(src_version_response);
+        //LMLM remove
+        // eslint-disable-next-line prefer-const
+        let src_contents_left = this._object_grouped_by_key_and_omitted(src_version_response);
+        dbg.log0(`LMLM src_contents_left: ${inspect(src_contents_left)}`);
         const src_cont_token = this._get_next_key_marker(src_version_response.IsTruncated, src_contents_left);
 
         const ans = {
@@ -202,22 +210,68 @@ class ReplicationScanner {
             dst_cont_token: ''
         };
 
+        dbg.log0(`LMLM ans: ${inspect(ans)}`);
+
         // edge case 1: Object.keys(src_contents_left).length = [] , nothing to replicate
         if (!Object.keys(src_contents_left).length) return ans;
 
-        //TODO: implement the get_keys_version_diff function
+        //LMLM remove
+        // eslint-disable-next-line prefer-const
+        let new_dst_cont_token = cur_dst_cont_token;
+        const last_src_key = Object.keys(src_contents_left)[Object.keys(src_contents_left).length - 1];
+
+        let keep_listing_dst = true;
+        while (keep_listing_dst) {
+            const dst_version_response = await this.list_objects_versions(dst_bucket, prefix, new_dst_cont_token);
+            const dst_key_etag = this._get_key_etag(dst_version_response);
+            dbg.log0(`LMLM dest_key_etag: ${inspect(dst_key_etag)}`);
+            keep_listing_dst = false; //LMLM remove
+            // edge case 2: Object.keys(dest_key_etag).length = [] , replicate all src_list
+            // edge case 3: all src_keys are lexicographic smaller than the first dst key, replicate all src_list
+            if (!Object.keys(dst_key_etag).length || last_src_key < Object.keys(dst_key_etag)[0]) {
+                // LMLM need to figure it out... 
+                // LMLM It will map all the keys to the size we need it to later report the size in_get_rule_status
+                // ans.keys_sizes_map_to_copy = src_contents_left.reduce(
+                //     (acc, content1) => {
+                //         acc[content1.Key] = content1.Size;
+                //         return acc;
+                //     }, { ...ans.keys_sizes_map_to_copy });
+                ans.keys_sizes_map_to_copy = {
+                    ...ans.keys_sizes_map_to_copy,
+                    ...src_contents_left
+                };
+                break;
+            }
+
+            //LMLM remove... 
+            // eslint-disable-next-line prefer-const
+            let dst_cont_token = this._get_next_key_marker(dst_version_response.IsTruncated, dst_key_etag);
+            // find keys and version pairs to copy
+            const diff = await this.get_keys_version_diff(src_contents_left, dst_key_etag, dst_cont_token, src_bucket, dst_bucket);
+
+            dbg.log0(`LMLM: get_keys_version_diff diff: ${inspect(diff)}`);
+
+            keep_listing_dst = diff.keep_listing_dst;
+            src_contents_left = diff.src_contents_left;
+            // ans.keys_sizes_map_to_copy = { ...ans.keys_sizes_map_to_copy, ...diff.to_replicate_map };
+
+            // // advance dst token only when cur dst list could not contains next src list items
+            // const last_dst_key = dst_list.Contents[dst_list.Contents.length - 1].Key;
+            // if (last_src_key >= last_dst_key) {
+            //     new_dst_cont_token = dst_list.NextContinuationToken;
+            // }
+        }
         return {
             ...ans,
             // if src_list cont token is empty - dst_list cont token should be empty too
-            //dst_cont_token: (src_cont_token && new_dst_cont_token) || ''
-            dst_cont_token: ''
+            dst_cont_token: (src_cont_token && new_dst_cont_token) || ''
         };
     }
 
     async list_objects(bucket_name, prefix, continuation_token) {
         try {
             dbg.log1('replication_server list_objects: params:', bucket_name, prefix, continuation_token);
-            const list = await this.noobaa_connection.listObjectsV2({
+            const list = await this.noobaa_connection.listObjectsV2({ //LMLM for versioning we will need to list versions.
                 Bucket: bucket_name.unwrap(),
                 Prefix: prefix,
                 ContinuationToken: continuation_token,
@@ -269,6 +323,21 @@ class ReplicationScanner {
         return is_truncated ? Object.keys(contents_list)[Object.keys(contents_list).length - 1] : '';
     }
 
+
+    // _get_key_etag takes a list of object versions, groups them by keys, 
+    // and extracts the ETag value for the first entry for each key. 
+    // it will return an object that maps keys to their respective ETag values.
+    _get_key_etag(version_list) {
+        // As we want to iterate over the latest only, it is ok to omit the latest.
+        // We still want to do it with listObjectVersions and not listObjectsV2 as we can have a delete marker
+        const dst_contents_left = this._object_grouped_by_key_and_omitted(version_list);
+        // As we get the entries per keys in newest in the head, and we only interested in the newest entry,
+        // regardless if it is the latest or not, we will map it to a new object containing only the key and the entry.
+        const dst_contents_first_entries = _.mapValues(dst_contents_left, _.head);
+        // We want to return an object containing only a key and etag so we can later compare the Etags of the same keys
+        return _.mapValues(dst_contents_first_entries, entry => entry.ETag);
+    }
+
     // get_keys_diff finds the object keys that src bucket contains but dst bucket doesn't
     // iterate all src_keys and for each if:
     // case 1: src_key is lexicographic bigger than last dst_key,
@@ -280,7 +349,7 @@ class ReplicationScanner {
     async get_keys_diff(src_keys, dst_keys, dst_next_cont_token, src_bucket_name, dst_bucket_name) {
         dbg.log1('replication_server.get_keys_diff: src contents', src_keys.map(c => c.Key), 'dst contents', dst_keys.map(c => c.Key));
 
-        const to_replicate_map = {};
+        const to_replicate_map = {}; //map of keys and size
         const dst_map = _.keyBy(dst_keys, 'Key');
 
         for (const [i, src_content] of src_keys.entries()) {
@@ -289,7 +358,6 @@ class ReplicationScanner {
 
             // case 1
             if (cur_src_key > dst_keys[dst_keys.length - 1].Key) {
-
                 // in next iteration we shouldn't iterate again src keys we already passed
                 const src_contents_left = src_keys.slice(i);
 
@@ -325,6 +393,89 @@ class ReplicationScanner {
         return { to_replicate_map };
     }
 
+    // get_keys_version_diff finds the object keys and versions that the source bucket contains but destination bucket doesn't
+    // LMLM ..... 
+    // iterate all src_keys and for each if:
+    // case 1: src_key is lexicographic bigger than last dst_key,
+    //         list dst from next cont token if exist, else - replicate all remaining keys and their versions
+    // case 2: src_key is lexicographic smaller than first dst_key
+    //         replicate src_key + all it's versions and continue the loop
+    // case 3: src_key in dst list keys range - 
+    //         compare etags of the key in the dst list, and find the place to replicate from. <-- LMLM not great explanations... 
+    async get_keys_version_diff(src_keys, dst_keys, dst_next_cont_token, src_bucket_name, dst_bucket_name) {
+
+        //LMLM probably should remove this or change as there are no maps here ? ? ? 
+        dbg.log0(`LMLM replication_server.get_keys_version_diff: src_keys: ${inspect(src_keys)} dst_keys: ${inspect(dst_keys)}`);
+        const to_replicate_map = {}; //LMLM should be key, version, size and not only key version.
+        // const dst_map = _.keyBy(dst_keys, 'Key');
+        const dest_key_array = Object.keys(dst_keys);
+        if (!dest_key_array.length) {
+            dbg.warn(`LMLM something went wrong, we should never reach get_keys_version_diff with dest_key_array.length === 0`);
+        }
+
+        // May-29 11:16:29.038 [BGWorkers/32014]    [L0] core.server.bg_services.replication_scanner:: LMLM replication_server.get_keys_version_diff: src_keys: {
+        //     kubeconfig1: [ { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig1', VersionId: 'hDbHYWp7Yuin57lfn2Ax_JgBW0EICGv2', IsLatest: true, LastModified: 2023-05-28T07:18:58.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig1', VersionId: 'Gd4HO4TcU6j8L4CEOpLiIYFA6zyDQh4L', IsLatest: false, LastModified: 2023-05-28T07:18:44.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig1', VersionId: 'vyArVjYFjH4U3HXYiscHGSJRNpCNfRJY', IsLatest: false, LastModified: 2023-05-28T07:18:41.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig1', VersionId: 'G3UrvYDAgYK9hmbJXNtS5mNxDxh9eGqe', IsLatest: false, LastModified: 2023-05-28T07:18:40.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, [length]: 4 ],
+        //     kubeconfig2: [ { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig2', VersionId: 'L_nUZafY7kX6ixwFbB_JOtZ3ajQ8aFwO', IsLatest: true, LastModified: 2023-05-28T07:45:42.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig2', VersionId: '88VcjijkxiOsFZFOWVrHzwGBCHFBd9f5', IsLatest: false, LastModified: 2023-05-28T07:19:14.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig2', VersionId: '1dGK3cEPEukXxy3YimFi.UT0i6sq8qmW', IsLatest: false, LastModified: 2023-05-28T07:19:12.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, [length]: 3 ],
+        //     kubeconfig3: [ { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig3', VersionId: 'wAVByTy0CsldF3McIER79EHEI.Nrf3Nu', IsLatest: true, LastModified: 2023-05-28T07:19:22.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig3', VersionId: 'vfPb0GHPcUjp7sgpgt1RPJDNOcrRYun1', IsLatest: false, LastModified: 2023-05-28T07:19:20.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, [length]: 2 ],
+        //     kubeconfig4: [ { ETag: '"133d21ca2c9604af034fab10ab6a6853"', ChecksumAlgorithm: [ [length]: 0 ], Size: 24599, StorageClass: 'STANDARD', Key: 'kubeconfig4', VersionId: 'YbikTcxfmghqdoIuxlkcT_oIdpaQnKsY', IsLatest: true, LastModified: 2023-05-28T07:19:32.000Z, Owner: { DisplayName: 'NooBaa', ID: '123' } }, [length]: 1 ]
+        //   } dst_keys: { kubeconfig1: '"133d21ca2c9604af034fab10ab6a6853"', kubeconfig2: '"133d21ca2c9604af034fab10ab6a6853"', kubeconfig3: '"133d21ca2c9604af034fab10ab6a6853"', kubeconfig4: '"133d21ca2c9604af034fab10ab6a6853"' }
+
+
+        // Checking lexicographic order <<--- LMLM not great explanation ¯\_(ツ)_/¯
+        for (const cur_src_key of Object.keys(src_keys)) {
+            //     const cur_src_key = src_content.Key;
+            //     dbg.log1('replication_server.get_keys_diff, src_key: ', i, cur_src_key);
+
+            // We will use src_contents_left to omit keys that we already passed 
+            // as in the next iteration we shouldn't iterate again on them
+            // as _.omit creates a new object we don't need to deep clone src_keys.
+            let src_contents_left = src_keys;
+            dbg.log0(`LMLM replication_server.get_keys_version_diff cur_src_key ${cur_src_key}, src_contents_left ${inspect(src_contents_left)}`);
+            // case 1: 
+            if (cur_src_key > dest_key_array[dest_key_array.length - 1]) {
+                const ans = dst_next_cont_token ? { to_replicate_map, keep_listing_dst: true, src_contents_left } : {
+                    // to_replicate_map: src_contents_left.reduce((acc, cur_obj) => {
+                    //     acc[cur_obj.Key] = cur_obj.Size;
+                    //     return acc;
+                    // }, { ...to_replicate_map })
+                    ...to_replicate_map,
+                    ...src_contents_left
+                };
+                dbg.log1(`replication_server.get_keys_version_diff, case 1: ${dst_next_cont_token}  ans: ${ans}`);
+                dbg.log0(`LMLM replication_server.get_keys_version_diff, case 1: ${dst_next_cont_token}  ans: ${ans}`);
+                return ans;
+            }
+            // case 2
+            if (cur_src_key < dest_key_array[0]) {
+                dbg.log1(`replication_server.get_keys_version_diff, case 2: ${cur_src_key}`);
+                dbg.log0(`LMLM replication_server.get_keys_version_diff, case 2: ${cur_src_key}`);
+                to_replicate_map[cur_src_key] = src_keys[cur_src_key];
+                src_contents_left = _.omit(src_contents_left, cur_src_key);
+                continue;
+            }
+
+            // case 3: src_key is in range
+            dbg.log1(`replication_server.get_keys_version_diff, case 3: src_content ${cur_src_key} dst_content etag: ${dst_keys[cur_src_key]}`);
+            dbg.log0(`LMLM replication_server.get_keys_version_diff, case 3: src_content ${cur_src_key} dst_content etag: ${dst_keys[cur_src_key]}`);
+            if (dst_keys[cur_src_key]) {
+                dbg.log0(`LMLM replication_server.get_keys_version in Range ${dst_keys[cur_src_key]}`);
+                continue; //LMLM remove
+                // LMLM do the compare .... (need to compare the etags and get the key + the version needed.)
+                // const src_md_info = await replication_utils.get_object_md(this.noobaa_connection, src_bucket_name, cur_src_key);
+                // const dst_md_info = await replication_utils.get_object_md(this.noobaa_connection, dst_bucket_name, cur_src_key);
+
+                // const should_copy = replication_utils.check_data_or_md_changed(src_md_info, dst_md_info);
+                // if (should_copy) to_replicate_map[cur_src_key] = src_content.Size;
+            } else {
+                to_replicate_map[cur_src_key] = src_keys[cur_src_key];
+            }
+            src_contents_left = _.omit(src_contents_left, cur_src_key);
+        }
+        dbg.log1('replication_server.get_keys_version_diff result:', to_replicate_map);
+        dbg.log0(`LMLM replication_server.get_keys_version_diff result to_replicate_map: ${inspect(to_replicate_map)}`);
+        return { to_replicate_map };
+    }
+
     _get_rule_status(rule, src_cont_token, keys_sizes_map_to_copy, move_res) {
         const keys_to_copy_sizes = Object.values(keys_sizes_map_to_copy);
         const num_keys_to_copy = keys_to_copy_sizes.length || 0;
@@ -355,6 +506,11 @@ class ReplicationScanner {
 
         core_report.set_replication_status(last_cycle_status);
     }
+}
+
+// LMLM: to clean :) 
+function inspect(x) {
+    return util.inspect(_.omit(x, 'source_stream'), true, 5, true);
 }
 
 exports.ReplicationScanner = ReplicationScanner;

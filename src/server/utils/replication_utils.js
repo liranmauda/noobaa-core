@@ -15,11 +15,11 @@ function check_data_or_md_changed(src_info, dst_info) {
     if (!src_last_modified_recent) return false;
 
     // data change - replicate the object
-    const data_change = src_info.ContentLength !== dst_info.ContentLength || src_info.ETag !== dst_info.ETag;
+    const data_change = src_info.ContentLength !== dst_info.ContentLength || src_info.ETag !== dst_info.ETag; //LMLM I wonder why we need to check ContentLength?
     if (data_change) return true;
 
     // md change - head objects and compare metadata, if metadata is different - copy object
-    if (!_.isEqual(src_info.Metadata, dst_info.Metadata)) return true;
+    if (!_.isEqual(src_info.Metadata, dst_info.Metadata)) return true; //LMLM this will probably not work with versioning as the version ID will be different.
 
     // data and md is equal which means something else changed in src
     // nothing to do 
