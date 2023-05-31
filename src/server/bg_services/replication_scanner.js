@@ -95,6 +95,9 @@ class ReplicationScanner {
             let dst_cont_token;
             let keys_sizes_map_to_copy;
 
+            // LMLM per https://github.com/noobaa/noobaa-core/pull/7316#discussion_r1211514520
+            // after finalizing the scan function we might be able to use inline conditions
+            // if not we should remove this comment.
             if (rule.sync_versions) {
                 dbg.log0(`LMLM:: We have sync_versions :)`);
                 ({ keys_sizes_map_to_copy, src_cont_token, dst_cont_token } = await this.list_versioned_buckets_and_compare(
@@ -271,7 +274,7 @@ class ReplicationScanner {
     async list_objects(bucket_name, prefix, continuation_token) {
         try {
             dbg.log1('replication_server list_objects: params:', bucket_name, prefix, continuation_token);
-            const list = await this.noobaa_connection.listObjectsV2({ //LMLM for versioning we will need to list versions.
+            const list = await this.noobaa_connection.listObjectsV2({
                 Bucket: bucket_name.unwrap(),
                 Prefix: prefix,
                 ContinuationToken: continuation_token,
@@ -287,6 +290,7 @@ class ReplicationScanner {
     }
 
     // list_objects_versions will list all the objects with the versions, continuation_token is the key marker.
+    // we prefer keeping the continuation_token term due to re-use of db properties but this is really a KeyMarker
     async list_objects_versions(bucket_name, prefix, continuation_token) {
         try {
             dbg.log1('replication_server list_objects_versions: params:', bucket_name, prefix, continuation_token);
