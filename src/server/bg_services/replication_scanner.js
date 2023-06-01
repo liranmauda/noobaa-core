@@ -323,6 +323,8 @@ class ReplicationScanner {
     }
 
     // if the list is truncated returns the the next key marker as the last key in the omitted objects list
+    // as we set the next key marker as the name of the object that we last processed, it means that the max
+    // number of version per object that we will replicate will be equal to the MaxKeys passed in the listObjectVersions
     _get_next_key_marker(is_truncated, contents_list) {
         return is_truncated ? Object.keys(contents_list)[Object.keys(contents_list).length - 1] : '';
     }
@@ -431,7 +433,7 @@ class ReplicationScanner {
             //     dbg.log1('replication_server.get_keys_diff, src_key: ', i, cur_src_key);
 
             // We will use src_contents_left to omit keys that we already passed 
-            // as in the next iteration we shouldn't iterate again on them
+            // as in the next iteration we shouldn't iterate again on them.
             // as _.omit creates a new object we don't need to deep clone src_keys.
             let src_contents_left = src_keys;
             dbg.log0(`LMLM replication_server.get_keys_version_diff cur_src_key ${cur_src_key}, src_contents_left ${inspect(src_contents_left)}`);
