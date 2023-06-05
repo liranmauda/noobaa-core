@@ -69,20 +69,6 @@ class BucketDiff {
 }
 
 
-// _object_grouped_by_key_and_omitted will return the objects grouped by key.
-// If there is more than one key, it omits the last key from the object,
-// In order to avoid processing incomplete list of object + version
-function _object_grouped_by_key_and_omitted(list) {
-    let grouped_by_key = _.groupBy(list.Versions, "Key");
-    if (list.IsTruncated) {
-        const last_key_pos = list.Versions.length - 1;
-        if (Object.keys(grouped_by_key).length > 1) {
-            grouped_by_key = _.omit(grouped_by_key, list.Versions[last_key_pos].Key);
-        }
-    }
-    return grouped_by_key;
-}
-
 // async list_buckets_and_compare(src_bucket, dst_bucket, prefix, cur_src_cont_token, cur_dst_cont_token) {
 
 //     // list src_bucket
