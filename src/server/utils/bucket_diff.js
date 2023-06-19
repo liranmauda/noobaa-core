@@ -265,14 +265,25 @@ async function get_keys_diff(first_bucket_keys, second_bucket_keys, first_bucket
 function keys_out_of_range(ans, first_bucket_keys, second_bucket_keys, first_bucket_cont_token, second_bucket_cont_token) {
     const first_bucket_key_array = Object.keys(first_bucket_keys);
     const second_bucket_key_array = Object.keys(second_bucket_keys);
+    // LMLM we will use stop compare for not keep iterating
+    // If we met a condition where all of one bucket list is larger then the other then we should not keep comparing.
     let stop_compare = true;
 
+    // second bucket list come empty 
     if (!Object.keys(second_bucket_key_array).length) {
         ans.keys_diff_map.first_bucket_only = first_bucket_keys;
         dbg.log('LMLM 1');
         return { ans, stop_compare };
     }
-    // case 1: 
+
+    // first bucket list come empty
+    if (!Object.keys(first_bucket_key_array).length) {
+        ans.keys_diff_map.second_bucket_only = second_bucket_keys;
+        dbg.log('LMLM 1.1');
+        return { ans, stop_compare };
+    }
+
+    // all keys in second bucket are lexicographic smaller
     if (first_bucket_key_array[0] > second_bucket_key_array[second_bucket_key_array.length - 1]) {
         ans.keys_diff_map.second_bucket_only = second_bucket_keys;
         if (second_bucket_cont_token) {
@@ -288,7 +299,7 @@ function keys_out_of_range(ans, first_bucket_keys, second_bucket_keys, first_buc
         return { ans, stop_compare };
     }
 
-    // case 1: 
+    //  all keys in first bucket are lexicographic smaller
     if (second_bucket_key_array[0] > first_bucket_key_array[first_bucket_key_array.length - 1]) {
         ans.keys_diff_map.first_bucket_only = first_bucket_keys;
         if (first_bucket_cont_token) {
@@ -303,6 +314,7 @@ function keys_out_of_range(ans, first_bucket_keys, second_bucket_keys, first_buc
         dbg.log('LMLM 3');
         return { ans, stop_compare };
     }
+
     stop_compare = false;
     dbg.log('LMLM 4');
     return { ans, stop_compare };
