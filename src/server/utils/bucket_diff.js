@@ -59,6 +59,7 @@ class BucketDiff {
         };
 
         //list the objects in the first bucket
+        //LMLM we should not always list, if we have contact left then we should use it.
         const {
             bucket_contents_left: first_bucket_contents_left,
             bucket_cont_token: first_bucket_cont_token
@@ -67,13 +68,15 @@ class BucketDiff {
         diff.first_bucket_cont_token = first_bucket_cont_token;
 
         if (Object.keys(first_bucket_contents_left).length) {
-            //TODO
+            //LMLM we should not always list, if we have contact left then we should use it.
             const {
                 bucket_contents_left: second_bucket_contents_left,
                 bucket_cont_token: new_second_bucket_cont_token
             } = await this.get_objects(second_bucket, prefix, max_keys, version, current_second_bucket_cont_token);
+
             const test = await get_keys_diff(
                 first_bucket_contents_left, second_bucket_contents_left, first_bucket_cont_token, new_second_bucket_cont_token);
+
             dbg.log('test:', test);
         } else if (!this.ref_first_bucket_only) { // LMLM probably can take all of this into the diff function... 
             let new_second_bucket_cont_token = current_second_bucket_cont_token;
@@ -200,64 +203,29 @@ async function get_keys_diff(first_bucket_keys, second_bucket_keys, first_bucket
             second_bucket_only: {},
         },
         keys_contents_left: {
-            first_bucket_contents_left: {},
-            second_bucket_keys_left: {},
+            first_bucket_contents_left: first_bucket_keys,
+            second_bucket_contents_left: second_bucket_keys,
         },
+        //LMLM we probably don't need it, as we will do a single run each time, and list only if the keys_contents_left is empty (per bucket)
         keep_listing_first_bucket: false,
         keep_listing_second_bucket: false,
     };
-
-    const first_bucket_key_array = Object.keys(first_bucket_keys);
-    const second_bucket_key_array = Object.keys(second_bucket_keys);
-
-    // We will use bucket_contents_left to omit keys that we already passed 
-    // as _.omit creates a new object we don't need to deep clone first_bucket_keys.
-    let first_bucket_keys_left = first_bucket_keys;
-    let second_bucket_keys_left = second_bucket_keys;
 
     const {
         ans: to_return,
         stop_compare,
     } = keys_out_of_range(ans, first_bucket_keys, second_bucket_keys, first_bucket_cont_token, second_bucket_cont_token);
 
-    if (stop_compare) return to_return;
-
-    // Checking lexicographic order << -- - LMLM not great explanation ¯\ _(ツ) _ / ¯
-    for (const cur_first_bucket_key of Object.keys(first_bucket_keys)) {
-        dbg.log0('cur_first_bucket_key', cur_first_bucket_key);
-
-        // case 2
-        if (cur_first_bucket_key < second_bucket_key_array[0]) {
-            dbg.log1(`replication_server.get_keys_version_diff, case 2: ${cur_first_bucket_key}`);
-            dbg.log0(`LMLM replication_server.get_keys_version_diff, case 2: ${cur_first_bucket_key}`);
-            ans.keys_diff_map.first_bucket_only[cur_first_bucket_key] =
-                ans.keys_diff_map.first_bucket_only[cur_first_bucket_key] ?
-                ans.keys_diff_map.first_bucket_only[cur_first_bucket_key].concat(first_bucket_keys_left[cur_first_bucket_key]) :
-                first_bucket_keys_left[cur_first_bucket_key];
-            first_bucket_keys_left = _.omit(first_bucket_keys_left, cur_first_bucket_key);
-            continue;
-        }
-
-        // case 3: first_bucket_key is in range
-        // dbg.log1(`replication_server.get_keys_version_diff, case 3: src_content ${cur_first_bucket_key} dst_content etag: ${second_bucket_keys[cur_first_bucket_key]}`);
-        // dbg.log0(`LMLM replication_server.get_keys_version_diff, case 3: src_content ${cur_first_bucket_key} dst_content etag: ${second_bucket_keys[cur_first_bucket_key]}`);
-        // if (second_bucket_keys[cur_first_bucket_key]) {
-        //     dbg.log0(`LMLM replication_server.get_keys_version in Range ${second_bucket_keys[cur_first_bucket_key]}`);
-        //     continue; //LMLM remove
-        //     // LMLM do the compare .... (need to compare the etags and get the key + the version needed.)
-        //     // const src_md_info = await replication_utils.get_object_md(this.noobaa_connection, src_bucket_name, cur_first_bucket_key);
-        //     // const dst_md_info = await replication_utils.get_object_md(this.noobaa_connection, dst_bucket_name, cur_first_bucket_key);
-
-        //     // const should_copy = replication_utils.check_data_or_md_changed(src_md_info, dst_md_info);
-        //     // if (should_copy) to_replicate_map[cur_first_bucket_key] = src_content.Size;
-        // } else {
-        //     to_replicate_map[cur_first_bucket_key] = first_bucket_keys[cur_first_bucket_key];
-        // }
-        // first_bucket_contents_left = _.omit(first_bucket_contents_left, cur_first_bucket_key);
-        dbg.log0(`LMLM case 3 not yet implemented`);
+    //LMLM TODO remove the print and make it a single line.
+    if (stop_compare) {
+        dbg.log0('LMLM stop_compare after keys_out_of_range');
+        return to_return;
     }
-    // dbg.log1('replication_server.get_keys_version_diff result:', to_replicate_map);
-    // dbg.log0(`LMLM replication_server.get_keys_version_diff result to_replicate_map: ${inspect(to_replicate_map)}`);
+    const { ans: new_to_return } = keys_in_range(
+        ans, first_bucket_keys, second_bucket_keys, first_bucket_cont_token, second_bucket_cont_token);
+
+    dbg.log0('LMLM', new_to_return);
+
     return ans;
 }
 
@@ -266,17 +234,17 @@ function keys_out_of_range(ans, first_bucket_keys, second_bucket_keys, first_buc
     const first_bucket_key_array = Object.keys(first_bucket_keys);
     const second_bucket_key_array = Object.keys(second_bucket_keys);
     // LMLM we will use stop compare for not keep iterating
-    // If we met a condition where all of one bucket list is larger then the other then we should not keep comparing.
+    // If we met a condition where all of one bucket list is lexicographic larger then the other bucket, we should not keep comparing.
     let stop_compare = true;
 
-    // second bucket list come empty 
+    // second bucket list is empty 
     if (!Object.keys(second_bucket_key_array).length) {
         ans.keys_diff_map.first_bucket_only = first_bucket_keys;
         dbg.log('LMLM 1');
         return { ans, stop_compare };
     }
 
-    // first bucket list come empty
+    // first bucket list is empty
     if (!Object.keys(first_bucket_key_array).length) {
         ans.keys_diff_map.second_bucket_only = second_bucket_keys;
         dbg.log('LMLM 1.1');
@@ -318,6 +286,99 @@ function keys_out_of_range(ans, first_bucket_keys, second_bucket_keys, first_buc
     stop_compare = false;
     dbg.log('LMLM 4');
     return { ans, stop_compare };
+}
+
+function keys_in_range(ans, first_bucket_keys, second_bucket_keys, first_bucket_cont_token, second_bucket_cont_token) {
+    const first_bucket_key_array = Object.keys(first_bucket_keys);
+    const second_bucket_key_array = Object.keys(second_bucket_keys);
+
+    // Checking lexicographic order << -- - LMLM not great explanation ¯\ _(ツ) _ / ¯
+    for (const cur_first_bucket_key of first_bucket_key_array) {
+        // dbg.log0('LMLM cur_first_bucket_key', cur_first_bucket_key);
+        // dbg.log0('LMLM ans.keys_contents_left.first_bucket_contents_left', ans.keys_contents_left.first_bucket_contents_left);
+
+        const first_bucket_curr_obj = ans.keys_contents_left.first_bucket_contents_left[cur_first_bucket_key];
+        dbg.log0('LMLM first_bucket_curr_obj', first_bucket_curr_obj);
+        // dbg.log0('LMLM first_bucket_curr_obj', first_bucket_curr_obj);
+        // case 2: 
+        if (cur_first_bucket_key < second_bucket_key_array[0]) {
+            dbg.log1(`replication_server.get_keys_version_diff, case 2: ${cur_first_bucket_key}`);
+            dbg.log0(`LMLM replication_server.get_keys_version_diff, case 2: ${cur_first_bucket_key}`);
+
+            const contents_left = ans.keys_contents_left.first_bucket_contents_left[cur_first_bucket_key];
+            const update_first_bucket_curr_obj = first_bucket_curr_obj ? first_bucket_curr_obj.concat(contents_left) : contents_left;
+
+            ans.keys_diff_map.first_bucket_only[cur_first_bucket_key] = update_first_bucket_curr_obj;
+
+            ans.keys_contents_left.first_bucket_contents_left = _.omit(
+                ans.keys_contents_left.first_bucket_contents_left, cur_first_bucket_key);
+            continue;
+        }
+
+
+        // case 3: first_bucket_key is is also in the second bucket 
+        // dbg.log1(`replication_server.get_keys_version_diff, case 3: src_content ${cur_first_bucket_key} dst_content etag: ${second_bucket_keys[cur_first_bucket_key]}`);
+        // dbg.log0(`LMLM replication_server.get_keys_version_diff, case 3: src_content ${cur_first_bucket_key} dst_content etag: ${second_bucket_keys[cur_first_bucket_key]}`);
+        const second_bucket_curr_obj = ans.keys_contents_left.second_bucket_contents_left[cur_first_bucket_key];
+        dbg.log0('LMLM second_bucket_curr_obj', second_bucket_curr_obj);
+
+        if (second_bucket_curr_obj) {
+            dbg.log0(`LMLM replication_server.get_keys_version in Range ${second_bucket_keys[cur_first_bucket_key]}`);
+
+            // get the position of the etag in the second bucket for the same key name. 
+            const etag_on_first_bucket = get_etag_pos(0, second_bucket_curr_obj, first_bucket_curr_obj); //LMLM maybe need to switch the order and check the latest Etag of the second one??
+
+            // -1 ETag is not in the first bucket it is a diff
+            // 0 Etag is on the latest, we just need to omit this key
+            // n > 0  all n are diff.
+            if (etag_on_first_bucket === -1) {
+                dbg.log0('LMLM -1 ETag is not in the first bucket it is a diff', etag_on_first_bucket);
+            } else if (etag_on_first_bucket !== 0) {
+                // can happen only in version
+                const first_bucket_diff = first_bucket_curr_obj.slice(0, etag_on_first_bucket);
+                dbg.log0('LMLM first_bucket_diff!!!', first_bucket_diff);
+            }
+            // omit that key from both content lists.
+            ans.keys_contents_left.first_bucket_contents_left = _.omit(
+                ans.keys_contents_left.first_bucket_contents_left, cur_first_bucket_key);
+
+            ans.keys_contents_left.second_bucket_contents_left = _.omit(
+                ans.keys_contents_left.second_bucket_contents_left, cur_first_bucket_key);
+            continue; //LMLM remove
+            // LMLM do the compare .... (need to compare the etags and get the key + the version needed.)
+            // const src_md_info = await replication_utils.get_object_md(this.noobaa_connection, src_bucket_name, cur_first_bucket_key);
+            // const dst_md_info = await replication_utils.get_object_md(this.noobaa_connection, dst_bucket_name, cur_first_bucket_key);
+
+            // const should_copy = replication_utils.check_data_or_md_changed(src_md_info, dst_md_info);
+            // if (should_copy) to_replicate_map[cur_first_bucket_key] = src_content.Size;
+        } else { //LMLM this is when  there is no such key name in this range.
+            dbg.log0('LMLM TODO');
+            // to_replicate_map[cur_first_bucket_key] = first_bucket_keys[cur_first_bucket_key];
+        }
+        // first_bucket_contents_left = _.omit(first_bucket_contents_left, cur_first_bucket_key);
+
+
+        // if (cur_first_bucket_key < second_bucket_key_array[0]) {
+        //     dbg.log1(`replication_server.get_keys_version_diff, case 2: ${cur_first_bucket_key}`);
+        //     dbg.log0(`LMLM replication_server.get_keys_version_diff, case 2: ${cur_first_bucket_key}`);
+        //     ans.keys_diff_map.first_bucket_only[cur_first_bucket_key] =
+        //         ans.keys_diff_map.first_bucket_only[cur_first_bucket_key] ?
+        //         ans.keys_diff_map.first_bucket_only[cur_first_bucket_key].concat(ans.first_bucket_contents_left[cur_first_bucket_key]) :
+        //         ans.first_bucket_contents_left[cur_first_bucket_key];
+        //     ans.first_bucket_contents_left = _.omit(ans.first_bucket_contents_left, cur_first_bucket_key);
+        //     continue;
+        // }
+    }
+    dbg.log0('LMLM ans', ans);
+    return ans;
+}
+
+//LMLM TODO give an appropriate names... 
+function get_etag_pos(pos, array_a, array_b) {
+    // Getting the first etag of array_a
+    const ETag = array_a[pos].ETag;
+    const target_pos = array_b.findIndex(obj => obj.ETag === ETag);
+    return target_pos;
 }
 
 exports.BucketDiff = BucketDiff;
