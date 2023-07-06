@@ -188,32 +188,6 @@ class ReplicationScanner {
         };
     }
 
-    async list_versioned_buckets_and_compare(src_bucket, dst_bucket, prefix, cur_src_cont_token, cur_dst_cont_token) {
-
-        // list source bucket
-        const src_version_response = await this.list_objects_versions(src_bucket, prefix, cur_src_cont_token);
-
-        const src_contents_left = this._object_grouped_by_key_and_omitted(src_version_response);
-        const src_cont_token = this._get_next_key_marker(src_version_response.IsTruncated, src_contents_left);
-
-        const ans = {
-            keys_sizes_map_to_copy: {}, //a map between the key and it size, we need it to later report the size in_get_rule_status
-            src_cont_token,
-            dst_cont_token: ''
-        };
-
-        // edge case 1: Object.keys(src_contents_left).length = [] , nothing to replicate
-        if (!Object.keys(src_contents_left).length) return ans;
-
-        //TODO: implement the get_keys_version_diff function
-        return {
-            ...ans,
-            // if src_list cont token is empty - dst_list cont token should be empty too
-            //dst_cont_token: (src_cont_token && new_dst_cont_token) || ''
-            dst_cont_token: ''
-        };
-    }
-
     async list_objects(bucket_name, prefix, continuation_token) {
         try {
             dbg.log1('replication_server list_objects: params:', bucket_name, prefix, continuation_token);
@@ -228,24 +202,6 @@ class ReplicationScanner {
             return list;
         } catch (err) {
             dbg.error('replication_server.list_objects: error:', err);
-            throw err;
-        }
-    }
-
-    // list_objects_versions will list all the objects with the versions, continuation_token is the key marker.
-    async list_objects_versions(bucket_name, prefix, continuation_token) {
-        try {
-            dbg.log1('replication_server list_objects_versions: params:', bucket_name, prefix, continuation_token);
-            const list = await this.noobaa_connection.listObjectVersions({
-                Bucket: bucket_name.unwrap(),
-                Prefix: prefix,
-                KeyMarker: continuation_token,
-                MaxKeys: Number(process.env.REPLICATION_MAX_KEYS) || 1000 // Max keys are the total of Versions + DeleteMarkers  
-            }).promise();
-
-            return list;
-        } catch (err) {
-            dbg.error('replication_server.list_objects_versions: error:', err);
             throw err;
         }
     }
