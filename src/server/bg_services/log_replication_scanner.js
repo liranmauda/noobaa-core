@@ -91,6 +91,7 @@ class LogReplicationScanner {
 
                 await this.process_candidates(src_bucket, dst_bucket, candidates.items, sync_versions);
 
+                //LMLM i dont like having a handler and using it, especially when it is so small of a code.
                 // Commit will save the continuation token for the next scan
                 // This needs to be done only after the candidates were processed.
                 // This is to avoid the scenario where we fail to process a set of candidates,

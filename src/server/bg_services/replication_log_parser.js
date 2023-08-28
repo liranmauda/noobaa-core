@@ -70,7 +70,9 @@ async function get_aws_log_candidates(source_bucket_id, rule_id, replication_con
 
     return {
         items: create_candidates(logs),
+        // LMLM this is a handler, why do we need a handler here? why cant we jest return the log_object_continuation_token?
         done: async () => {
+            // LMLM if we will not have a continuation token, then we will keep parse the same log.
             if (log_object_continuation_token) {
                 await replication_store.update_log_replication_marker_by_id(
                     replication_config._id, rule_id, { continuation_token: log_object_continuation_token }
@@ -133,9 +135,7 @@ async function get_azure_log_candidates(source_bucket_id, rule_id, replication_c
 
     const query_result = await logs_query_client.queryWorkspace(
         monitor_workspace_id.unwrap(),
-        kusto_query,
-        { startTime: start_duration, endTime: new Date(Date.now()) },
-        { serverTimeoutInSeconds: 300 }
+        kusto_query, { startTime: start_duration, endTime: new Date(Date.now()) }, { serverTimeoutInSeconds: 300 }
     );
 
     if (query_result.status === LogsQueryResultStatus.Success) {
@@ -226,7 +226,10 @@ function create_candidates(logs) {
     return candidates;
 }
 
+
+//LMLM this will return the list of the log objects, why do we want to lost it one by one???
 async function aws_get_next_log_entry(s3, logs_bucket, logs_prefix, continuation_token) {
+    //LMLM we should probably remove this start_after section... 
     let start_after = logs_prefix;
     if (start_after && !start_after.endsWith('/')) {
         start_after += '/';
@@ -237,13 +240,13 @@ async function aws_get_next_log_entry(s3, logs_bucket, logs_prefix, continuation
         Prefix: logs_prefix,
         ContinuationToken: continuation_token,
         MaxKeys: 1,
-        StartAfter: start_after,
+        StartAfter: start_after, //LMLM why do we want this, it will not work properly with ContinuationToken
     };
 
     try {
         dbg.log2('log_parser aws_get_next_log_entry: params:', params);
         const res = await s3.listObjectsV2(params).promise();
-        dbg.log1('log_parser aws_get_next_log_entry: finished successfully ', res);
+        dbg.log0('LMLM log_parser aws_get_next_log_entry: finished successfully ', res); //should be reverted to log1
         return res;
 
     } catch (err) {
@@ -531,6 +534,7 @@ function parse_potentially_empty_log_value(log_value, custom_parser) {
     return log_value;
 }
 
+// LMLM probably returns the continuation_token of the log objects
 function _get_log_object_continuation_token_for_rule(rule_id, replication_config) {
     dbg.log1('_get_log_object_continuation_token_for_rule:: rule_id', rule_id, 'replication_config', replication_config);
     const replication_rule = replication_config.rules.find(rule => rule.rule_id === rule_id);
