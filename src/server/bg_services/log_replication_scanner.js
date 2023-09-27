@@ -76,28 +76,35 @@ class LogReplicationScanner {
                     return;
                 }
 
-                const candidates = await log_parser.get_log_candidates(
+                const { items, log_object_continuation_token } = await log_parser.get_log_candidates(
                     src_bucket._id,
                     rule.rule_id,
                     repl,
                     config.AWS_LOG_CANDIDATES_LIMIT,
                     rule.sync_deletions
                 );
-                if (!candidates.items || !candidates.done) return;
+                if (!items) {
+                    dbg.log0('LMLM items are empty, exiting...', items);
+                    return;
+                }
 
-                dbg.log1('log_replication_scanner: candidates: ', candidates.items);
+                dbg.log1('log_replication_scanner: candidates: ', items);
 
                 const sync_versions = rule.sync_versions || false;
 
-                await this.process_candidates(src_bucket, dst_bucket, candidates.items, sync_versions);
+                await this.process_candidates(src_bucket, dst_bucket, items, sync_versions);
 
-                //LMLM i dont like having a handler and using it, especially when it is so small of a code.
                 // Commit will save the continuation token for the next scan
                 // This needs to be done only after the candidates were processed.
                 // This is to avoid the scenario where we fail to process a set of candidates,
                 // in such case we will not save the continuation token so that we can scan the 
                 // same candidates again.
-                await candidates.done();
+                if (log_object_continuation_token) {
+                    dbg.log0('LMLM replication_id:', replication_id, 'rule_id:', rule.rule_id, 'continuation_token:', log_object_continuation_token);
+                    await replication_store.update_log_replication_marker_by_id(
+                        replication_id, rule.rule_id, { continuation_token: log_object_continuation_token }
+                    );
+                }
 
                 await replication_store.update_log_replication_status_by_id(replication_id, Date.now());
             });

@@ -3,7 +3,6 @@
 
 const AWS = require('aws-sdk');
 const system_store = require('../system_services/system_store').get_instance();
-const replication_store = require('../system_services/replication_store').instance();
 const cloud_utils = require('../../util/cloud_utils');
 const http_utils = require('../../util/http_utils');
 const pool_server = require('../system_services/pool_server');
@@ -22,7 +21,7 @@ const { ClientSecretCredential } = require("@azure/identity");
  * @param {boolean} sync_deletions - Whether deletions should be synced or not
  * @returns {Promise<{
  *  items: nb.ReplicationLogCandidates,
- *  done: () => Promise<void>
+ *  log_object_continuation_token: string
  * }>} Candidates
  */
 async function get_log_candidates(source_bucket_id, rule_id, replication_config, candidates_limit, sync_deletions) {
@@ -70,15 +69,7 @@ async function get_aws_log_candidates(source_bucket_id, rule_id, replication_con
 
     return {
         items: create_candidates(logs),
-        // LMLM this is a handler, why do we need a handler here? why cant we jest return the log_object_continuation_token?
-        done: async () => {
-            // LMLM if we will not have a continuation token, then we will keep parse the same log.
-            if (log_object_continuation_token) {
-                await replication_store.update_log_replication_marker_by_id(
-                    replication_config._id, rule_id, { continuation_token: log_object_continuation_token }
-                );
-            }
-        },
+        log_object_continuation_token
     };
 }
 
@@ -171,9 +162,7 @@ async function get_azure_log_candidates(source_bucket_id, rule_id, replication_c
 
     return {
         items: candidates,
-        done: async () => {
-            await replication_store.update_log_replication_marker_by_id(replication_config._id, rule_id, { continuation_token });
-        },
+        log_object_continuation_token: continuation_token
     };
 }
 
@@ -417,7 +406,7 @@ function _get_source_bucket_aws_connection(source_bucket_id, aws_log_replication
  * } | Record<string, any>}
  */
 function _parse_aws_log_entry(log_entry) {
-    console.log('entry:', log_entry);
+    dbg.log0('LMLM entry:', log_entry);
 
     if (typeof log_entry === "undefined") return;
 
@@ -533,9 +522,9 @@ function parse_potentially_empty_log_value(log_value, custom_parser) {
     return log_value;
 }
 
-// LMLM probably returns the continuation_token of the log objects
+// Returns the continuation_token of the log objects from the db
 function _get_log_object_continuation_token_for_rule(rule_id, replication_config) {
-    dbg.log1('_get_log_object_continuation_token_for_rule:: rule_id', rule_id, 'replication_config', replication_config);
+    dbg.log0('LMLM _get_log_object_continuation_token_for_rule:: rule_id', rule_id, 'replication_config', replication_config);
     const replication_rule = replication_config.rules.find(rule => rule.rule_id === rule_id);
     return replication_rule?.rule_log_status?.log_marker?.continuation_token;
 }
