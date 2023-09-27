@@ -227,26 +227,25 @@ function create_candidates(logs) {
 }
 
 
-//LMLM this will return the list of the log objects, why do we want to lost it one by one???
-async function aws_get_next_log_entry(s3, logs_bucket, logs_prefix, continuation_token) {
-    //LMLM we should probably remove this start_after section... 
-    let start_after = logs_prefix;
-    if (start_after && !start_after.endsWith('/')) {
-        start_after += '/';
-    }
 
+/**
+ * @param {AWS.S3} s3
+ * @param {string} logs_bucket
+ * @param {string} logs_prefix
+ * @param {string} continuation_token
+ */
+async function aws_get_next_log_entry(s3, logs_bucket, logs_prefix, continuation_token) {
     const params = {
         Bucket: logs_bucket,
         Prefix: logs_prefix,
         ContinuationToken: continuation_token,
         MaxKeys: 1,
-        StartAfter: start_after, //LMLM why do we want this, it will not work properly with ContinuationToken
     };
 
     try {
         dbg.log2('log_parser aws_get_next_log_entry: params:', params);
         const res = await s3.listObjectsV2(params).promise();
-        dbg.log0('LMLM log_parser aws_get_next_log_entry: finished successfully ', res); //should be reverted to log1
+        dbg.log1('log_parser aws_get_next_log_entry: finished successfully ', res);
         return res;
 
     } catch (err) {
