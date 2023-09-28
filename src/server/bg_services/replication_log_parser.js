@@ -145,7 +145,7 @@ async function get_azure_log_candidates(source_bucket_id, rule_id, replication_c
             azure_parse_log_object(logs, query_result, sync_deletions);
             dbg.log1("get_azure_log_candidates: logs", logs);
             candidates = create_candidates(logs);
-            dbg.log1("get_azure_log_candidates: candsidates", candidates);
+            dbg.log1("get_azure_log_candidates: candidates", candidates);
         } else {
             dbg.log1("get_azure_log_candidates: No new Azure logs found to process");
         }
