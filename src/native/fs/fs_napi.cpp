@@ -1215,7 +1215,8 @@ struct Readdir : public FSWorker
             return;
         }
 
-        while (true) {
+        int entry_count = 0;
+        while (entry_count < 2) {
             // need to set errno before the call to readdir() to detect between EOF and error
             errno = 0;
             struct dirent* e = readdir(dir);
@@ -1229,6 +1230,7 @@ struct Readdir : public FSWorker
                     e->d_ino,
                     e->d_type,
                 });
+                entry_count++;
             } else {
                 if (errno) SetSyscallError();
                 break;
