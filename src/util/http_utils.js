@@ -10,8 +10,8 @@ const https = require('https');
 const crypto = require('crypto');
 const xml2js = require('xml2js');
 const querystring = require('querystring');
-const {HttpProxyAgent} = require('http-proxy-agent');
-const {HttpsProxyAgent} = require('https-proxy-agent');
+const { HttpProxyAgent } = require('http-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 
 const dbg = require('./debug_module')(__filename);
 const config = require('../../config');
@@ -34,7 +34,7 @@ const http_proxy_agent = HTTP_PROXY ?
 const https_proxy_agent = HTTPS_PROXY ?
     new HttpsProxyAgent(HTTPS_PROXY) : null;
 const unsecured_https_proxy_agent = HTTPS_PROXY ?
-    new HttpsProxyAgent(HTTPS_PROXY, {rejectUnauthorized: false}) : null;
+    new HttpsProxyAgent(HTTPS_PROXY, { rejectUnauthorized: false }) : null;
 
 const no_proxy_list =
     (NO_PROXY ? NO_PROXY.split(',') : []).map(addr => {
@@ -419,7 +419,6 @@ function get_unsecured_agent(endpoint) {
 
 function _get_http_agent(endpoint, request_unsecured) {
     const { protocol, hostname } = url.parse(endpoint);
-
     if (protocol === "https:" || protocol === "wss:") {
         if (HTTPS_PROXY && should_proxy(hostname)) {
             if (request_unsecured) {
@@ -471,6 +470,7 @@ function make_https_request(options, body, body_encoding) {
             .end(body, body_encoding);
     });
 }
+
 
 // Write periodically to keep the connection alive
 // TODO: Every complete above the S3_KEEP_ALIVE_WHITESPACE_INTERVAL
@@ -663,6 +663,19 @@ function authorize_session_token(req, options) {
     }
 }
 
+// This function is intended to provide partial functionalaty to replace the deprecated request npm module (https://www.npmjs.com/package/request)
+// Before using this function, make sure it provides your needs., or consider using more full featured library like axios (https://www.npmjs.com/package/axios)
+// e.g.: one drawback of this implementation is that it does not follow redirects (this can be fixed by using 3rd party modules)
+// the function returns a stream.
+function http_get(uri, options) {
+    options = options || {};
+    const client = uri.startsWith('https:') ? https : http;
+    return new Promise((resolve, reject) => {
+        client.get(uri, options, resolve).on('error', reject);
+    });
+}
+
+
 exports.parse_url_query = parse_url_query;
 exports.parse_client_ip = parse_client_ip;
 exports.get_md_conditions = get_md_conditions;
@@ -687,3 +700,4 @@ exports.set_cors_headers_s3 = set_cors_headers_s3;
 exports.set_cors_headers_sts = set_cors_headers_sts;
 exports.parse_content_length = parse_content_length;
 exports.authorize_session_token = authorize_session_token;
+exports.http_get = http_get;
