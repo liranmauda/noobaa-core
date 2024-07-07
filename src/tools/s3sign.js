@@ -5,7 +5,7 @@ const AWS = require('aws-sdk');
 const util = require('util');
 const req = require('minimist')(process.argv.slice(2));
 
-if (req.help) return usage();
+if (req.help) usage();
 
 // inherit functions from AWS.HttpRequest
 Object.setPrototypeOf(req, AWS.HttpRequest.prototype);
@@ -58,4 +58,5 @@ Example Headers:
 --header.Date 'Sat, 28 Apr 2018 06:26:22 GMT'
 --header.User-Agent 'Smith'
 `);
+    process.exit(0);
 }
