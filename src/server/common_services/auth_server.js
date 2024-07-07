@@ -2,7 +2,7 @@
 'use strict';
 
 const _ = require('lodash');
-const bcrypt = require('bcrypt');
+const argon2 = require('argon2')
 const ip_module = require('ip');
 
 const P = require('../../util/promise');
@@ -66,7 +66,7 @@ function create_auth(req) {
             if (!password) return;
 
             return P.resolve()
-                .then(() => bcrypt.compare(password.unwrap(), target_account.password.unwrap()))
+                .then(() => argon2.verify(password.unwrap(), target_account.password.unwrap()))
                 .then(match => {
                     if (!match) {
                         dbg.log0('password mismatch', email, system_name);

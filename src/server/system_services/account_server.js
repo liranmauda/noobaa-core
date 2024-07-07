@@ -6,7 +6,7 @@ const _ = require('lodash');
 const net = require('net');
 const chance = require('chance')();
 const GoogleStorage = require('../../util/google_storage_wrap');
-const bcrypt = require('bcrypt');
+const argon2 = require('argon2')
 const server_rpc = require('../server_rpc');
 
 const config = require('../../../config');
@@ -79,7 +79,7 @@ async function create_account(req) {
 
     if (req.rpc_params.has_login) {
         account.password = req.rpc_params.password;
-        const password_hash = await bcrypt_password(account.password.unwrap());
+        const password_hash = await argon2_password(account.password.unwrap());
         account.password = password_hash;
     }
 
@@ -574,7 +574,7 @@ async function reset_password(req) {
 
     const params = req.rpc_params;
 
-    const password = await bcrypt_password(params.password.unwrap());
+    const password = await argon2_password(params.password.unwrap());
 
     const changes = {
         password: new SensitiveString(password),
@@ -1334,7 +1334,7 @@ function ensure_support_account() {
             }
 
             console.log('CREATING SUPPORT ACCOUNT...');
-            return bcrypt_password(system_store.get_server_secret())
+            return argon2_password(system_store.get_server_secret())
                 .then(password => {
                     const support_account = {
                         _id: system_store.new_system_store_id(),
@@ -1358,10 +1358,16 @@ function ensure_support_account() {
         });
 }
 
-function bcrypt_password(password) {
-    return P.resolve()
-        .then(() => password && bcrypt.hash(password, 10));
-}
+async function argon2_password(password) {
+    if (!password) return password; 
+    const hash = await argon2.hash(password, {
+      type: argon2.argon2id,
+      memoryCost: 2 ** 16,
+      timeCost: 3,
+      parallelism: 1
+    });
+    return hash;
+  }
 
 function is_support_or_admin_or_me(system, account, target_account) {
     return account.is_support ||
@@ -1454,7 +1460,7 @@ async function verify_authorized_account(req) {
     if (req.role === 'operator') {
         return true;
     }
-    return bcrypt.compare(req.rpc_params.verification_password.unwrap(), req.account.password.unwrap());
+    return argon2.verify(req.rpc_params.verification_password.unwrap(), req.account.password.unwrap());
 }
 
 function _list_connection_usage(account, credentials) {
