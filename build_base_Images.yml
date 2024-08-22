@@ -17,14 +17,20 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build Builder
         run: |
-          docker pull ghcr.io/noobaa/noobaa-builder:latest
+          docker pull ghcr.io/noobaa/noobaa-builder:latest || true
+          docker tag ghcr.io/noobaa/noobaa-builder noobaa-builder
           make builder
           docker tag noobaa-builder ghcr.io/noobaa/noobaa-builder
           docker push ghcr.io/noobaa/noobaa-builder:latest
-      - name: Build Base
-        run: |
-          docker pull ghcr.io/noobaa/noobaa-base:latest
-          make base
-          docker tag noobaa-base ghcr.io/noobaa/noobaa-base
-          docker push ghcr.io/noobaa/noobaa-base:latest
-      
+      # - name: Build Base
+      #   run: |
+      #     docker pull ghcr.io/noobaa/noobaa-base:latest || true
+      #     make base
+      #     docker tag noobaa-base ghcr.io/noobaa/noobaa-base
+      #     docker push ghcr.io/noobaa/noobaa-base:latest
+      # - name: Build NooBaa
+      #   run: |
+      #     docker pull ghcr.io/noobaa/noobaa:latest || true
+      #     make base
+      #     docker tag noobaa ghcr.io/noobaa/noobaa
+      #     docker push ghcr.io/noobaa/noobaa:latest
