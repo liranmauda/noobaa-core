@@ -424,7 +424,11 @@ mocha.describe('Encryption tests', function() {
                 };
                 compare_secrets(secrets, system_store_account.master_key_id._id);
                 const pool_name = `${cur_account.email}-cloud-pool`;// check pools connection secret key in db is encrypted and updated
-                const db_pool = await db_client.collection('pools').findOne({ name: pool_name }); // db data - supposed to be encrypted
+                let db_pool = await db_client.collection('pools').findOne({ name: pool_name }); // db data - supposed to be encrypted
+                while (_.isUndefined(db_pool.cloud_pool_info)) {
+                    await P.delay(20 * 1000);
+                    db_pool = await db_client.collection('pools').findOne({ name: pool_name });
+                }
                 const system_store_pool = pool_by_name(system_store.data.pools, pool_name); // system store data supposed to be decrypted
                 const pools_secrets = {
                     db_secret: db_pool.cloud_pool_info.access_keys.secret_key,
