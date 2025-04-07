@@ -98,7 +98,7 @@ class VerifierMock extends AgentBlocksVerifier {
         }
     }
 
-    verify_blocks(rpc_params, target_params) {
+    async verify_blocks(rpc_params, target_params) {
         assert(target_params &&
             _.difference(Object.keys(target_params), ['address', 'timeout']).length === 0,
             'Verifier should only send to address with timeout');
@@ -115,7 +115,7 @@ class VerifierMock extends AgentBlocksVerifier {
         });
         this.verified_blocks = _.concat(this.verified_blocks, block_ids);
         console.log('verify_blocks', block_ids, 'node', target_params.address);
-        return P.resolve();
+        return
     }
 
 }
@@ -126,7 +126,7 @@ mocha.describe('mocked agent_blocks_verifier', function() {
     const bucket_id = new mongodb.ObjectId();
     const system_id = new mongodb.ObjectId();
 
-    mocha.it('should verify blocks on nodes', function() {
+    mocha.it('should verify blocks on nodes', async function() {
         const self = this; // eslint-disable-line no-invalid-this
         const nodes = [make_node('bla2', false)];
         const chunk_coder_configs = [{
@@ -139,18 +139,16 @@ mocha.describe('mocked agent_blocks_verifier', function() {
         const pools = [make_schema_pool('pool1')];
         const blocks = [make_schema_block(chunks[0].frags[0]._id, chunks[0]._id, nodes[0]._id, pools[0]._id)];
         const verifier_mock = new VerifierMock(blocks, nodes, chunks, pools);
-        return P.resolve()
-            .then(() => verifier_mock.run_agent_blocks_verifier())
-            .then(() => {
-                assert(verifier_mock.verified_blocks.length === 1, self.test.title);
-            })
-            .catch(err => {
-                console.error(err, err.stack);
-                throw err;
-            });
+        try {
+            await verifier_mock.run_agent_blocks_verifier();
+            assert(verifier_mock.verified_blocks.length === 1, self.test.title);
+        } catch (err) {
+            console.error(err, err.stack);
+            throw err;
+        }
     });
 
-    mocha.it('should not verify blocks on offline nodes', function() {
+    mocha.it('should not verify blocks on offline nodes', async function() {
         const self = this; // eslint-disable-line no-invalid-this
         const nodes = [make_node('bla1', true)];
         const chunk_coder_configs = [{
@@ -164,18 +162,16 @@ mocha.describe('mocked agent_blocks_verifier', function() {
         const blocks = [make_schema_block(chunks[0].frags[0]._id, chunks[0]._id, nodes[0]._id, pools[0]._id)];
 
         const verifier_mock = new VerifierMock(blocks, nodes, chunks, pools);
-        return P.resolve()
-            .then(() => verifier_mock.run_agent_blocks_verifier())
-            .then(() => {
-                assert(verifier_mock.verified_blocks.length === 0, self.test.title);
-            })
-            .catch(err => {
-                console.error(err, err.stack);
-                throw err;
-            });
+        try {
+            await verifier_mock.run_agent_blocks_verifier();
+            assert(verifier_mock.verified_blocks.length === 0, self.test.title);
+        } catch (err) {
+            console.error(err, err.stack);
+            throw err;
+        }
     });
 
-    mocha.it('should not verify blocks on non existing nodes', function() {
+    mocha.it('should not verify blocks on non existing nodes', async function() {
         const self = this; // eslint-disable-line no-invalid-this
         // const nodes = [make_node('node1')];
         const chunk_coder_configs = [{
@@ -190,15 +186,13 @@ mocha.describe('mocked agent_blocks_verifier', function() {
         const blocks = [make_schema_block(chunks[0].frags[0]._id, chunks[0]._id, new mongodb.ObjectId(), pools[0]._id)];
 
         const verifier_mock = new VerifierMock(blocks, [], chunks, pools);
-        return P.resolve()
-            .then(() => verifier_mock.run_agent_blocks_verifier())
-            .then(() => {
-                assert(verifier_mock.verified_blocks.length === 0, self.test.title);
-            })
-            .catch(err => {
-                console.error(err, err.stack);
-                throw err;
-            });
+        try {
+            await verifier_mock.run_agent_blocks_verifier();
+            assert(verifier_mock.verified_blocks.length === 0, self.test.title);
+        } catch (err) {
+            console.error(err, err.stack);
+            throw err;
+        }
     });
 
     /**
