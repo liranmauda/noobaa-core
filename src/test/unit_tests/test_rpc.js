@@ -8,7 +8,6 @@ const _ = require('lodash');
 const mocha = require('mocha');
 const assert = require('assert');
 
-const P = require('../../util/promise');
 const ssl_utils = require('../../util/ssl_utils');
 const { RPC, RpcError, RpcSchema, RPC_BUFFERS } = require('../../rpc');
 
@@ -459,21 +458,19 @@ mocha.describe('RPC', function() {
             });
     });
 
-    mocha.it('TLS', function() {
+    mocha.it('TLS', async function() {
         rpc.register_service(test_api, make_server());
         let tls_server;
-        return P.resolve()
-            .then(() => rpc.register_tcp_transport(0, ssl_utils.generate_ssl_certificate()))
-            .then(tls_server_arg => {
-                tls_server = tls_server_arg;
-                const tls_client = rpc.new_client({
-                    address: 'tls://localhost:' + tls_server.port
-                });
-                return tls_client.test.get(_.cloneDeep(PARAMS));
-            })
-            .finally(() => {
-                if (tls_server) tls_server.close();
+        try {
+            const tls_server_arg = await rpc.register_tcp_transport(0, ssl_utils.generate_ssl_certificate());
+            tls_server = tls_server_arg;
+            const tls_client = rpc.new_client({
+                address: 'tls://localhost:' + tls_server.port
             });
+            return tls_client.test.get(_.cloneDeep(PARAMS));
+        } finally {
+            if (tls_server) tls_server.close();
+        }
     });
 
     mocha.it('N2N DEFAULT', n2n_tester());

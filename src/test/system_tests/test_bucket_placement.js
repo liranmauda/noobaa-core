@@ -216,7 +216,7 @@ async function update_quota_on_bucket(limit_gb) {
         }
     } catch (err) {
         throw new Error(`Failed setting quota with ${limit_gb} - ${err}`);
-    };
+    }
 }
 
 function main() {

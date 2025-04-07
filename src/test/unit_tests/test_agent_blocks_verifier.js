@@ -10,7 +10,6 @@ coretest.setup();
 const _ = require('lodash');
 const mocha = require('mocha');
 const assert = require('assert');
-const P = require('../../util/promise');
 const AgentBlocksVerifier = require('../../server/bg_services/agent_blocks_verifier').AgentBlocksVerifier;
 const db_client = require('../../util/db_client');
 const schema_utils = require('../../util/schema_utils');
@@ -115,7 +114,7 @@ class VerifierMock extends AgentBlocksVerifier {
         });
         this.verified_blocks = _.concat(this.verified_blocks, block_ids);
         console.log('verify_blocks', block_ids, 'node', target_params.address);
-        return
+
     }
 
 }
