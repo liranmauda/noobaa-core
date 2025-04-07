@@ -394,7 +394,7 @@ mocha.describe('RPC', function() {
 
     });
 
-    mocha.it('HTTP/WS', function() {
+    mocha.it('Testing HTTP/WS', function() {
         rpc.register_service(test_api, make_server());
         let http_server;
         let http_client;
@@ -418,7 +418,7 @@ mocha.describe('RPC', function() {
             .then(() => http_server.close());
     });
 
-    mocha.it('HTTPS/WSS', function() {
+    mocha.it('Testing HTTPS/WSS', function() {
         rpc.register_service(test_api, make_server());
         let https_server;
         let https_client;
@@ -442,7 +442,7 @@ mocha.describe('RPC', function() {
             .then(() => https_server.close());
     });
 
-    mocha.it('TCP', function() {
+    mocha.it('Testing TCP', function() {
         rpc.register_service(test_api, make_server());
         let tcp_server;
         return rpc.register_tcp_transport(0)
@@ -458,7 +458,7 @@ mocha.describe('RPC', function() {
             });
     });
 
-    mocha.it('TLS', async function() {
+    mocha.it('Testing TLS', async function() {
         rpc.register_service(test_api, make_server());
         let tls_server;
         try {
@@ -467,7 +467,7 @@ mocha.describe('RPC', function() {
             const tls_client = rpc.new_client({
                 address: 'tls://localhost:' + tls_server.port
             });
-            return tls_client.test.get(_.cloneDeep(PARAMS));
+            return await tls_client.test.get(_.cloneDeep(PARAMS));
         } finally {
             if (tls_server) tls_server.close();
         }
