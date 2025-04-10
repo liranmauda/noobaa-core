@@ -1,8 +1,6 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
-// const _ = require('lodash');
-const P = require('../../util/promise');
 const mocha = require('mocha');
 const assert = require('assert');
 const KeysLock = require('../../util/keys_lock');
@@ -59,7 +57,7 @@ mocha.describe('keys_lock', function() {
 
 
     mocha.it('should work parallel keys', async function() {
-        const kl = new KeysLock();;
+        const kl = new KeysLock();
         let first_woke = false;
         assert.strictEqual(kl.length, 0);
 
@@ -67,7 +65,7 @@ mocha.describe('keys_lock', function() {
             first_woke = true;
         }
 
-
+        /* eslint-disable no-empty-function */
         const first_lock = kl.surround_keys(['key1'], () => {});
         assert.strictEqual(kl.length, 0);
         const second_lock = kl.surround_keys(['key2'], do_wake_first);

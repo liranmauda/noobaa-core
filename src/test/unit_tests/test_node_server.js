@@ -9,8 +9,6 @@ coretest.setup({ pools_to_create: [coretest.POOL_LIST[0]] });
 const mocha = require('mocha');
 const assert = require('assert');
 
-const P = require('../../util/promise');
-
 mocha.describe('node_server', function() {
 
     const { rpc_client } = coretest;
@@ -22,7 +20,7 @@ mocha.describe('node_server', function() {
         const nodes = res.nodes;
         coretest.log('NODES', nodes);
         assert(res.nodes.length >= 2);
-        const res_1 = await rpc_client.node.read_node({
+        await rpc_client.node.read_node({
             name: nodes[0].name
         });
         await rpc_client.node.get_test_nodes({
