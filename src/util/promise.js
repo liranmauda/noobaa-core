@@ -299,7 +299,7 @@ exports.retry = retry;
 // we should probably keep all and remove resolve/reject
 // when resolve/reject are used, it is probably better to use async/await
 exports.resolve = val => Promise.resolve(val); // 178 occurrences
-exports.reject = err => Promise.reject(err); // 7 occurrences
+exports.reject = err => Promise.reject(err); // 3 occurrences
 exports.all = arr => Promise.all(arr);
 // deprecated
 exports.fromCallback = fromCallback; // 28 occurrences
