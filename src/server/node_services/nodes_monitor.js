@@ -849,31 +849,31 @@ class NodesMonitor extends EventEmitter {
         });
     }
 
-    _run_node(item) {
-        if (!this._started) return P.reject(new Error('monitor has not started'));
+    async _run_node(item) {
+        if (!this._started) throw new Error('monitor has not started');
         item._run_node_serial = item._run_node_serial || new semaphore.Semaphore(1);
-        if (item.node.deleted) return P.reject(new Error(`node ${item.node.name} is deleted`));
-        return item._run_node_serial.surround(() =>
-            P.resolve()
-            .then(() => dbg.log1('_run_node:', item.node.name))
-            .then(() => this._get_agent_info(item))
-            .then(() => { //If internal or cloud resource, cut down initializing time (in update_rpc_config)
-                if (!item.node_from_store && (item.node.is_mongo_node || item.node.is_cloud_node)) {
-                    return this._update_nodes_store('force');
-                }
-            })
-            .then(() => this._uninstall_deleting_node(item))
-            .then(() => this._remove_hideable_nodes(item))
-            .then(() => this._update_node_service(item))
-            .then(() => this._update_create_node_token(item))
-            .then(() => this._update_rpc_config(item))
-            .then(() => this._test_nodes_validity(item))
-            .then(() => this._update_status(item))
-            .then(() => this._handle_issues(item))
-            .then(() => this._update_nodes_store())
-            .catch(err => {
+        if (item.node.deleted) throw new Error(`node ${item.node.name} is deleted`);
+        return item._run_node_serial.surround(async () => {
+            dbg.log1('_run_node:', item.node.name);
+            await this._get_agent_info(item);
+            //If internal or cloud resource, cut down initializing time (in update_rpc_config)
+            if (!item.node_from_store && (item.node.is_mongo_node || item.node.is_cloud_node)) {
+                return this._update_nodes_store('force');
+            }
+            try {
+                await this._uninstall_deleting_node(item);
+                this._remove_hideable_nodes(item);
+                await this._update_node_service(item);
+                await this._update_create_node_token(item);
+                await this._update_rpc_config(item);
+                await this._test_nodes_validity(item);
+                this._update_status(item);
+                this._handle_issues(item);
+                await this._update_nodes_store();
+            } catch (err) {
                 dbg.warn('_run_node: ERROR', err.stack || err, 'node', item.node);
-            }));
+            }
+        });
     }
 
     _handle_issues(item) {
