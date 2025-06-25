@@ -1,6 +1,6 @@
 {
   "name": "noobaa-core",
-  "version": "5.19.0",
+  "version": "5.20.0",
   "license": "SEE LICENSE IN LICENSE",
   "description": "",
   "homepage": "https://github.com/noobaa/noobaa-core",
@@ -107,7 +107,7 @@
     "morgan": "1.10.0",
     "nan": "2.22.2",
     "node-addon-api": "8.3.1",
-    "node-rdkafka": "3.4.0",
+    "node-rdkafka": "3.4.1",
     "performance-now": "2.1.0",
     "pg": "8.16.0",
     "ping": "0.4.4",
