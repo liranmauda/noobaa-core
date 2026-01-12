@@ -98,6 +98,7 @@ jobs:
 
       - name: Pull noobaa-base image
         id: pull_base_image
+        # Only try to pull if we are not building the base image
         if: ${{ steps.should_build_base.outputs.should_build == 'false' }}
         run: |
           output=false
@@ -116,6 +117,7 @@ jobs:
 
       - name: Pull noobaa-builder image
         id: should_build_builder
+        #  Only try to pull if we are building the base image or if pulling base image failed
         if: ${{steps.should_build_base.outputs.should_build == 'true' ||
           steps.pull_base_image.outputs.pull_succeed == 'false'}}
         run: |
@@ -132,6 +134,7 @@ jobs:
           done
           # If not changed, try to pull
           if [ "$should_pull" = true ]; then
+            # this loop tries to pull the most recent builder image 
             for i in $(seq 0 ${{ steps.prep.outputs.pull_tries }})
             do
               date=$(date -d "${i} days ago" +'%Y%m%d')
@@ -154,6 +157,8 @@ jobs:
             flags="-o builder"
           fi
           make base ${flags}
+          docker tag noobaa-base quay.io/${{ steps.prep.outputs.basetags }}$(date +'%Y%m%d')
+          docker push quay.io/${{ steps.prep.outputs.basetags }}$(date +'%Y%m%d')
 
       - name: Build noobaa and tester images
         run: make tester -o base
