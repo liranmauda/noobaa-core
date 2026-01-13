@@ -245,7 +245,7 @@ base: builder
 noobaa: base
 	@echo "\n##\033[1;32m Build image noobaa ...\033[0m"
 	@echo "$(CONTAINER_ENGINE) build $(CONTAINER_PLATFORM_FLAG)"
-	$(CONTAINER_ENGINE) build $(CONTAINER_PLATFORM_FLAG) $(CPUSET) $(CACHE_FLAG) $(NETWORK_FLAG) \
+	$(CONTAINER_ENGINE) build $(CONTAINER_PLATFORM_FLAG) $(CPUSET) $(CACHE_FLAG_NOOBAA) $(NETWORK_FLAG) \
 		-f src/deploy/NVA_build/NooBaa.Dockerfile \
 		-t noobaa \
 		--build-arg CENTOS_VER=$(CENTOS_VER) \
@@ -334,7 +334,7 @@ nbdev:
 
 tester: noobaa
 	@echo "\n##\033[1;32m Build image noobaa-tester ...\033[0m"
-	$(CONTAINER_ENGINE) build $(CONTAINER_PLATFORM_FLAG) $(CPUSET) -f src/deploy/NVA_build/Tests.Dockerfile $(CACHE_FLAG) $(NETWORK_FLAG) -t noobaa-tester . $(REDIRECT_STDOUT)
+	$(CONTAINER_ENGINE) build $(CONTAINER_PLATFORM_FLAG) $(CPUSET) -f src/deploy/NVA_build/Tests.Dockerfile $(CACHE_FLAG_TESTER) $(NETWORK_FLAG) -t noobaa-tester . $(REDIRECT_STDOUT)
 	$(CONTAINER_ENGINE) tag noobaa-tester $(TESTER_TAG)
 	@echo "\033[1;32mTester done.\033[0m"
 	@echo "##\033[1;32m Build image noobaa-tester done.\033[0m"
