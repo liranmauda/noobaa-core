@@ -71,10 +71,17 @@ jobs:
             #on dispach, use the current branch
             BRANCH=${{github.ref_name}}
           fi
-          BUILDER_TAGS="${DOCKER_BUILDER_IMAGE}:${BRANCH}-"
+          # BUILDER_TAGS is hardcoded to master because it rarely changes and we want to maximize cache hits
+          # It mainly effects when running on private branches that are not master in a fork
+          BUILDER_TAGS="${DOCKER_BUILDER_IMAGE}:master-"
           BASE_TAGS="${DOCKER_BASE_IMAGE}:${BRANCH}-"
+          # A fallback to master tags in case the branch specific tags are not found
+          # Under the assumption that the diversity between branches is small enough
+          # We try to pull images built for master branch to reduce build times mainly at the first iteration of a new branch 
+          BASE_TAGS_MASTER="${DOCKER_BASE_IMAGE}:master-"
           EARLIEST_VERSION_PAST=20
           echo "basetags=${BASE_TAGS}" >> $GITHUB_OUTPUT
+          echo "basetagsmaster=${BASE_TAGS_MASTER}" >> $GITHUB_OUTPUT
           echo "buildertags=${BUILDER_TAGS}" >> $GITHUB_OUTPUT
           echo "pull_tries=${EARLIEST_VERSION_PAST}" >> $GITHUB_OUTPUT
 
@@ -113,6 +120,21 @@ jobs:
             output=true
             break
           done
+          if [ "$output" = false ]; then
+            # Try to pull from master tags as a fallback
+            for i in $(seq 0 ${{ steps.prep.outputs.pull_tries }})
+            do
+              date=$(date -d "${i} days ago" +'%Y%m%d')
+              base_tag="quay.io/${{ steps.prep.outputs.basetagsmaster }}${date}"
+              echo "Trying to pull ${base_tag} as a fallback"
+              docker pull ${base_tag} || continue
+              echo "Successfully pulled ${base_tag} from quay.io"
+              docker tag ${base_tag} noobaa-base
+              echo "Pulling from master tags succeeded, but we still need to build"
+              # output=true
+              break
+            done
+          fi
           echo "pull_succeed=${output}" >> $GITHUB_OUTPUT
 
       - name: Pull noobaa-builder image
