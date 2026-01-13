@@ -66,16 +66,16 @@ endif
 
 NO_CACHE?=""
 CACHE_FLAG=
-CACHE_FLAG_BUILDER="--cache-from=noobaa-builder"
-CACHE_FLAG_BASE="--cache-from=noobaa-base"
-CACHE_FLAG_NOOBAA="--cache-from=noobaa"
-CACHE_FLAG_TESTER="--cache-from=noobaa-tester"
+CACHE_FLAG_BUILDER=--cache-from=noobaa-builder
+CACHE_FLAG_BASE=--cache-from=noobaa-base
+CACHE_FLAG_NOOBAA=--cache-from=noobaa
+CACHE_FLAG_TESTER=--cache-from=noobaa-tester
 ifeq ($(NO_CACHE), true)
-	CACHE_FLAG="--no-cache"
-	CACHE_FLAG_BUILDER="--no-cache"
-	CACHE_FLAG_BASE="--no-cache"
-	CACHE_FLAG_NOOBAA="--no-cache"
-	CACHE_FLAG_TESTER="--no-cache"
+	CACHE_FLAG=--no-cache
+	CACHE_FLAG_BUILDER=--no-cache
+	CACHE_FLAG_BASE=--no-cache
+	CACHE_FLAG_NOOBAA=--no-cache
+	CACHE_FLAG_TESTER=--no-cache
 endif
 
 USE_HOSTNETWORK?=""
@@ -214,6 +214,7 @@ builder: assert-container-engine
 	@echo "\n##\033[1;32m Build image noobaa-builder ...\033[0m"
 	mkdir -p $(CUOBJ_INC_CTX) 
 	mkdir -p $(CUOBJ_LIB_CTX)
+	$(CONTAINER_ENGINE) images
 	$(CONTAINER_ENGINE) build $(CONTAINER_PLATFORM_FLAG) $(CPUSET) $(CACHE_FLAG_BUILDER) $(NETWORK_FLAG) \
 		-f src/deploy/NVA_build/builder.Dockerfile  \
 		-t noobaa-builder \
@@ -232,6 +233,7 @@ builder: assert-container-engine
 
 base: builder
 	@echo "\n##\033[1;32m Build image noobaa-base ...\033[0m"
+	$(CONTAINER_ENGINE) images
 	$(CONTAINER_ENGINE) build $(CONTAINER_PLATFORM_FLAG) $(CPUSET) $(CACHE_FLAG_BASE) $(NETWORK_FLAG) \
 		-f src/deploy/NVA_build/Base.Dockerfile \
 		-t noobaa-base \
