@@ -66,10 +66,16 @@ endif
 
 NO_CACHE?=""
 CACHE_FLAG=
-CACHE_FLAG_BUILDER=--cache-from=noobaa-builder
-CACHE_FLAG_BASE=--cache-from=noobaa-base
-CACHE_FLAG_NOOBAA=--cache-from=noobaa
-CACHE_FLAG_TESTER=--cache-from=noobaa-tester
+CACHE_FLAG_BUILDER=--cache-from=type=docker,ref=noobaa-builder:latest
+CACHE_FLAG_BASE=--cache-from=type=docker,ref=noobaa-base:latest
+CACHE_FLAG_NOOBAA=--cache-from=type=docker,ref=noobaa:latest
+CACHE_FLAG_TESTER=--cache-from=type=docker,ref=noobaa-tester:latest
+ifeq ($(CONTAINER_ENGINE),podman)
+	CACHE_FLAG_BUILDER=
+	CACHE_FLAG_BASE=
+	CACHE_FLAG_NOOBAA=
+	CACHE_FLAG_TESTER=
+endif
 ifeq ($(NO_CACHE), true)
 	CACHE_FLAG=--no-cache
 	CACHE_FLAG_BUILDER=--no-cache
