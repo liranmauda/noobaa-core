@@ -234,6 +234,7 @@ builder: assert-container-engine
 base: builder
 	@echo "\n##\033[1;32m Build image noobaa-base ...\033[0m"
 	$(CONTAINER_ENGINE) images
+	$(CONTAINER_ENGINE) history noobaa-base || echo "noobaa-base image not found, building afresh"
 	$(CONTAINER_ENGINE) build $(CONTAINER_PLATFORM_FLAG) $(CPUSET) $(CACHE_FLAG_BASE) $(NETWORK_FLAG) \
 		-f src/deploy/NVA_build/Base.Dockerfile \
 		-t noobaa-base \
