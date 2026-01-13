@@ -105,10 +105,9 @@ jobs:
 
       - name: Pull noobaa-base image
         id: pull_base_image
-        # Only try to pull if we are not building the base image
-        if: ${{ steps.should_build_base.outputs.should_build == 'false' }}
         run: |
           output=false
+
           for i in $(seq 0 ${{ steps.prep.outputs.pull_tries }})
           do
             date=$(date -d "${i} days ago" +'%Y%m%d')
@@ -117,9 +116,12 @@ jobs:
             docker pull ${base_tag} || continue
             echo "Successfully pulled ${base_tag} from quay.io"
             docker tag ${base_tag} noobaa-base
-            output=true
+            if [ "${{ steps.should_build_base.outputs.should_build }}" = 'false' ]; then
+              output=true
+            fi
             break
           done
+
           if [ "$output" = false ]; then
             # Try to pull from master tags as a fallback
             for i in $(seq 0 ${{ steps.prep.outputs.pull_tries }})
@@ -135,13 +137,13 @@ jobs:
               break
             done
           fi
-          echo "pull_succeed=${output}" >> $GITHUB_OUTPUT
+          echo "skip_build=${output}" >> $GITHUB_OUTPUT
 
       - name: Pull noobaa-builder image
         id: should_build_builder
         #  Only try to pull if we are building the base image or if pulling base image failed
         if: ${{steps.should_build_base.outputs.should_build == 'true' ||
-          steps.pull_base_image.outputs.pull_succeed == 'false'}}
+          steps.pull_base_image.outputs.skip_build == 'false'}}
         run: |
           output=true
           should_pull=true
@@ -173,7 +175,7 @@ jobs:
 
       - name: Build noobaa-base image
         if: ${{steps.should_build_base.outputs.should_build == 'true' ||
-          steps.pull_base_image.outputs.pull_succeed == 'false'}}
+          steps.pull_base_image.outputs.skip_build == 'false'}}
         run: |
           if [ "${{ steps.should_build_builder.outputs.should_build }}" = 'false' ]; then
             flags="-o builder"
