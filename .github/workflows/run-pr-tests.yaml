@@ -182,7 +182,8 @@ jobs:
           fi
           make base ${flags}
           docker tag noobaa-base quay.io/${{ steps.prep.outputs.basetags }}$(date +'%Y%m%d')
-          docker push quay.io/${{ steps.prep.outputs.basetags }}$(date +'%Y%m%d')
+          # disabling for now.
+          # docker push quay.io/${{ steps.prep.outputs.basetags }}$(date +'%Y%m%d')
 
       - name: Build noobaa and tester images
         run: make tester -o base
