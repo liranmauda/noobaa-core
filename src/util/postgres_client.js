@@ -11,14 +11,14 @@ const crypto = require('crypto');
 const util = require('util');
 const EventEmitter = require('events').EventEmitter;
 const { Pool, Client } = require('pg');
-const { MongoSequence } = require('./mongo_client');
+const { DBSequence } = require('./db_utils');
 
 const P = require('./promise');
 const dbg = require('./debug_module')(__filename);
 const common_api = require('../api/common_api');
 const schema_utils = require('./schema_utils');
 const schema_keywords = require('./schema_keywords');
-const mongodb = require('mongodb');
+const mongodb = require('./objectId_utils');
 const mongo_to_pg = require('mongo-query-to-postgres-jsonb');
 const fs = require('fs');
 // TODO: Shouldn't be like that, we shouldn't use MongoDB functions to compare
@@ -526,67 +526,7 @@ class OrderedBulkOp extends BulkOp {
 
 }
 
-class PostgresSequence {
-    constructor(params) {
-        const { name, client } = params;
-        this.name = name;
-        this.client = client;
-        this.pool_key = params.postgres_pool || 'default';
-    }
 
-    // Lazy migration of the old mongo style collection/table based
-    // sequences. If a table with the name matching the sequence one
-    // is found, then:
-    // - fetch the current sequence value from the collection
-    // - return the init value to be used for native sequence
-    // If no table is found, return 1 - clean install
-    async migrateFromMongoSequence(name, pool) {
-        const res = await _do_query(pool, { text: `SELECT count(*) FROM pg_tables WHERE tablename  = '${name}';` }, 0);
-        const count = Number(res.rows[0].count);
-        if (count === 0) {
-            dbg.log0(`Table ${name} not found, skipping sequence migration`);
-            return 1;
-        }
-        dbg.log0(`✅ Table ${name} is found, starting migration to native sequence`);
-        const mongoSeq = new MongoSequence({ name, client: this.client });
-        const start = await mongoSeq.nextsequence();
-
-        return start;
-    }
-
-    seqname() {
-        return this.name + "native";
-    }
-
-    async _create(pool) {
-        try {
-            const start = await this.migrateFromMongoSequence(this.name, pool);
-            await _do_query(pool, { text: `CREATE SEQUENCE IF NOT EXISTS ${this.seqname()} AS BIGINT START ${start};` }, 0);
-            if (start !== 1) {
-                await _do_query(pool, { text: `DROP table IF EXISTS ${this.name};` }, 0);
-                dbg.log0(`✅ Table ${this.name} is dropped, migration to native sequence is completed`);
-            }
-        } catch (err) {
-            dbg.error('PostgresSequence._create failed', err);
-            throw err;
-        }
-    }
-
-    get_pool() {
-        const pool = this.client.get_pool(this.pool_key);
-        if (!pool) {
-            throw new Error(`The postgres clients pool ${this.pool_key} disconnected`);
-        }
-        return pool;
-    }
-
-    async nextsequence() {
-        if (this.init_promise) await this.init_promise;
-        const q = { text: `SELECT nextval('${this.seqname()}')` };
-        const res = await _do_query(this.get_pool(), q, 0);
-        return Number.parseInt(res.rows[0].nextval, 10);
-    }
-}
 
 // TODO: Hint for the index is ignored
 class PostgresTable {
@@ -1624,7 +1564,7 @@ class PostgresClient extends EventEmitter {
         if (_.find(this.sequences, s => s.name === params.name)) {
             throw new Error('define_sequence: sequence already defined ' + params.name);
         }
-        const seq = new PostgresSequence({ ...params, client: this });
+        const seq = new DBSequence({ ...params, client: this });
         this.sequences.push(seq);
 
         if (this.default_pool) {
