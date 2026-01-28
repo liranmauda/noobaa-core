@@ -2,7 +2,7 @@
 'use strict';
 
 const _ = require('lodash');
-const mongodb = require('mongodb');
+// const mongodb = require('mongodb');
 const assert = require('assert');
 
 const P = require('../../util/promise');
@@ -132,6 +132,7 @@ Didn't Run: ${JSON.stringify(
         };
     }
 
+    /*
     async _connect_to_mongo() {
         let retries = 5;
         while (retries > 0) {
@@ -156,6 +157,7 @@ Didn't Run: ${JSON.stringify(
             console.warn('got close on mongo connection');
         });
     }
+    */
 
     async _send_report() {
         try {

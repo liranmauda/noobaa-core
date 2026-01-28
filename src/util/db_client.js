@@ -2,12 +2,13 @@
 /** @typedef {typeof import('../sdk/nb')} nb */
 'use strict';
 
-const mongodb = require('mongodb');
+// const mongodb = require('mongodb');
 const { EventEmitter } = require('events');
 
 const dbg = require('./debug_module')(__filename);
 const config = require('../../config');
-const mongo_client = require('./mongo_client');
+const { ObjectId } = require('./objectId_utils');
+// const mongo_client = require('./mongo_client');
 const postgres_client = require('./postgres_client');
 
 /**
@@ -15,8 +16,10 @@ const postgres_client = require('./postgres_client');
  * @implements {nb.DBClient}
  */
 class NoneDBClient extends EventEmitter {
-    /** @returns {any} */ noop() { return undefined; }
-    /** @returns {any} */ noop_obj() { return {}; }
+    /** @returns {any} */
+    noop() { return undefined; }
+    /** @returns {any} */
+    noop_obj() { return {}; }
     operators = new Set();
     async connect(skip_init_db) { return this.noop(); }
     async reconnect() { return this.noop(); }
@@ -36,10 +39,10 @@ class NoneDBClient extends EventEmitter {
     async populate(docs, doc_path, collection, fields) { return this.noop(); }
     resolve_object_ids_recursive(idmap, item) { return this.noop(); }
     resolve_object_ids_paths(idmap, item, paths, allow_missing) { return this.noop(); }
-    new_object_id() { return new mongodb.ObjectId(); }
-    parse_object_id(id_str) { return new mongodb.ObjectId(String(id_str || undefined)); }
+    new_object_id() { return new ObjectId(); }
+    parse_object_id(id_str) { return new ObjectId(String(id_str || undefined)); }
     fix_id_type(doc) { return doc; }
-    is_object_id(id) { return false; }
+    is_object_id(id) { return (id instanceof ObjectId); }
     is_err_duplicate_key(err) { return false; }
     is_err_namespace_exists(err) { return false; }
     check_duplicate_key_conflict(err, entity) { return this.noop(); }
@@ -63,8 +66,6 @@ function instance() {
     switch (config.DB_TYPE) {
         case 'postgres':
             return postgres_client.instance();
-        case 'mongodb':
-            return mongo_client.instance();
         case 'none':
             return none_db_client;
         default: {
