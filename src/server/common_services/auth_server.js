@@ -292,7 +292,9 @@ async function authorize(req) {
     if (req.method_api.auth !== false) {
         // Don't run load_auth/check_auth until system_store has finished initial load,
         // so accounts_by_email/systems_by_name and data are ready.
-        if (!system_store.is_finished_initial_load) {
+        // Skip wait for redirector_api - it is often called during bootstrap and would deadlock.
+        const is_redirector = req.method_api.$id === 'redirector_api';
+        if (!is_redirector && !system_store.is_finished_initial_load) {
             await P.wait_until(() => system_store.is_finished_initial_load, 60000);
         }
         req.load_auth();
