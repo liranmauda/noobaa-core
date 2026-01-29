@@ -3,6 +3,7 @@
 
 const _ = require('lodash');
 
+const P = require('../../util/promise');
 const dbg = require('../../util/debug_module')(__filename);
 const { RpcError } = require('../../rpc');
 const net_utils = require('../../util/net_utils');
@@ -278,7 +279,7 @@ function read_auth(req) {
  * and assign the info in req.auth.
  *
  */
-function authorize(req) {
+async function authorize(req) {
     _prepare_auth_request(req);
     if (req.auth_token) {
         if (typeof req.auth_token === 'object') {
@@ -289,6 +290,11 @@ function authorize(req) {
     }
     // This check is only for to pass RPC tests
     if (req.method_api.auth !== false) {
+        // Don't run load_auth/check_auth until system_store has finished initial load,
+        // so accounts_by_email/systems_by_name and data are ready.
+        if (!system_store.is_finished_initial_load) {
+            await P.wait_until(() => system_store.is_finished_initial_load, 60000);
+        }
         req.load_auth();
         if (req.auth) {
             req.check_auth();
