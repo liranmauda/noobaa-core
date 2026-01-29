@@ -28,7 +28,6 @@ const cloud_utils = require('../util/cloud_utils');
 const BlockStoreFs = require('./block_store_services/block_store_fs').BlockStoreFs;
 const BlockStoreS3 = require('./block_store_services/block_store_s3').BlockStoreS3;
 const BlockStoreGoogle = require('./block_store_services/block_store_google').BlockStoreGoogle;
-const BlockStoreMongo = require('./block_store_services/block_store_mongo').BlockStoreMongo;
 const BlockStoreMem = require('./block_store_services/block_store_mem').BlockStoreMem;
 const BlockStoreAzure = require('./block_store_services/block_store_azure').BlockStoreAzure;
 
@@ -132,11 +131,6 @@ class Agent {
                     block_store_options.cloud_info.google = { project_id, private_key, client_email };
                     this.block_store = new BlockStoreGoogle(block_store_options);
                 }
-            } else if (params.mongo_info) {
-                this.mongo_info = params.mongo_info;
-                block_store_options.mongo_path = params.mongo_path;
-                this.node_type = 'BLOCK_STORE_MONGO';
-                this.block_store = new BlockStoreMongo(block_store_options);
             } else {
                 block_store_options.root_path = this.storage_path;
                 this.node_type = 'BLOCK_STORE_FS';
