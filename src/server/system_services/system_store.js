@@ -276,7 +276,11 @@ class SystemStoreData {
     rebuild_indexes() {
         _.each(COLLECTIONS, col => {
             _.each(col.mem_indexes, index => {
-                _.each(this[col.name], item => {
+                // Initialize index map when context is global (this) so it exists even when collection is empty
+                if (!index.context) {
+                    this[index.name] = {};
+                }
+                _.each(this[col.name] || [], item => {
                     const field = _.get(item, index.key || '_id');
                     if (!field) {
                         dbg.error(`SystemStoreData: Item ${col.name}[${item._id}] could not be indexed for ${index.name}
