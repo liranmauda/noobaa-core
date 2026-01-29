@@ -21,7 +21,7 @@ const nb_native = require('../util/nb_native');
 const { ConfigFS } = require('../sdk/config_fs');
 const cloud_utils = require('../util/cloud_utils');
 const native_fs_utils = require('../util/native_fs_utils');
-const mongo_utils = require('../util/mongo_utils');
+const { ObjectId } = require('../util/objectId_utils');
 const SensitiveString = require('../util/sensitive_string');
 const { account_id_cache } = require('../sdk/accountspace_fs');
 const ManageCLIError = require('../manage_nsfs/manage_nsfs_cli_errors').ManageCLIError;
@@ -221,7 +221,7 @@ async function merge_new_and_existing_config_data(user_input_bucket_data) {
  * @returns { Promise<{ code: ManageCLIResponse.BucketCreated, detail: Object, event_arg: Object }>} 
  */
 async function add_bucket(data) {
-    data._id = mongo_utils.mongoObjectId();
+    data._id = new ObjectId();
     const parsed_bucket_data = await config_fs.create_bucket_config_file(data);
 
     const account = await account_id_cache.get_with_cache({ _id: parsed_bucket_data.owner_account, config_fs });
@@ -586,7 +586,7 @@ async function fetch_existing_account_data(action, target, decrypt_secret_key) {
  * @returns { Promise<{ code: typeof ManageCLIResponse.AccountCreated, detail: Object, event_arg: Object  }>} 
  */
 async function add_account(data) {
-    data._id = mongo_utils.mongoObjectId();
+    data._id = new ObjectId();
     await config_fs.create_account_config_file(data);
     return { code: ManageCLIResponse.AccountCreated, detail: data, event_arg: { account: data.name } };
 }

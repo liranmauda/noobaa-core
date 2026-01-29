@@ -10,7 +10,7 @@ const config = require('../../config');
 const RpcError = require('../rpc/rpc_error');
 const js_utils = require('../util/js_utils');
 const nb_native = require('../util/nb_native');
-const mongo_utils = require('../util/mongo_utils');
+const { ObjectId } = require('../util/objectId_utils');
 const KeysSemaphore = require('../util/keys_semaphore');
 const {
     get_umasked_mode,
@@ -350,7 +350,7 @@ class BucketSpaceFS extends BucketSpaceSimpleFS {
 
     new_bucket_defaults(account, { name, tag, lock_enabled, force_md5_etag }, create_uls, bucket_storage_path) {
         return {
-            _id: mongo_utils.mongoObjectId(),
+            _id: new ObjectId(),
             name,
             tag: js_utils.default_value(tag, BucketSpaceFS._default_bucket_tags()),
             owner_account: account.owner ? account.owner : account._id, // The account is the owner of the buckets that were created by it or by its users.
