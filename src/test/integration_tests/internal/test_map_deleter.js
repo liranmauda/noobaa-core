@@ -5,17 +5,9 @@
 const coretest = require('../../utils/coretest/coretest');
 coretest.setup();
 
-// const _ = require('lodash');
-// const util = require('util');
 const mocha = require('mocha');
-// const assert = require('assert');
-// const mongodb = require('mongodb');
 
-// const P = require('../../util/promise');
-// const MDStore = require('../../server/object_services/md_store').MDStore;
-// const map_writer = require('../../server/object_services/map_writer');
 const map_deleter = require('../../../server/object_services/map_deleter');
-// const system_store = require('../../server/system_services/system_store').get_instance();
 
 coretest.describe_mapper_test_case({
     name: 'map_deleter',

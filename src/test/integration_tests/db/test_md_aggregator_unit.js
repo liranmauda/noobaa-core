@@ -10,7 +10,6 @@ const _ = require('lodash');
 const util = require('util');
 const mocha = require('mocha');
 const assert = require('assert');
-// const mongodb = require('mongodb');
 
 const P = require('../../../util/promise');
 const config = require('../../../../config.js');
