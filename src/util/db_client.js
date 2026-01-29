@@ -2,13 +2,11 @@
 /** @typedef {typeof import('../sdk/nb')} nb */
 'use strict';
 
-// const mongodb = require('mongodb');
 const { EventEmitter } = require('events');
 
 const dbg = require('./debug_module')(__filename);
 const config = require('../../config');
 const { ObjectId } = require('./objectId_utils');
-// const mongo_client = require('./mongo_client');
 const postgres_client = require('./postgres_client');
 
 /**

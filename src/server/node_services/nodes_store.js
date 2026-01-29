@@ -2,7 +2,7 @@
 'use strict';
 
 const _ = require('lodash');
-const mongodb = require('mongodb');
+const { ObjectId } = require('../../util/objectId_utils');
 
 const dbg = require('../../util/debug_module')(__filename);
 const node_schema = require('./node_schema');
@@ -24,7 +24,7 @@ class NodesStore {
     }
 
     make_node_id(id_str) {
-        return new mongodb.ObjectId(id_str);
+        return new ObjectId(id_str);
     }
 
     is_connected() {
@@ -121,7 +121,7 @@ class NodesStore {
                 };
             }
             if (result && result.hasWriteErrors()) {
-                const write_errors = /** @type {mongodb.WriteError[]} */ (result.getWriteErrors());
+                const write_errors = result.getWriteErrors();
                 const failed = _.map(write_errors, e => items[e.index]);
                 dbg.warn('bulk_update:', result.getWriteErrorCount(), 'WriteErrors',
                     _.map(write_errors, e => ({

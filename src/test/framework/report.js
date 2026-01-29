@@ -2,7 +2,6 @@
 'use strict';
 
 const _ = require('lodash');
-// const mongodb = require('mongodb');
 const assert = require('assert');
 
 const P = require('../../util/promise');
