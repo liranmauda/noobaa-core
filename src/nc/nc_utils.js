@@ -7,7 +7,7 @@ const { ObjectId } = require('../util/objectId_utils');
  * generate_id will generate an id that we use to identify entities (such as account, bucket, etc.). 
  */
 // TODO: 
-// - reuse this function in NC NSFS where we used the mongo_utils module
+// - reuse this function in NC NSFS
 // - this function implantation should be db_client.new_object_id(), 
 //   but to align with manage nsfs we won't change it now
 function generate_id() {
@@ -35,4 +35,3 @@ function is_nc_environment() {
 exports.generate_id = generate_id;
 exports.check_root_account_owns_user = check_root_account_owns_user;
 exports.is_nc_environment = is_nc_environment;
-
