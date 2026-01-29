@@ -13,67 +13,6 @@ module.exports = {
     $id: 'cluster_internal_api',
 
     methods: {
-        join_to_cluster: {
-            doc: 'direct current server to join to the cluster',
-            method: 'POST',
-            params: {
-                type: 'object',
-                required: ['topology', 'master_ip', 'cluster_id', 'secret', 'role', 'shard', 'jwt_secret', 'ssl_certs'],
-                properties: {
-                    ip: {
-                        type: 'string',
-                    },
-                    master_ip: {
-                        type: 'string',
-                    },
-                    cluster_id: {
-                        type: 'string'
-                    },
-                    secret: {
-                        type: 'string'
-                    },
-                    jwt_secret: {
-                        type: 'string'
-                    },
-                    role: {
-                        $ref: 'cluster_server_api#/definitions/cluster_member_role'
-                    },
-                    shard: {
-                        type: 'string',
-                    },
-                    location: {
-                        type: 'string'
-                    },
-                    topology: {
-                        type: 'object',
-                        additionalProperties: true,
-                        properties: {}
-                    },
-                    new_hostname: {
-                        type: 'string'
-                    },
-                    ssl_certs: {
-                        type: 'object',
-                        required: ['root_ca', 'server_cert', 'client_cert'],
-                        properties: {
-                            root_ca: {
-                                type: 'string'
-                            },
-                            server_cert: {
-                                type: 'string'
-                            },
-                            client_cert: {
-                                type: 'string'
-                            },
-                        }
-                    }
-                }
-            },
-            auth: {
-                system: false
-            }
-        },
-
         verify_join_conditions: {
             doc: 'check join conditions to the cluster and return caller ip (stun)',
             method: 'GET',
@@ -134,71 +73,6 @@ module.exports = {
                         type: 'string'
                     },
                 }
-            },
-            auth: {
-                system: false
-            }
-        },
-
-        news_config_servers: {
-            doc: 'published the config server IPs to the cluster',
-            method: 'POST',
-            params: {
-                type: 'object',
-                required: ['IPs', 'cluster_id'],
-                properties: {
-                    IPs: {
-                        type: 'array',
-                        items: {
-                            type: 'object',
-                            properties: {
-                                address: {
-                                    type: 'string'
-                                },
-                            }
-                        },
-                    },
-                    cluster_id: {
-                        type: 'string'
-                    },
-                },
-            },
-            auth: {
-                system: false
-            }
-        },
-
-        redirect_to_cluster_master: {
-            doc: 'redirect to master server to our knowledge',
-            method: 'GET',
-            reply: {
-                type: 'string',
-            },
-            auth: {
-                system: false
-            }
-        },
-
-        news_updated_topology: {
-            doc: 'published updated clustering topology info',
-            method: 'POST',
-            params: {
-                type: 'object',
-                additionalProperties: true,
-                properties: {}
-            },
-            auth: {
-                system: false
-            }
-        },
-
-        news_replicaset_servers: {
-            doc: 'published updated replica set clustering topology info',
-            method: 'POST',
-            params: {
-                type: 'object',
-                additionalProperties: true,
-                properties: {}
             },
             auth: {
                 system: false

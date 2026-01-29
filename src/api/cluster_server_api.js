@@ -13,38 +13,6 @@ module.exports = {
     $id: 'cluster_server_api',
 
     methods: {
-        add_member_to_cluster: {
-            doc: 'Add new member to the cluster',
-            method: 'POST',
-            params: {
-                type: 'object',
-                required: ['address', 'secret', 'role', 'shard'],
-                properties: {
-                    address: {
-                        type: 'string',
-                    },
-                    secret: {
-                        type: 'string'
-                    },
-                    role: {
-                        $ref: '#/definitions/cluster_member_role'
-                    },
-                    shard: {
-                        type: 'string'
-                    },
-                    location: {
-                        type: 'string'
-                    },
-                    new_hostname: {
-                        type: 'string'
-                    }
-                },
-            },
-            auth: {
-                system: 'admin'
-            },
-        },
-
         update_member_of_cluster: {
             doc: 'Update member of the cluster',
             method: 'POST',
