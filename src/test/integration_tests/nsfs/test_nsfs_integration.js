@@ -35,7 +35,7 @@ const nc_mkm = require('../../../manage_nsfs/nc_master_key_manager').get_instanc
 const { S3 } = require('@aws-sdk/client-s3');
 const { NodeHttpHandler } = require("@smithy/node-http-handler");
 const native_fs_utils = require('../../../util/native_fs_utils');
-const mongo_utils = require('../../../util/mongo_utils');
+const { ObjectId } = require('../../../util/objectId_utils');
 const { make_auth_token } = require('../../../server/common_services/auth_server');
 
 const coretest = require_coretest();
@@ -2172,7 +2172,7 @@ async function update_account_nsfs_config(email, default_resource, new_nsfs_acco
 async function add_anonymous_account(nsfs_account_config, accounts_dir_path, account_config_path) {
     const { master_key_id } = await nc_mkm.encrypt_access_keys({});
     const data = {
-        _id: mongo_utils.mongoObjectId(),
+        _id: new ObjectId(),
         name: config.ANONYMOUS_ACCOUNT_NAME,
         email: config.ANONYMOUS_ACCOUNT_NAME,
         nsfs_account_config: nsfs_account_config,

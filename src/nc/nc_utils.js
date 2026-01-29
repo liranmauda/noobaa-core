@@ -1,7 +1,7 @@
 /* Copyright (C) 2024 NooBaa */
 'use strict';
 
-const mongo_utils = require('../util/mongo_utils');
+const { ObjectId } = require('../util/objectId_utils');
 
 /**
  * generate_id will generate an id that we use to identify entities (such as account, bucket, etc.). 
@@ -11,7 +11,7 @@ const mongo_utils = require('../util/mongo_utils');
 // - this function implantation should be db_client.new_object_id(), 
 //   but to align with manage nsfs we won't change it now
 function generate_id() {
-    return mongo_utils.mongoObjectId();
+    return new ObjectId();
 }
 
 /**

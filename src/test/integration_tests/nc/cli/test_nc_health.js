@@ -13,7 +13,7 @@ const fs = require('fs');
 const fs_utils = require('../../../../util/fs_utils');
 const nb_native = require('../../../../util/nb_native');
 const { ConfigFS } = require('../../../../sdk/config_fs');
-const mongo_utils = require('../../../../util/mongo_utils');
+const { ObjectId } = require('../../../../util/objectId_utils');
 const test_utils = require('../../../system_tests/test_utils');
 const NSFSHealth = require('../../../../manage_nsfs/health').NSFSHealth;
 const { get_process_fs_context } = require('../../../../util/native_fs_utils');
@@ -276,7 +276,7 @@ mocha.describe('nsfs nc health', function() {
 
         mocha.it('NSFS account with invalid storage path', async function() {
             // create it manually because we can not skip invalid storage path check on the CLI
-            const account_invalid_options = { _id: mongo_utils.mongoObjectId(), name: 'account_invalid', nsfs_account_config: { new_buckets_path: path.join(new_buckets_path, '/invalid') } };
+            const account_invalid_options = { _id: new ObjectId(), name: 'account_invalid', nsfs_account_config: { new_buckets_path: path.join(new_buckets_path, '/invalid') } };
             await test_utils.write_manual_config_file(TYPES.ACCOUNT, config_fs, account_invalid_options);
             test_utils.set_health_mock_functions(Health, {
                 get_service_state: get_service_state_mock_default_response,
@@ -295,7 +295,7 @@ mocha.describe('nsfs nc health', function() {
             const resp = await exec_manage_cli(TYPES.ACCOUNT, ACTIONS.ADD, { config_root, ...account2_options });
             const parsed_res = JSON.parse(resp).response.reply;
             // create it manually because we can not skip invalid storage path check on the CLI
-            const bucket_invalid = { _id: mongo_utils.mongoObjectId(), name: 'bucket_invalid', path: new_buckets_path + '/bucket1/invalid', owner_account: parsed_res._id };
+            const bucket_invalid = { _id: new ObjectId(), name: 'bucket_invalid', path: new_buckets_path + '/bucket1/invalid', owner_account: parsed_res._id };
             await test_utils.write_manual_config_file(TYPES.BUCKET, config_fs, bucket_invalid);
             test_utils.set_health_mock_functions(Health, {
                 get_service_state: get_service_state_mock_default_response,
@@ -340,7 +340,7 @@ mocha.describe('nsfs nc health', function() {
         mocha.it('Bucket with inaccessible owner', async function() {
             this.timeout(5000);// eslint-disable-line no-invalid-this
             //create bucket manually, cli wont allow bucket with invalid owner
-            const bucket_invalid_owner = { _id: mongo_utils.mongoObjectId(), name: 'bucket_invalid_account', path: new_buckets_path + '/bucket_account', owner_account: 'invalid_account' };
+            const bucket_invalid_owner = { _id: new ObjectId(), name: 'bucket_invalid_account', path: new_buckets_path + '/bucket_account', owner_account: 'invalid_account' };
             await test_utils.write_manual_config_file(TYPES.BUCKET, config_fs, bucket_invalid_owner);
             Health.all_account_details = true;
             Health.all_bucket_details = true;
@@ -360,7 +360,7 @@ mocha.describe('nsfs nc health', function() {
         mocha.it('Bucket with empty owner', async function() {
             this.timeout(5000);// eslint-disable-line no-invalid-this
             //create bucket manually, cli wont allow bucket with empty owner
-            const bucket_invalid_owner = { _id: mongo_utils.mongoObjectId(), name: 'bucket_invalid_account', path: new_buckets_path + '/bucket_account' };
+            const bucket_invalid_owner = { _id: new ObjectId(), name: 'bucket_invalid_account', path: new_buckets_path + '/bucket_account' };
             await test_utils.write_manual_config_file(TYPES.BUCKET, config_fs, bucket_invalid_owner);
             Health.all_account_details = true;
             Health.all_bucket_details = true;
@@ -379,7 +379,7 @@ mocha.describe('nsfs nc health', function() {
 
         mocha.it('NSFS invalid bucket schema json', async function() {
             // create it manually because we can not skip json schema check on the CLI
-            const bucket_invalid_schema = { _id: mongo_utils.mongoObjectId(), name: 'bucket_invalid_schema', path: new_buckets_path };
+            const bucket_invalid_schema = { _id: new ObjectId(), name: 'bucket_invalid_schema', path: new_buckets_path };
             await test_utils.write_manual_config_file(TYPES.BUCKET, config_fs, bucket_invalid_schema, 'invalid');
             test_utils.set_health_mock_functions(Health, {
                 get_service_state: get_service_state_mock_default_response,
@@ -396,7 +396,7 @@ mocha.describe('nsfs nc health', function() {
 
         mocha.it('NSFS invalid account schema json', async function() {
             // create it manually because we can not skip json schema check on the CLI
-            const account_invalid_schema = { _id: mongo_utils.mongoObjectId(), name: 'account_invalid_schema', path: new_buckets_path, bla: 5 };
+            const account_invalid_schema = { _id: new ObjectId(), name: 'account_invalid_schema', path: new_buckets_path, bla: 5 };
             await test_utils.write_manual_config_file(TYPES.ACCOUNT, config_fs, account_invalid_schema, 'invalid');
             test_utils.set_health_mock_functions(Health, {
                 get_service_state: get_service_state_mock_default_response,
