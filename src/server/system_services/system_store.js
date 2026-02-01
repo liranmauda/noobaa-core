@@ -386,9 +386,9 @@ class SystemStore extends EventEmitter {
                 func: () => this.master_key_manager.load_root_keys_from_mount()
             });
         }
-        if (db_client.instance().is_connected()) {
-            return this.load();
-        }
+        // Wait for DB to connect (e.g. during install DB may not be ready yet)
+        await P.wait_until(() => db_client.instance().is_connected(), 60000);
+        return this.load();
     }
 
     initial_load() {
@@ -446,7 +446,7 @@ class SystemStore extends EventEmitter {
                 this.master_key_manager.load_root_key();
                 const new_data = new SystemStoreData();
                 let millistamp = time_utils.millistamp();
-                await this._register_for_changes();
+                this._register_reconnect_listener();
                 let from_core_failure = false;
 
                 if (this.source === SOURCE.CORE) {
@@ -489,6 +489,7 @@ class SystemStore extends EventEmitter {
                 }
                 this.emit('load');
                 this.is_finished_initial_load = true;
+                await this._register_to_cluster();
                 return this.data;
             } catch (err) {
                 dbg.error('SystemStore: load failed', err.stack || err);
@@ -516,14 +517,20 @@ class SystemStore extends EventEmitter {
     }
 
 
-    async _register_for_changes() {
+    _register_reconnect_listener() {
         if (this.is_standalone) {
-            dbg.log0('system_store is running in standalone mode. skip _register_for_changes');
             return;
         }
         if (!this._registered_for_reconnect) {
             server_rpc.rpc.on('reconnect', conn => this._on_reconnect(conn));
             this._registered_for_reconnect = true;
+        }
+    }
+
+    async _register_to_cluster() {
+        if (this.is_standalone) {
+            dbg.log0('system_store is running in standalone mode. skip _register_to_cluster');
+            return;
         }
         return server_rpc.client.redirector.register_to_cluster();
     }
