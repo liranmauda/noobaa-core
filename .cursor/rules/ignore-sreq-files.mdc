@@ -1,0 +1,13 @@
+---
+description: Do not edit or consider .sreq signature test fixture files
+globs: "**/*.sreq"
+alwaysApply: true
+---
+
+# Ignore .sreq Files
+
+Do **not** read, edit, or suggest changes to `.sreq` files.
+
+`.sreq` files are signature test request fixtures (captured HTTP requests). They should be left unchanged by the agent unless the user explicitly asks to modify them.
+
+When searching or refactoring, skip files matching `*.sreq` or `**/*.sreq`.
