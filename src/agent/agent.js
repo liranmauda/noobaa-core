@@ -730,7 +730,7 @@ class Agent {
 
     /**
      * Choose which ip this agent will publish to the server.
-     * This is not relevant for n2n/ICE which will discover the ip by p2p attempts,
+     * This is not relevant for n2n (WS) which exchanges ws_url via the signaller,
      * but for other client-server protocols we need to choose.
      * Prefer the ip of a local network interface if the same as the server address,
      * to "easily" select the same internal network such as inside a cluster.
