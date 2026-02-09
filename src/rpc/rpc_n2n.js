@@ -1,17 +1,18 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
-// const _ = require('lodash');
 const P = require('../util/promise');
 const dbg = require('../util/debug_module')(__filename);
 const RpcBaseConnection = require('./rpc_base_conn');
-const Ice = require('./ice');
+const RpcWsConnection = require('./rpc_ws');
+const url_utils = require('../util/url_utils');
 
 /**
  *
  * RpcN2NConnection
  *
- * n2n - node-to-node or noobaa-to-noobaa, essentially p2p, but noobaa branded.
+ * n2n - node-to-node or noobaa-to-noobaa. Uses WebSocket over the N2N signaller
+ * (replaces legacy ICE/NAT traversal with direct WS to peer's ws_url).
  *
  */
 class RpcN2NConnection extends RpcBaseConnection {
@@ -20,15 +21,7 @@ class RpcN2NConnection extends RpcBaseConnection {
         if (!n2n_agent) throw new Error('N2N AGENT NOT REGISTERED');
         super(addr_url);
         this.n2n_agent = n2n_agent;
-        this.ice = new Ice(this.connid, n2n_agent.n2n_config, this.url.href);
-
-        this.ice.on('close', () => {
-            const closed_err = new Error('N2N ICE CLOSED');
-            closed_err.stack = '';
-            this.emit('error', closed_err);
-        });
-
-        this.ice.on('error', err => this.emit('error', err));
+        this._ws_conn = null; // set when connected (initiator) or when _fulfill(ws) (acceptor)
 
         this.reset_n2n_listener = () => {
             const reset_err = new Error('N2N RESET');
@@ -36,61 +29,92 @@ class RpcN2NConnection extends RpcBaseConnection {
             this.emit('error', reset_err);
         };
         n2n_agent.on('reset_n2n', this.reset_n2n_listener);
-
-        this.ice.once('connect', session => {
-            this.session = session;
-            if (session.tcp) {
-                dbg.log1('N2N CONNECTED TO TCP',
-                    // session.tcp.localAddress + ':' + session.tcp.localPort, '=>',
-                    session.tcp.remoteAddress + ':' + session.tcp.remotePort);
-                this._send = async msg => session.tcp.frame_stream.send_message(msg);
-                session.tcp.on('message', msg => this.emit('message', msg));
-                this.emit('connect');
-            } else {
-                this._send = async msg => P.ninvoke(this.ice.udp, 'send', msg);
-                this.ice.udp.on('message', msg => this.emit('message', msg));
-                if (this.controlling) {
-                    dbg.log1('N2N CONNECTING NUDP', session.key);
-                    P.fromCallback(callback => this.ice.udp.connect(
-                            session.remote.port,
-                            session.remote.address,
-                            callback))
-                        .then(() => {
-                            dbg.log1('N2N CONNECTED TO NUDP', session.key);
-                            this.emit('connect');
-                        })
-                        .catch(err => {
-                            this.emit('error', err);
-                        });
-                } else {
-                    dbg.log1('N2N ACCEPTING NUDP');
-                    this.emit('connect');
-                    // TODO need to wait for NUDP accept event...
-                }
-            }
-        });
     }
 
     _connect() {
-        this.controlling = true;
-        return this.ice.connect();
+        const self = this;
+        return P.try(() => self.n2n_agent.n2n_config.signaller(self.url.href, {}))
+            .then(info => {
+                const ws_url = info && info.ws_url;
+                if (!ws_url) {
+                    throw new Error('N2N WS: peer did not return ws_url');
+                }
+                dbg.log1('N2N WS CONNECT to', ws_url);
+                const ws_conn = new RpcWsConnection(url_utils.quick_parse(ws_url));
+                self._ws_conn = ws_conn;
+                ws_conn.on('error', err => self.emit('error', err));
+                ws_conn.on('close', () => {
+                    const closed_err = new Error('N2N WS CLOSED');
+                    closed_err.stack = '';
+                    self.emit('error', closed_err);
+                });
+                ws_conn.once('connect', () => {
+                    self._send = msg => ws_conn._send(msg);
+                    ws_conn.on('message', msg => self.emit('message', msg));
+                    dbg.log1('N2N WS CONNECTED', self.connid);
+                    self.emit('connect');
+                });
+                return ws_conn.connect();
+            })
+            .catch(err => {
+                self.emit('error', err);
+            });
     }
 
     /**
-     * pass remote_info to ICE and return back the ICE local info
+     * Accept: return our ws_url (with token) so the initiator can connect.
+     * The connection will be fulfilled when the initiator's WS arrives (agent calls _fulfill).
      */
     accept(remote_info) {
-        return this.ice.accept(remote_info);
+        return this.n2n_agent.accept_ws_connection(this);
     }
 
-    _close(err) {
-        dbg.log0('_close', err);
+    /**
+     * Called by RpcN2NAgent when an incoming WS connection is received for this pending accept.
+     * @param {object} ws - raw WebSocket from ws library
+     */
+    _fulfill(ws) {
+        if (this._ws_conn) {
+            dbg.warn('N2N _fulfill: already fulfilled', this.connid);
+            return;
+        }
+        this._ws_conn = { ws };
+        ws.binaryType = 'fragments';
+        ws.on('error', err => this.emit('error', err));
+        ws.on('close', () => {
+            const closed_err = new Error('N2N WS CLOSED');
+            closed_err.stack = '';
+            this.emit('error', closed_err);
+        });
+        ws.on('message', (fragments, flags) => this.emit('message', fragments));
+        this._send = async msg => {
+            const opts = { fin: false, binary: true, compress: false };
+            for (let i = 0; i < msg.length; ++i) {
+                opts.fin = (i + 1 === msg.length);
+                ws.send(msg[i], opts);
+            }
+        };
+        dbg.log1('N2N WS ACCEPTED', this.connid);
+        this.emit('connect');
+    }
+
+    _close() {
+        dbg.log0('_close', this.connid);
         this.n2n_agent.removeListener('reset_n2n', this.reset_n2n_listener);
-        this.ice.close();
+        if (this._ws_conn) {
+            if (typeof this._ws_conn._close === 'function') {
+                this._ws_conn._close();
+            } else if (this._ws_conn.ws) {
+                const WS = require('ws');
+                if (this._ws_conn.ws.readyState !== WS.CLOSED && this._ws_conn.ws.readyState !== WS.CLOSING) {
+                    this._ws_conn.ws.close();
+                }
+            }
+            this._ws_conn = null;
+        }
     }
 
     async _send(msg) {
-        // this default error impl will be overridden once ice emit's connect
         throw new Error('N2N NOT CONNECTED');
     }
 
