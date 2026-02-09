@@ -42,7 +42,9 @@ let global_tcp_permanent_passive;
  *
  * RpcN2NAgent
  *
- * Represents an endpoint for N2N connections using WebSocket.
+ * represents an end-point for N2N connections using WebSocket.
+ * it will be used to accept new connections initiated by remote peers,
+ * and also when initiated locally to connect to a remote peer.
  * Exchanges ws_url via the signaller; initiator connects to acceptor's WS server.
  *
  */
@@ -52,32 +54,48 @@ class RpcN2NAgent extends EventEmitter {
         super();
         options = options || {};
 
+        // we expect all n2n connections to register on the agent n2n_reset event
         this.setMaxListeners(100);
 
+        // send_signal is function(info) that sends over a signal channel
+        // and delivers the info to info.target,
+        // and returns back the info that was returned by the peer.
         const send_signal = options.send_signal;
 
+        // initialize the default config structure
         this.n2n_config = {
+
+            // ip options
             offer_ipv4: true,
             offer_ipv6: true,
             accept_ipv4: true,
             accept_ipv6: true,
             offer_internal: config.N2N_OFFER_INTERNAL,
+
+            // tcp options
             tcp_active: true,
             tcp_permanent_passive: {
-                min: 60101,
+                min: 60101, // 60100 is used by the hosted agents
                 max: 60600
             },
             tcp_transient_passive: false,
             tcp_simultaneous_open: false,
             tcp_tls: true,
+
+            // udp options (kept for config schema compatibility)
             udp_port: true,
             udp_dtls: false,
             stun_servers: [],
             public_ips: [],
+
+            // ssl options for tcp-tls
             ssl_options: {
+                // we allow self generated certificates to avoid public CA signing:
                 rejectUnauthorized: false,
                 secureContext: tls.createSecureContext({ honorCipherOrder: true, ...ssl_utils.generate_ssl_certificate() }),
             },
+
+            // signaller callback - send info to the peer over a relayed signal channel
             signaller: (target, info) => send_signal({
                 source: this.rpc_address,
                 target: target,
@@ -113,6 +131,9 @@ class RpcN2NAgent extends EventEmitter {
         dbg.log0('UPDATE N2N CONFIG', n2n_config);
         _.each(n2n_config, (val, key) => {
             if (key === 'tcp_permanent_passive') {
+                // since the tcp permanent object holds more info than just the port_range
+                // then we need to check if the port range config changes, if not we ignore
+                // if it did then we have to start a new
                 const prev = this.n2n_config.tcp_permanent_passive;
                 const conf = prev ? _.pick(prev, N2N_CONFIG_PORT_PICK) : prev;
                 dbg.log0('update_n2n_config: update tcp_permanent_passive old', conf, 'new', val);
@@ -132,6 +153,7 @@ class RpcN2NAgent extends EventEmitter {
             }
         });
 
+        // emit 'reset_n2n' to notify all existing connections to close
         this.emit('reset_n2n');
         const remaining_listeners = this.listenerCount('reset_n2n');
         if (remaining_listeners) {
@@ -270,6 +292,8 @@ class RpcN2NAgent extends EventEmitter {
     accept_signal(params) {
         dbg.log1('N2N AGENT accept_signal:', params, 'my rpc_address', this.rpc_address);
 
+        // target address is me, source is you.
+        // the special case if rpc_address='n2n://*' allows testing code to accept for any target
         const source = url_utils.quick_parse(params.source);
         const target = url_utils.quick_parse(params.target);
         if (!this.rpc_address || !target ||

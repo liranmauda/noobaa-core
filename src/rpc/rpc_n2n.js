@@ -11,8 +11,8 @@ const url_utils = require('../util/url_utils');
  *
  * RpcN2NConnection
  *
- * n2n - node-to-node or noobaa-to-noobaa. Uses WebSocket over the N2N signaller
- * (replaces legacy ICE/NAT traversal with direct WS to peer's ws_url).
+ * n2n - node-to-node or noobaa-to-noobaa, essentially p2p, but noobaa branded.
+ * Uses WebSocket over the N2N signaller (replaces legacy ICE/NAT traversal with direct WS to peer's ws_url).
  *
  */
 class RpcN2NConnection extends RpcBaseConnection {
@@ -115,6 +115,7 @@ class RpcN2NConnection extends RpcBaseConnection {
     }
 
     async _send(msg) {
+        // this default error impl will be overridden once connected
         throw new Error('N2N NOT CONNECTED');
     }
 
