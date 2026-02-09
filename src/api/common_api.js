@@ -823,12 +823,6 @@ module.exports = {
                 udp_dtls: {
                     type: 'boolean'
                 },
-                stun_servers: {
-                    type: 'array',
-                    items: {
-                        type: 'string'
-                    }
-                },
                 public_ips: {
                     type: 'array',
                     items: {

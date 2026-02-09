@@ -75,7 +75,7 @@ module.exports = {
         },
 
         verify_join_conditions: {
-            doc: 'check join conditions to the cluster and return caller ip (stun)',
+            doc: 'check join conditions to the cluster and return caller ip',
             method: 'GET',
             params: {
                 type: 'object',

@@ -32,7 +32,6 @@ const N2N_CONFIG_FIELDS_PICK = [
     'tcp_tls',
     'udp_port',
     'udp_dtls',
-    'stun_servers',
     'public_ips'
 ];
 
@@ -85,7 +84,6 @@ class RpcN2NAgent extends EventEmitter {
             // udp options (kept for config schema compatibility)
             udp_port: true,
             udp_dtls: false,
-            stun_servers: [],
             public_ips: [],
 
             // ssl options for tcp-tls

@@ -563,15 +563,6 @@ async function read_system(req) {
 
     const system_cap = system.freemium_cap.cap_terabytes ? system.freemium_cap.cap_terabytes : Number.MAX_SAFE_INTEGER;
 
-    // TODO use n2n_config.stun_servers ?
-    // var stun_address = 'stun://' + ip_address + ':' + stun.PORT;
-    // var stun_address = 'stun://64.233.184.127:19302'; // === 'stun://stun.l.google.com:19302'
-    // n2n_config.stun_servers = n2n_config.stun_servers || [];
-    // if (!_.includes(n2n_config.stun_servers, stun_address)) {
-    //     n2n_config.stun_servers.unshift(stun_address);
-    //     dbg.log0('read_system: n2n_config.stun_servers', n2n_config.stun_servers);
-    // }
-
     const last_upgrade = system.upgrade_history.successful_upgrades[0] && {
         timestamp: system.upgrade_history.successful_upgrades[0].timestamp
     };
