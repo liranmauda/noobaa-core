@@ -23,4 +23,4 @@ jobs:
         run: docker load --input /tmp/noobaa-tester.tar
 
       - name: Run Unit Tests with Postgres
-        run: make test-postgres -o tester
+        run: make test-postgres -o tester SUPPRESS_LOGS=true
