@@ -202,6 +202,18 @@ async function retry({ attempts, delay_ms, func, error_logger }) {
     }
 }
 
+/**
+ * Run a function and return a promise. Sync throws become rejected promises.
+ * Defers fn to the next microtask (same as Promise.resolve().then(fn)).
+ * (Named try_ because try is a reserved keyword.)
+ * @template T
+ * @param {() => T | Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+async function try_(fn) {
+    await Promise.resolve(); // defer to next microtask, like .then(fn)
+    return await fn();
+}
 
 /////////////////////////////////////
 /////////////////////////////////////
@@ -295,6 +307,7 @@ exports.map_any = map_any;
 exports.timeout = timeout;
 exports.TimeoutError = TimeoutError;
 exports.retry = retry;
+exports.try = try_;
 // should we deprecated usage of P.resolve/reject/all ?
 // we should probably keep all and remove resolve/reject
 // when resolve/reject are used, it is probably better to use async/await
