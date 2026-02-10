@@ -20,7 +20,6 @@ static const int UTP_RCVBUF_SIZE = 128 * 1024;
 
 // static std::string addrinfo2str(const struct addrinfo *ai);
 static std::string sockaddr2str(const struct sockaddr* sa);
-static bool is_stun_packet(const void* packet, int len);
 
 NAN_MODULE_INIT(Nudp::setup)
 {
@@ -602,38 +601,11 @@ Nudp::uv_callback_receive(
         return;
     }
     assert(addr);
-    if (is_stun_packet(buf->base, nread)) {
-        DBG2("Nudp::uv_callback_receive: got STUN packet local_port " << self._local_port);
-        Nan::HandleScope scope;
-        auto rinfo = NAN_NEW_OBJ();
-        // char s[INET6_ADDRSTRLEN];
-        if (addr->sa_family == AF_INET) {
-            const struct sockaddr_in* sin4 = reinterpret_cast<const struct sockaddr_in*>(addr);
-            char name4[INET_ADDRSTRLEN];
-            uv_ip4_name(sin4, name4, sizeof(name4));
-            NAN_SET_STR(rinfo, "family", "IPv4");
-            NAN_SET_STR(rinfo, "address", name4);
-            NAN_SET_INT(rinfo, "port", ntohs(sin4->sin_port));
-        } else {
-            const struct sockaddr_in6* sin6 = reinterpret_cast<const struct sockaddr_in6*>(addr);
-            char name6[INET6_ADDRSTRLEN];
-            uv_ip6_name(sin6, name6, sizeof(name6));
-            NAN_SET_STR(rinfo, "family", "IPv6");
-            NAN_SET_STR(rinfo, "address", name6);
-            NAN_SET_INT(rinfo, "port", ntohs(sin6->sin6_port));
-        }
-        // the node buffer takes ownership on the memory, so not deleting the allocation in this
-        // path
-        v8::Local<v8::Value> argv[] = {
-            NAN_STR("stun"), Nan::NewBuffer(buf->base, nread).ToLocalChecked(), rinfo};
-        NAN_CALLBACK(self.handle(), "emit", 3, argv);
-    } else {
-        const byte* data = reinterpret_cast<const byte*>(buf->base);
-        if (!utp_process_udp(self._utp_ctx, data, nread, addr, sizeof(struct sockaddr))) {
-            DBG3("Nudp::uv_callback_receive: UDP packet not handled by UTP. Ignoring.");
-        }
-        delete[] buf->base;
+    const byte* data = reinterpret_cast<const byte*>(buf->base);
+    if (!utp_process_udp(self._utp_ctx, data, nread, addr, sizeof(struct sockaddr))) {
+        DBG3("Nudp::uv_callback_receive: UDP packet not handled by UTP. Ignoring.");
     }
+    delete[] buf->base;
 }
 
 struct SendUtpPacketReq {
@@ -915,20 +887,6 @@ Nudp::MsgHdr::is_valid()
         return false;
     }
     return true;
-}
-
-/**
- * detect stun packet according to header first byte
- * the packet needs to have at least one byte
- */
-static bool
-is_stun_packet(const void* packet, int len)
-{
-    assert(len >= 1);
-    uint8_t first_byte = reinterpret_cast<const uint8_t*>(packet)[0];
-    uint8_t bit1 = first_byte & 0x80;
-    uint8_t bit2 = first_byte & 0x40;
-    return bit1 == 0 && bit2 == 0;
 }
 
 } // namespace noobaa
