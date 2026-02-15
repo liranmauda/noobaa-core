@@ -16,9 +16,10 @@ const server_rpc = require('../server_rpc');
  *
  */
 async function load_system_store(req) {
+    const load_source = req?.rpc_params?.load_source;
     await system_store.load(
         req?.rpc_params?.since,
-        req?.rpc_params?.load_source.toUpperCase()
+        load_source ? String(load_source).toUpperCase() : undefined
     );
 }
 
