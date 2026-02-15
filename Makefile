@@ -3,7 +3,8 @@ NOOBAA_BASE_TAG?="noobaa-base"
 NOOBAA_TAG?="noobaa"
 TESTER_TAG?="noobaa-tester"
 NOOBAA_RPM_TAG?="noobaa-rpm-build"
-POSTGRES_IMAGE?="centos/postgresql-12-centos7"
+# No centos/postgresql-16 image exists (CentOS 7 EOL). Use official postgres:16 (Debian-based).
+POSTGRES_IMAGE?=postgres:16
 CENTOS_VER?=9
 
 #####################
@@ -576,7 +577,7 @@ endef
 
 define run_postgres
 	@echo "\033[1;34mRunning Postgres container\033[0m"
-	$(CONTAINER_ENGINE) run -d $(CPUSET) --network noobaa-net --name coretest-postgres-$(GIT_COMMIT)-$(NAME_POSTFIX) --env "POSTGRESQL_DATABASE=coretest" --env "POSTGRESQL_USER=noobaa" --env "POSTGRESQL_PASSWORD=noobaa" --env "LC_COLLATE=C" $(POSTGRES_IMAGE)
+	$(CONTAINER_ENGINE) run -d $(CPUSET) --network noobaa-net --name coretest-postgres-$(GIT_COMMIT)-$(NAME_POSTFIX) --env "POSTGRES_DB=coretest" --env "POSTGRES_USER=noobaa" --env "POSTGRES_PASSWORD=noobaa" --env "LC_COLLATE=C" $(POSTGRES_IMAGE)
 	@echo "\033[1;34mWaiting for postgres to start..\033[0m"
 	sleep 20
 	@echo "\033[1;32mRun postgres done.\033[0m"
