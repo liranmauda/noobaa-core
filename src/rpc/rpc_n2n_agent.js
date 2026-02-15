@@ -211,8 +211,14 @@ class RpcN2NAgent extends EventEmitter {
             (port_range.min + Math.floor(Math.random() * (port_range.max - port_range.min + 1)));
 
         const use_tls = this.n2n_config.tcp_tls;
+        const server_options = use_tls ? {
+            ...this.n2n_config.ssl_options,
+            // Explicit TLS version for consistent handshake in CI/Docker
+            minVersion: 'TLSv1.2',
+            maxVersion: 'TLSv1.3',
+        } : undefined;
         const create_server = use_tls ?
-            () => https.createServer(this.n2n_config.ssl_options, _n2n_http_handler) :
+            () => https.createServer(server_options, _n2n_http_handler) :
             () => http.createServer(_n2n_http_handler);
 
         function _n2n_http_handler(req, res) {
