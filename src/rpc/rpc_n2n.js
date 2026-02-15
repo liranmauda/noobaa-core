@@ -22,6 +22,7 @@ class RpcN2NConnection extends RpcBaseConnection {
         super(addr_url);
         this.n2n_agent = n2n_agent;
         this._ws_conn = null; // set when connected (initiator) or when _fulfill(ws) (acceptor)
+        this._n2n_keepalive_interval = null;
 
         this.reset_n2n_listener = () => {
             const reset_err = new Error('N2N RESET');
@@ -43,14 +44,15 @@ class RpcN2NConnection extends RpcBaseConnection {
                 const ws_conn = new RpcWsConnection(url_utils.quick_parse(ws_url));
                 self._ws_conn = ws_conn;
                 ws_conn.on('error', err => self.emit('error', err));
-                ws_conn.on('close', () => {
-                    const closed_err = new Error('N2N WS CLOSED');
+                ws_conn.on('close', (code, reason) => {
+                    const closed_err = new Error(`N2N WS CLOSED${code === undefined ? '' : ` (code=${code})`}`);
                     closed_err.stack = '';
                     self.emit('error', closed_err);
                 });
                 ws_conn.once('connect', () => {
                     self._send = msg => ws_conn._send(msg);
                     ws_conn.on('message', msg => self.emit('message', msg));
+                    self._start_n2n_keepalive(ws_conn.ws);
                     dbg.log1('N2N WS CONNECTED', self.connid);
                     self.emit('connect');
                 });
@@ -81,12 +83,13 @@ class RpcN2NConnection extends RpcBaseConnection {
         this._ws_conn = { ws };
         ws.binaryType = 'fragments';
         ws.on('error', err => this.emit('error', err));
-        ws.on('close', () => {
-            const closed_err = new Error('N2N WS CLOSED');
+        ws.on('close', (code, reason) => {
+            const closed_err = new Error(`N2N WS CLOSED${code === undefined ? '' : ` (code=${code})`}`);
             closed_err.stack = '';
             this.emit('error', closed_err);
         });
         ws.on('message', (fragments, flags) => this.emit('message', fragments));
+        this._start_n2n_keepalive(ws);
         this._send = async msg => {
             const opts = { fin: false, binary: true, compress: false };
             for (let i = 0; i < msg.length; ++i) {
@@ -98,8 +101,26 @@ class RpcN2NConnection extends RpcBaseConnection {
         this.emit('connect');
     }
 
+    _start_n2n_keepalive(ws) {
+        const WS = require('ws');
+        const KEEPALIVE_MS = 25000;
+        this._clear_n2n_keepalive();
+        this._n2n_keepalive_interval = setInterval(() => {
+            if (ws && ws.readyState === WS.OPEN) ws.ping();
+        }, KEEPALIVE_MS);
+        if (this._n2n_keepalive_interval.unref) this._n2n_keepalive_interval.unref();
+    }
+
+    _clear_n2n_keepalive() {
+        if (this._n2n_keepalive_interval) {
+            clearInterval(this._n2n_keepalive_interval);
+            this._n2n_keepalive_interval = null;
+        }
+    }
+
     _close() {
         dbg.log0('_close', this.connid);
+        this._clear_n2n_keepalive();
         this.n2n_agent.removeListener('reset_n2n', this.reset_n2n_listener);
         if (this._ws_conn) {
             if (typeof this._ws_conn._close === 'function') {
