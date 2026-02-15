@@ -16,6 +16,7 @@ process.env.DEBUG_MODE = 'true';
 process.env.CORETEST = CORETEST;
 process.env.JWT_SECRET = CORETEST;
 const root_secret = crypto.randomBytes(32).toString('base64');
+process.env.NOOBAA_ROOT_SECRET = root_secret; // so any process/context that handles load_system_store can load_root_key (e.g. endpoint)
 process.env.ACCOUNTS_CACHE_EXPIRY = '1';
 
 require('../../../util/dotenv').load();
