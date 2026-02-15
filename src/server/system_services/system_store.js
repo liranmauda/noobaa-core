@@ -439,6 +439,15 @@ class SystemStore extends EventEmitter {
                     dbg.log0('SystemStore.load: Got load request with a timestamp', since, 'older than my last update time', this.last_update_time);
                     this.last_update_time = since;
                 }
+                // Ensure keys are available before load_root_key(): try mount first if not yet initialized
+                // (avoids race where load() runs before the 100ms/reconnect-triggered load_root_keys_from_mount).
+                if (!this.master_key_manager.is_initialized && !process.env.NOOBAA_ROOT_SECRET) {
+                    try {
+                        await this.master_key_manager.load_root_keys_from_mount();
+                    } catch (err) {
+                        dbg.log1('SystemStore.load: load_root_keys_from_mount failed (mount may be absent)', err.message);
+                    }
+                }
                 this.master_key_manager.load_root_key();
                 const new_data = new SystemStoreData();
                 let millistamp = time_utils.millistamp();
