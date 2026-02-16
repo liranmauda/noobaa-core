@@ -103,7 +103,7 @@ class RpcN2NConnection extends RpcBaseConnection {
 
     _start_n2n_keepalive(ws) {
         const WS = require('ws');
-        const KEEPALIVE_MS = 25000;
+        const KEEPALIVE_MS = 10000;
         this._clear_n2n_keepalive();
         this._n2n_keepalive_interval = setInterval(() => {
             if (ws && ws.readyState === WS.OPEN) ws.ping();

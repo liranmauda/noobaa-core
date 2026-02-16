@@ -41,7 +41,7 @@ class RpcWsConnection extends RpcBaseConnection {
         this.ws = ws;
         ws.binaryType = 'fragments';
         ws.on('error', err => this.emit('error', err));
-        ws.on('close', () => this.emit('error', stackless_error('WS CLOSED')));
+        ws.on('close', (code, reason) => this.emit('error', stackless_error(`WS CLOSED${code === undefined ? '' : ` (code=${code})`}`)));
         ws.on('message', (fragments, flags) => this.emit('message', fragments));
     }
 
