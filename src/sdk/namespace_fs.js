@@ -4,6 +4,7 @@
 'use strict';
 
 const _ = require('lodash');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
@@ -2238,7 +2239,7 @@ class NamespaceFS {
     }
 
     async _generate_unique_path(fs_context) {
-        const rand_id = uuidv4();
+        const rand_id = crypto.randomUUID();
         const unique_temp_path = path.join(this.bucket_path, this.get_bucket_tmpdir(), 'lost+found', rand_id);
         await this._make_path_dirs(unique_temp_path, fs_context);
         return unique_temp_path;
