@@ -958,7 +958,7 @@ function listen_port(port, server, server_type) {
         if (server_type !== 'METRICS' && server_type !== 'FORK_HEALTH') {
             setup_endpoint_server(server);
         }
-        const local_ip = process.env.LOCAL_IP || '0.0.0.0';
+        const local_ip = process.env.LOCAL_IP || undefined;
         server.listen(port, local_ip, err => {
             if (err) {
                 dbg.error('ENDPOINT FAILED to listen', err);
