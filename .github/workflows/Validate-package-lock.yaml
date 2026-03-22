@@ -1,5 +1,5 @@
 name: Validate package-lock.json Tests
-on: [pull_request]
+on: [pull_request, workflow_dispatch]
 
 jobs:
   run-package-lock-validation:
