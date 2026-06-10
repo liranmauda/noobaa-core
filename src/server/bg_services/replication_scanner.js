@@ -61,7 +61,7 @@ class ReplicationScanner {
     async scan() {
         if (!this.noobaa_connection) throw new Error('noobaa endpoint connection is not started yet...');
         await replication_utils.reconcile_replication_target_status();
-        // find rule for each replication policy that was not updated for the longest period
+        // find rule for each replication policy that was not updated for the longest period TEST only, :) 
         const least_recently_replicated_rules = await replication_store.find_rules_updated_longest_time_ago();
 
         await P.all(_.map(least_recently_replicated_rules, async replication_id_and_rule => {
