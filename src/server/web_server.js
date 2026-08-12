@@ -1,6 +1,10 @@
 /* Copyright (C) 2016 NooBaa */
 'use strict';
 
+/** @typedef {import('http').IncomingMessage} HttpIncomingMessage */
+/** @typedef {import('http').ServerResponse} HttpServerResponse */
+/** @typedef {(req: HttpIncomingMessage, res: HttpServerResponse) => void} HttpDefaultHandler */
+
 // load .env file before any other modules so that it will contain
 // all the arguments even when the modules are loading.
 require('../util/dotenv').load();
@@ -14,10 +18,8 @@ const debug_config = require('../util/debug_config');
 const _ = require('lodash');
 const http = require('http');
 const https = require('https');
-const express = require('express');
-const express_compress = require('compression');
+const { URL } = require('url');
 const http_request_logger = require('../util/http_request_logger');
-const express_proxy = require('express-http-proxy');
 const P = require('../util/promise');
 const ssl_utils = require('../util/ssl_utils');
 const pkg = require('../../package.json');
@@ -50,15 +52,14 @@ async function main() {
         http_utils.update_http_agents({ keepAlive: true });
         http_utils.update_https_agents({ keepAlive: true });
 
-        // register the rpc route first, and then the rest of the web server routes
-        const app = express();
         server_rpc.register_system_services();
         server_rpc.register_node_services();
         server_rpc.register_object_services();
         server_rpc.register_common_services();
         server_rpc.rpc.router.default = 'fcall://fcall';
-        server_rpc.rpc.register_http_app(app);
-        setup_web_server_app(app);
+
+        // Default HTTP handler for non-/rpc/ routes (/version, metrics, oauth).
+        const web_handler = create_web_server_handler();
 
         process.env.PORT = http_port;
         process.env.SSL_PORT = https_port;
@@ -82,14 +83,16 @@ async function main() {
         // we register the rpc before listening on the port
         // in order for the rpc services to be ready immediately
         // with the http services like /version
-        const http_server = http.createServer(app);
+        const http_server = http.createServer();
+        server_rpc.rpc.register_http_transport(http_server, web_handler);
         server_rpc.rpc.register_ws_transport(http_server);
         await P.ninvoke(http_server, 'listen', http_port);
 
         const ssl_cert_info = await ssl_utils.get_ssl_cert_info('MGMT');
         const ssl_options = { ...ssl_cert_info.cert, honorCipherOrder: true };
         ssl_utils.apply_tls_config(ssl_options, 'MGMT');
-        const https_server = https.createServer(ssl_options, app);
+        const https_server = https.createServer(ssl_options);
+        server_rpc.rpc.register_http_transport(https_server, web_handler);
         ssl_cert_info.on('update', updated_cert_info => {
             dbg.log0("Setting updated MGMT ssl certs for web server.");
             const updated_ssl_options = { ...updated_cert_info.cert, honorCipherOrder: true };
@@ -113,31 +116,155 @@ async function main() {
     }
 }
 
-function setup_web_server_app(app) {
+/**
+ * Creates the default HTTP handler for non-RPC routes.
+ * @returns {HttpDefaultHandler}
+ */
+function create_web_server_handler() {
+    const middlewares = [
+        http_request_logger(dev_mode ? 'dev' : 'combined'),
+        https_redirect_handler,
+        route_dispatcher,
+        error_404,
+    ];
+    return (req, res) => run_middleware_chain(req, res, middlewares);
+}
 
-    // copied from s3rver. not sure why. but copy.
-    app.disable('x-powered-by');
-    app.use(http_request_logger(dev_mode ? 'dev' : 'combined'));
-    app.use(https_redirect_handler);
-    app.use(express_compress());
+/**
+ * Runs a connect-style middleware chain.
+ * @param {HttpIncomingMessage} req
+ * @param {HttpServerResponse} res
+ * @param {Array<Function>} middlewares
+ * @param {number} [index]
+ */
+function run_middleware_chain(req, res, middlewares, index = 0) {
+    if (res.writableEnded || res.headersSent) return;
+    const middleware = middlewares[index];
+    if (!middleware) return;
 
-    app.get('/version', get_version_handler);
+    const next = err => {
+        if (err) return error_handler(err, req, res);
+        run_middleware_chain(req, res, middlewares, index + 1);
+    };
 
-    app.get('/oauth/authorize', oauth_authorise_handler);
+    try {
+        middleware(req, res, next);
+    } catch (err) {
+        error_handler(err, req, res);
+    }
+}
 
-    app.get('/metrics/nsfs_stats', metrics_nsfs_stats_handler);
-    if (config.PROMETHEUS_ENABLED) {
-        // Enable proxying for all metrics servers
-        app.use('/metrics/web_server', express_proxy(`localhost:${config.WS_METRICS_SERVER_PORT}`));
-        app.use('/metrics/bg_workers', express_proxy(`localhost:${config.BG_METRICS_SERVER_PORT}`));
-        app.use('/metrics/hosted_agents', express_proxy(`localhost:${config.HA_METRICS_SERVER_PORT}`));
+/**
+ * Dispatches non-RPC HTTP routes.
+ * @param {HttpIncomingMessage} req
+ * @param {HttpServerResponse} res
+ * @param {Function} next
+ */
+function route_dispatcher(req, res, next) {
+    const { pathname, method } = parse_request_url(req);
+
+    if (method === 'GET' && pathname === '/version') {
+        return wrap_async_handler(get_version_handler)(req, res, next);
+    }
+    if (method === 'GET' && pathname === '/oauth/authorize') {
+        return wrap_async_handler(oauth_authorize_handler)(req, res, next);
+    }
+    if (method === 'GET' && pathname === '/metrics/nsfs_stats') {
+        metrics_nsfs_stats_handler(req, res);
+        return;
+    }
+    if (method === 'GET' && pathname === '/') {
+        redirect(res, '/version');
+        return;
     }
 
-    app.get('/', (req, res) => res.redirect(`/version`));
+    if (config.PROMETHEUS_ENABLED) {
+        if (pathname.startsWith('/metrics/web_server')) {
+            return proxy_metrics(req, res, config.WS_METRICS_SERVER_PORT, '/metrics/web_server');
+        }
+        if (pathname.startsWith('/metrics/bg_workers')) {
+            return proxy_metrics(req, res, config.BG_METRICS_SERVER_PORT, '/metrics/bg_workers');
+        }
+        if (pathname.startsWith('/metrics/hosted_agents')) {
+            return proxy_metrics(req, res, config.HA_METRICS_SERVER_PORT, '/metrics/hosted_agents');
+        }
+    }
 
-    // error handlers should be last
-    app.use(error_404);
-    app.use(error_handler);
+    return next();
+}
+
+/**
+ * Wraps an async route handler for connect-style middleware.
+ * @param {Function} handler
+ * @returns {Function}
+ */
+function wrap_async_handler(handler) {
+    return (req, res, next) => {
+        P.resolve()
+            .then(() => handler(req, res))
+            .catch(next);
+    };
+}
+
+/**
+ * Parses the pathname and method from a request URL.
+ * @param {HttpIncomingMessage} req
+ * @returns {{ pathname: string, method: string }}
+ */
+function parse_request_url(req) {
+    const parsed = new URL(req.url || '/', 'http://localhost');
+    return {
+        pathname: parsed.pathname,
+        method: req.method || 'GET',
+    };
+}
+
+/**
+ * Sends an HTTP redirect response.
+ * @param {HttpServerResponse} res
+ * @param {string} location
+ * @param {number} [status_code]
+ */
+function redirect(res, location, status_code = 302) {
+    res.statusCode = status_code;
+    res.setHeader('Location', location);
+    res.end();
+}
+
+/**
+ * Forwards a request to a local metrics server.
+ * @param {HttpIncomingMessage} req
+ * @param {HttpServerResponse} res
+ * @param {number} target_port
+ * @param {string} mount_prefix
+ */
+function proxy_metrics(req, res, target_port, mount_prefix) {
+    let proxy_path = req.url.slice(mount_prefix.length);
+    if (!proxy_path || proxy_path === '') proxy_path = '/';
+    if (!proxy_path.startsWith('/')) proxy_path = '/' + proxy_path;
+
+    const proxy_req = http.request({
+        hostname: 'localhost',
+        port: target_port,
+        method: req.method,
+        path: proxy_path,
+        headers: req.headers,
+    }, proxy_res => {
+        res.writeHead(proxy_res.statusCode, proxy_res.headers);
+        proxy_res.pipe(res);
+    });
+
+    const on_proxy_error = err => {
+        dbg.warn('metrics proxy error', mount_prefix, err.message || err);
+        if (!res.headersSent) {
+            res.statusCode = 502;
+            res.end('Bad Gateway');
+        }
+    };
+
+    proxy_req.on('error', on_proxy_error);
+    req.on('error', on_proxy_error);
+    req.pipe(proxy_req);
 }
 
 function https_redirect_handler(req, res, next) {
@@ -149,13 +276,10 @@ function https_redirect_handler(req, res, next) {
     // however our nodejs server is always http so the flag is false,
     // and on heroku only the router does ssl,
     // so we need to pull the heroku router headers to check.
-    const fwd_proto = req.get('X-Forwarded-Proto');
-    // var fwd_port = req.get('X-Forwarded-Port');
-    // var fwd_from = req.get('X-Forwarded-For');
-    // var fwd_start = req.get('X-Request-Start');
+    const fwd_proto = req.headers['x-forwarded-proto'];
     if (fwd_proto === 'http') {
-        const host = req.get('Host');
-        return res.redirect('https://' + host + req.originalUrl);
+        const host = req.headers.host;
+        return redirect(res, 'https://' + host + req.url);
     }
     return next();
 }
@@ -164,9 +288,13 @@ async function get_version_handler(req, res) {
     // Authorize bearer token version endpoint
     if (config.NOOBAA_VERSION_AUTH_ENABLED && !http_utils.authorize_bearer(req, res)) return;
     const { status, version } = await getVersion(req.url);
-    if (version) res.send(version);
-    if (status !== 200) res.status(status);
-    res.end();
+    res.statusCode = status;
+    if (version) {
+        res.setHeader('Content-Type', 'text/plain');
+        res.end(version);
+    } else {
+        res.end();
+    }
 }
 
 async function getVersion(route) {
@@ -183,7 +311,7 @@ async function getVersion(route) {
 }
 
 // An oauth authorize endpoint that forwards to the OAuth authorization server.
-async function oauth_authorise_handler(req, res) {
+async function oauth_authorize_handler(req, res) {
     const {
         KUBERNETES_SERVICE_HOST,
         KUBERNETES_SERVICE_PORT,
@@ -193,22 +321,23 @@ async function oauth_authorise_handler(req, res) {
 
     if (!KUBERNETES_SERVICE_HOST || !KUBERNETES_SERVICE_PORT) {
         dbg.warn('/oauth/authorize: oauth is supported only on OpenShift deployments');
-        res.status(500);
+        res.statusCode = 500;
         res.end();
         return;
     }
 
     if (!OAUTH_AUTHORIZATION_ENDPOINT) {
         dbg.warn('/oauth/authorize: oauth support was not configured for this system');
-        res.status(500);
+        res.statusCode = 500;
         res.end();
         return;
     }
 
     if (!NOOBAA_SERVICE_ACCOUNT) {
         dbg.warn('/oauth/authorize: noobaa k8s service account name is not available');
-        res.status(500);
+        res.statusCode = 500;
         res.end();
+        return;
     }
 
     let redirect_host;
@@ -234,7 +363,7 @@ async function oauth_authorise_handler(req, res) {
     authorization_endpoint.searchParams.set('redirect_uri', redirect_uri.toString());
     authorization_endpoint.searchParams.set('state', decodeURIComponent(return_url));
 
-    res.redirect(authorization_endpoint);
+    redirect(res, authorization_endpoint.toString());
 }
 
 function metrics_nsfs_stats_handler(req, res) {
@@ -269,15 +398,16 @@ function metrics_nsfs_stats_handler(req, res) {
 
     dbg.log1(`_create_nsfs_report: nsfs_report ${nsfs_report}`);
 
-    res.send(nsfs_report);
-    res.status(200).end();
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html');
+    res.end(nsfs_report);
 }
 
 /**
  * Responds with a JSON or plain-text error for failed web requests.
  * Prefer JSON when the client accepts it, otherwise send plain text.
  */
-function error_handler(err, req, res, next) {
+function error_handler(err, req, res) {
     console.error('ERROR:', err);
     let e;
     if (dev_mode) {
@@ -290,12 +420,14 @@ function error_handler(err, req, res, next) {
     if (e.statusCode < 400) {
         e.statusCode = 500;
     }
-    res.status(e.statusCode);
+    res.statusCode = e.statusCode;
 
-    if (req.accepts('json')) {
-        return res.json(e);
+    if (request_accepts(req, 'json')) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify(e));
     }
-    return res.type('txt').send(e.message || e.toString());
+    res.setHeader('Content-Type', 'text/plain');
+    return res.end(e.message || e.toString());
 }
 
 function error_404(req, res, next) {
@@ -303,6 +435,18 @@ function error_404(req, res, next) {
         status: 404, // not found
         message: 'We dug the earth, but couldn\'t find your requested URL'
     });
+}
+
+/**
+ * Returns true when the Accept header includes the given type.
+ * @param {HttpIncomingMessage} req
+ * @param {string} type
+ * @returns {boolean}
+ */
+function request_accepts(req, type) {
+    const accept = req.headers.accept || '';
+    if (type === 'json') return (/\bapplication\/json\b/).test(accept) || accept.includes('*/*');
+    return accept.includes(type);
 }
 
 exports.main = main;
