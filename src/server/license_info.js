@@ -43,11 +43,15 @@ function serve_http(req, res) {
         )
         .then(() => {
             console.log('license_info: serving data');
-            res.sendFile(LICENSE_INFO_JSON_PATH);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            fs.createReadStream(LICENSE_INFO_JSON_PATH).pipe(res);
         })
         .catch(err => {
             console.error('license_info: ERROR', err.stack || err);
-            res.status(500).send('Server Error');
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'text/plain');
+            res.end('Server Error');
         });
 }
 
